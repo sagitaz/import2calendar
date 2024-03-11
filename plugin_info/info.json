@@ -8,7 +8,7 @@
 	"licence": "AGPL",
 	"author": "Jeedom SAS",
 	"require": "4.2",
-	"category": "programming",
+	"category": "organization",
 	"hasDependency": false,
 	"hasOwnDeamon": false,
 	"maxDependancyInstallTime": 0,
