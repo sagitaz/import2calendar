@@ -1,0 +1,35 @@
+{
+	"id": "import2calendar",
+	"name": "importToCalendar",
+	"pluginVersion": "0.1",
+	"description": {
+		"fr_FR": "import2calendar permet d'importer un calendrier ical dans le plugin agenda"
+	},
+	"licence": "AGPL",
+	"author": "Jeedom SAS",
+	"require": "4.2",
+	"category": "programming",
+	"hasDependency": false,
+	"hasOwnDeamon": false,
+	"maxDependancyInstallTime": 0,
+	"changelog_beta": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar\/beta\/changelog",
+	"changelog": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar\/changelog",
+	"documentation_beta": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar\/beta",
+	"documentation": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar",
+	"link": {
+		"forum": "Lien vers le forum",
+		"video": "Lien vers une video"
+	},
+	"language": [
+		"fr_FR"
+	],
+	"compatibility": [
+		"smart",
+		"luna",
+		"atlas",
+		"rpi",
+		"docker",
+		"diy",
+		"mobile"
+	]
+}

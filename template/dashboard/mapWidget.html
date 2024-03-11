@@ -1,0 +1,71 @@
+<div class="eqLogic eqLogic-widget #eqType# allowResize" style="width: #width#;height: #height#;#style#" data-eqLogic_id="#id#"
+  data-eqLogic_uid="#uid#" data-version="#version#">
+  <center class="widget-name">
+    <a href="/index.php?v=d&p=jeemate&m=jeemate" style="font-size : 1.1em;#hideEqLogicName#">#name_display#
+      <span class="object_name">#object_name#</span>
+    </a>
+    <span style="position:relative" class="cmd refresh refresh-map pull-right cursor">
+      <i class="fas fa-sync"></i>
+    </span>
+  </center>
+  <style>
+    .leaflet-marker-icon {
+      border-radius: 50% !important;
+    }
+    #widget {
+      		left: 5px;
+    		width: calc(100% - 10px);
+    		height: calc(#height# - 40px);
+      		border-radius: 2%
+    }
+
+  </style>
+  <link rel="stylesheet" href="plugins/jeemate/desktop/css/leaflet.css" />
+  <link rel="stylesheet" href="plugins/jeemate/desktop/css/L.Control.SlideMenu.css" />
+  <link rel="stylesheet" href="plugins/jeemate/desktop/css/control.fullscreen.css" />
+  <link rel="stylesheet" href="plugins/jeemate/desktop/css/Leaflet.BigImage.css" />
+  <link rel="stylesheet" href="plugins/jeemate/desktop/css/esri-leaflet-geocoder.css" />
+
+
+    <div id="widget"></div>
+
+
+  <script type="text/javascript">
+    $.include(['plugins/jeemate/desktop/js/leaflet.js',
+      'plugins/jeemate/desktop/js/widgetMap.js',
+      'plugins/jeemate/desktop/js/L.Control.SlideMenu.js',
+      'plugins/jeemate/desktop/js/control.fullscreen.js',
+      'plugins/jeemate/desktop/js/Leaflet.BigImage.js',
+      'plugins/jeemate/desktop/js/leaflet.PopupMovable.js',
+      'plugins/jeemate/desktop/js/esri-leaflet.js',
+      'plugins/jeemate/desktop/js/esri-leaflet-geocoder.js'],
+      function () {
+        createMap();
+        setupPage();
+        addUserWidgetPosition();
+
+
+        $.ajax({
+          type: "POST",
+          url: "plugins/jeemate/core/ajax/jeemate.ajax.php",
+          data: { action: "getCronWidget" }, dataType: 'json',
+          async: false,
+          error: function (request, status, error) {
+            handleAjaxError(request, status, error);
+          },
+          success: function (data) {
+            console.log(data);
+            var cronTimer = data.result;
+            if (cronTimer != 0) {
+              setInterval(addUserWidgetPosition, cronTimer);
+            }
+
+
+          },
+        });
+
+      });
+  </script>
+
+
+</div>

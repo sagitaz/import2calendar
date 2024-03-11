@@ -1,0 +1,804 @@
+<div
+  class="eqLogic eqLogic-widget  allowResize allowReorderCmd jeemate_widget jeemate #custom_layout# #eqLogic_class# #class#"
+  data-version="#version#" data-eqLogic_id="#id#" data-eqLogic_uid="#uid#" data-eqType="#eqType#" data-tags="#tags#"
+  style="text-align:center; border:#border#; border-radius:#border-radius#; color: #color#;width: #width#;height: #height#;#style#;">
+
+  <center class="widget-name">
+    <span class="pull-right btnBatterie battery#id##batteryCharge#">
+      <i class="fa fa-#battery_img#"> #battery_value# %</i>
+    </span>
+    <span class="reportModeVisible">#name_display# <span class="object_name">#object_name#</span></span>
+    <a href="#eqLink#" class="reportModeHidden">#name_display# <span class="object_name">#object_name#</span></a>
+  </center>
+
+  <div class="principalDiv">
+    <div class="imageDiv">
+      <img src="#userPicture#" class="userpics " />
+      <div class="geofencenow#id#">#geofencenow#</div>
+
+    </div>
+    <div class="infoDiv">
+      #infos#
+    </div>
+  </div>
+  <div style="height:280px;">
+    <label>JeeMate</label><br>
+    <div id="tabPrincipal">
+      #actions#
+
+    </div>
+
+    #divGraphInfo#
+
+  </div>
+
+  <div id="LocateSideNav#id#" class="sidenav">
+    <div class="col-lg-12" onclick="closeLocateNav#id#()">
+      <div class="col-lg-1"></div>
+      <div class="col-lg-10 TabTitle#id#">Géolocalisation</div>
+      <div class="col-lg-1 btnBatterie"><i class="fa fa-times"></i></div>
+    </div>
+    <div id="tabGeoloc">
+      <div class="ligneGeoloc">
+        #geolocInfos#
+      </div>
+    </div>
+    <div id="tabGeofence">
+      <div class="ligneGeofence">
+        <div class="cellGeofence#id#">Zone</div>
+        <div class="cellGeofence#id#">Distance</div>
+        <div class="cellGeofence#id#">Date</div>
+      </div>
+      #geofencesActual#
+      #geofences#
+    </div>
+  </div>
+
+  <div id="NotifSideNav#id#" class="sidenav">
+    <div class="col-lg-12" onclick="closeNotifNav#id#()">
+      <div class="col-lg-1"></div>
+      <div class="col-lg-10 TabTitle#id#">Notifications</div>
+      <div class="col-lg-1 btnBatterie"><i class="fa fa-times"></i></div>
+    </div>
+    <div id="tabNotif">
+      <div class="ligneNotif">
+        <div class="cellNotif#id#">Nom</div>
+        <div class="cellNotif#id#">Titre</div>
+        <div class="cellNotif#id#">Message</div>
+        <div class="cellNotif#id#">Test</div>
+      </div>
+      #notifs#
+    </div>
+  </div>
+
+  <div id="ActionsSideNav#id#" class="sidenav">
+    <div class="col-lg-12" onclick="closeActionsNav#id#()">
+      <div class="col-lg-1"></div>
+      <div class="col-lg-10 TabTitle#id#">Actions</div>
+      <div class="col-lg-1 btnBatterie"><i class="fa fa-tools"></i></div>
+    </div>
+    <div id="tabActions">
+      <div class="ligneActions">
+        <div class="cellActions#id#">Nom</div>
+        <div class="cellActions#id#">Action</div>
+        <div class="cellActions#id#">Test</div>
+      </div>
+      #actionsTab#
+    </div>
+  </div>
+
+
+  <div id="AboutSideNav#id#" class="sidenav">
+    <div class="col-lg-12" onclick="closeAboutNav#id#()">
+      <div class="col-lg-1"></div>
+      <div class="col-lg-10 TabTitle#id#">A propos</div>
+      <div class="col-lg-1 btnBatterie"><i class="fa fa-times"></i></div>
+    </div>
+    <div id="tabAbout">
+      <div class="ligneAbout">
+        <div class="cellAbout#id#">Modèle :</div>
+        <div class="cellAboutValue">#manufacturer# #model#</div>
+      </div>
+      <div class="ligneAbout">
+        <div class="cellAbout#id#">Système d'exploitation :</div>
+        <div class="cellAboutValue">#os# #osVersion#</div>
+      </div>
+      <div class="ligneAbout">
+        <div class="cellAbout#id#">Application :</div>
+        <div class="cellAboutValue">#appVersion#</div>
+      </div>
+      <div class="ligneAbout">
+        <div class="cellAbout#id#">Plugin :</div>
+        <div class="cellAboutValue">#plugin#</div>
+      </div>
+      <div class="ligneAbout">
+        <div class="cellAbout#id#">Dernière communication :</div>
+        <div class="cellAboutValue">#lastCommunication#</div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="bottomBar">
+    <button class="btnWidget#id# #displayHealth#"><i class=" fa fa-heartbeat" onclick="openHealthNav#id#()"
+        title="Santé"></i></button>
+    <button class="btnWidget#id# #displayWorkout#"><i class=" fa fa-running" onclick="openWorkoutNav#id#()"
+        title="Sports"></i></button>
+    <button class="btnWidget#id# #displayLocate#"><i class=" fa fa-location-arrow" onclick="openLocateNav#id#()"
+        title="Géolocalisation"></i></button>
+    <button class="btnWidget#id# #displayNotifs#"><i class=" fas fa-envelope-open-text" onclick="openNotifNav#id#()"
+        title="Notifications"></i></button>
+    <button class="btnWidget#id# #displayActions#"><i class=" fas fa-tools" onclick="openActionsNav#id#()"
+        title="Actions"></i></button>
+    <button class="btnWidget#id#"><i class="fas fa-sticky-note" onclick="openAboutNav#id#()"
+        title="A propos"></i></button>
+  </div>
+
+
+
+  <script>
+    var jeemateIconColor#id# = ('#jeemateIconColor#' != '#' + 'jeemateIconColor#') ? "#jeemateIconColor#" : 'var(--txt-color)';
+    document.documentElement.style.setProperty('--jeemate-icone-color#id#', jeemateIconColor#id#);
+    var jeemateTxtColor#id# = ('#jeemateTxtColor#' != '#' + 'jeemateTxtColor#') ? "#jeemateTxtColor#" : 'var(--txt-color)';
+    document.documentElement.style.setProperty('--jeemate-txt-color#id#', jeemateTxtColor#id#);
+    var jeemateLabelColor#id# = ('#jeemateLabelColor#' != '#' + 'jeemateLabelColor#') ? "#jeemateLabelColor#" : 'var(--txt-color)';
+    document.documentElement.style.setProperty('--jeemate-label-color#id#', jeemateLabelColor#id#);
+    var jeemateBatteryColor#id# = ('#jeemateBatteryColor#' != '#' + 'jeemateBatteryColor#') ? "#jeemateBatteryColor#" : 'var(--txt-color)';
+    document.documentElement.style.setProperty('--jeemate-batterie-color#id#', jeemateBatteryColor#id#);
+    var jeemateGeofenceColor#id# = ('#jeemateGeofenceColor#' != '#' + 'jeemateGeofenceColor#') ? "#jeemateGeofenceColor#" : 'var(--txt-color)';
+    document.documentElement.style.setProperty('--jeemate-geofence-color#id#', jeemateGeofenceColor#id#);
+
+    function openLocateNav#id#() {
+          closeAll#id#()
+      document.getElementById("LocateSideNav#id#").style.width = "100%";
+    }
+
+    function closeLocateNav#id#() {
+          closeAll#id#()
+      document.getElementById("LocateSideNav#id#").style.width = "0";
+    }
+
+    function openAboutNav#id#() {
+          closeAll#id#()
+      document.getElementById("AboutSideNav#id#").style.width = "100%";
+    }
+
+    function closeAboutNav#id#() {
+          closeAll#id#()
+      document.getElementById("AboutSideNav#id#").style.width = "0";
+    }
+    function openNotifNav#id#() {
+          closeAll#id#()
+      document.getElementById("NotifSideNav#id#").style.width = "100%";
+    }
+
+    function closeNotifNav#id#() {
+          closeAll#id#()
+      document.getElementById("NotifSideNav#id#").style.width = "0";
+    }
+    function openActionsNav#id#() {
+          closeAll#id#()
+      document.getElementById("ActionsSideNav#id#").style.width = "100%";
+    }
+
+    function closeActionsNav#id#() {
+          closeAll#id#()
+      document.getElementById("ActionsSideNav#id#").style.width = "0";
+    }
+    function closeAll#id#() {
+      document.getElementById("LocateSideNav#id#").style.width = "0";
+      document.getElementById("HealthSideNav#id#").style.width = "0";
+      document.getElementById("AboutSideNav#id#").style.width = "0";
+      document.getElementById("NotifSideNav#id#").style.width = "0";
+      document.getElementById("WorkoutSideNav#id#").style.width = "0";
+      document.getElementById("ActionsSideNav#id#").style.width = "0";
+    }
+
+    function execNotif(cmdid) {
+      if (document.getElementById("title" + cmdid).value != '') {
+        var title = document.getElementById("title" + cmdid).value;
+      } else {
+        var title = 'test notification';
+      }
+
+      if (document.getElementById("message" + cmdid).value != '') {
+        var message = document.getElementById("message" + cmdid).value;
+      } else {
+        var message = 'message de test pour la commande ' + cmdid;
+      }
+
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { title: title, message: message }
+      })
+    }
+    function execTTS(cmdid) {
+      if (document.getElementById("message" + cmdid).value != '') {
+        var message = document.getElementById("message" + cmdid).value;
+      } else {
+        var message = 'message de test pour la commande ' + cmdid;
+      }
+
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { message: message }
+      })
+    }
+    function execURL(cmdid) {
+      if (document.getElementById("message" + cmdid).value != '') {
+        var message = document.getElementById("message" + cmdid).value;
+      } else {
+        var message = 'docs.jeemate.fr/fr/home';
+      }
+
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { message: message }
+      })
+    }
+    function execApp(cmdid) {
+      if (document.getElementById("message" + cmdid).value != '') {
+        var message = document.getElementById("message" + cmdid).value;
+      } else {
+        var message = 'com.android.chrome';
+      }
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { message: message }
+      })
+    }
+
+    function execAppleShortcut(cmdid) {
+      if (document.getElementById("title" + cmdid).value != '') {
+        var title = document.getElementById("title" + cmdid).value;
+        var message = document.getElementById("message" + cmdid).value;
+      }
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { title: title, message: message }
+      })
+    }
+
+    function execPowershell(cmdid) {
+      if (document.getElementById("message" + cmdid).value != '') {
+        var message = document.getElementById("message" + cmdid).value;
+        jeedom.cmd.execute({
+          id: cmdid,
+          value: { message: message }
+        })
+      }
+    }
+    function execShowclock1(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: '1 1' }
+      })
+    }
+    function execShowclock2(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: '2 1' }
+      })
+    }
+    function execShowclock3(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: '3 1' }
+      })
+    }
+    function execShowclock0(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: '0 0' }
+      })
+    }
+
+    function execAction(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid
+      })
+    }
+    function execShowSreenOn(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: 1 }
+      })
+    }
+    function execShowSreenOff(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: 0 }
+      })
+    }
+    function execSoundNormal(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: 'Normal' }
+      })
+    }
+    function execSoundSilence(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: 'Silencieux' }
+      })
+    }
+    function execSoundVibreur(cmdid) {
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: 'Vibration' }
+      })
+    }
+    function selectDeeplink(cmdid) {
+      var value = "";
+      jeedom.cmd.execute({
+        id: cmdid,
+        value: { select: value }
+      })
+    }
+    function setAlarm#id#(cmdid)
+    {
+      $('#md_modal').dialog({
+        dialogClass: "cadre_modal",
+        title: '#name_display# - Alarme'
+      });
+      $('#md_modal').load('index.php?v=d&plugin=jeemate&modal=setAlarm&id=#id#&cmdid=' + cmdid + '').dialog('open');
+    }
+  </script>
+
+</div>
+
+<style>
+  :root {
+    --jeemate-icone-color#id#: white;
+    --jeemate-txt-color#id#: white;
+    --jeemate-label-color#id#: white;
+    --jeemate-batterie-color#id#: white;
+    --jeemate-geofence-color#id#: white;
+  }
+
+  .cadre_modal {
+    position: absolute !important;
+    height: 440px !important;
+    width: 440px !important;
+  }
+
+  .jeemate_widget {
+    max-height: 460px;
+    min-height: 460px;
+    height: 460px;
+    min-width: 40%;
+  }
+
+  .jeemate_widget .btnWidget#id# {
+    background-color: rgba(var(--panel-bg-color), var(--opacity)) !important;
+    border: none;
+    padding: 6px 20px;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  /* Darker background on mouse-over */
+  .jeemate_widget .btnWidget#id#:hover {
+    color: var(--jeemate-icone-color#id#) !important;
+  }
+
+  .jeemate_widget .geofencenow#id# {
+    font-size: 15px;
+    color: var(--jeemate-geofence-color#id#) !important;
+  }
+
+  .jeemate_widget .TabTitle#id# {
+    font-size: 18px;
+    color: var(--jeemate-label-color#id#) !important;
+  }
+
+  .jeemate_widget .principalDiv {
+    background-color: rgba(var(--panel-bg-color), var(--opacity)) !important;
+    height: 110px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .jeemate_widget .imageDiv {
+    width: 30%;
+    padding: 5px;
+    text-align: center !important;
+    vertical-align: middle;
+  }
+
+  .jeemate_widget .infoDiv {
+    width: 70%;
+    display: inline-block;
+  }
+
+  .jeemate_widget .infoTxt {
+    padding-top: 2px;
+    font-size: 13px;
+    text-align: left !important;
+    color: var(--txt-color) !important;
+  }
+
+  .jeemate_widget .userpics {
+    width: 85px;
+    height: 85px;
+    border-radius: 30%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .jeemate_widget .bottomBar {
+    background-color: rgba(var(--panel-bg-color), var(--opacity)) !important;
+    text-align: center;
+    height: 50px;
+  }
+
+
+  .jeemate_widget .btnBatterie {
+    border: none;
+    font-size: 15px;
+    padding-top: 2px;
+    padding-right: 14px;
+    cursor: pointer;
+  }
+
+  .jeemate_widget .battery#id#batteryOnline {
+    color: var(--jeemate-batterie-color#id#) !important;
+  }
+
+  .jeemate_widget .txtBatterie {
+    border: none;
+    padding: 7px 0px 11px;
+    font-size: 12px;
+  }
+
+  .jeemate_widget .sidenav {
+    height: 280px;
+    width: 0;
+    position: absolute;
+    z-index: 1;
+    top: 135px;
+    left: 0;
+    background-color: rgba(var(--panel-bg-color), var(--opacity)) !important;
+    overflow-x: hidden;
+    padding-top: 10px;
+    transition: 0.5s;
+    border-top: solid !important;
+    border-color: rgba(75, 75, 75, 0.5) !important;
+    border-width: 4px !important;
+  }
+
+  .jeemate_widget .sidenav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    display: block;
+    transition: 0.3s;
+  }
+
+  .jeemate_widget .sidenav a:hover {}
+
+  .jeemate_widget .sidenav .closebtn {
+    position: absolute;
+    top: 0;
+    right: 15px;
+    font-size: 16px;
+    margin-left: 50px;
+  }
+
+  /* CSS dedié au panneau geoloc */
+  #tabGeoloc {
+    display: table;
+    border-collapse: collapse;
+    width: 90%;
+    height: 30%;
+    table-layout: fixed;
+    margin: auto;
+  }
+
+  .jeemate_widget .ligneGeoloc {
+    display: table-row;
+    border-top: solid !important;
+    border-color: rgba(75, 75, 75, 0.3) !important;
+    border-width: 2px !important;
+  }
+
+  .jeemate_widget .cellGeoloc {
+    display: table-cell;
+  }
+
+  .jeemate_widget .cellGeolocIcon {
+    display: grid;
+    font-size: 22px;
+    color: var(--txt-color) !important;
+    padding-top: 10px;
+  }
+
+  .jeemate_widget .cellGeolocText#id# {
+    display: grid;
+    vertical-align: middle;
+    font-size: 12px !important;
+    color: var(--jeemate-txt-color#id#) !important;
+    text-align: center;
+  }
+
+  .jeemate_widget .cellGeolocValue {
+    display: grid;
+    vertical-align: middle;
+    font-size: 14px !important;
+    color: var(--txt-color) !important;
+    text-align: center;
+  }
+
+  #tabGeofence {
+    display: table;
+    border-collapse: collapse;
+    width: 90%;
+    height: 60%;
+    table-layout: fixed;
+    margin: auto;
+  }
+
+  .jeemate_widget .ligneGeofence {
+    display: table-row;
+    border-top: solid !important;
+    border-color: rgba(75, 75, 75, 0.3) !important;
+    border-width: 2px !important;
+  }
+
+  .jeemate_widget .cellGeofence#id# {
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 14px !important;
+    text-align: center;
+    color: var(--jeemate-txt-color#id#) !important;
+  }
+
+  .jeemate_widget .cellGeofenceValue {
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 14px !important;
+    text-align: center;
+  }
+
+  /* CSS dedié au panneau notif */
+  #tabNotif {
+    display: table;
+    border-collapse: collapse;
+    width: 90%;
+    margin: auto;
+  }
+
+  .jeemate_widget .ligneNotif {
+    display: table-row;
+    border-top: solid !important;
+    border-color: rgba(75, 75, 75, 0.3) !important;
+    border-width: 2px !important;
+  }
+
+  .jeemate_widget .cellNotif#id# {
+    display: table-cell;
+    padding: 5px;
+    vertical-align: middle;
+    font-size: 14px;
+    text-align: center;
+    color: var(--jeemate-txt-color#id#) !important;
+  }
+
+  .jeemate_widget .cellNotifIcon {
+    display: grid;
+    font-size: 18px;
+    color: var(--txt-color) !important;
+  }
+
+  .jeemate_widget .imputNotif {
+    width: 90%;
+    height: 25px;
+  }
+
+  .jeemate_widget .cellNotifName {
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 12px !important;
+    text-align: center;
+    width: 20%;
+  }
+
+  .jeemate_widget .cellNotifTitle {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    width: 20%;
+    padding: 2px;
+  }
+
+  .jeemate_widget .cellNotifMessage {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    width: 50%;
+    padding: 2px;
+  }
+
+  .jeemate_widget .iconPlayNotif#id# {
+    border: none;
+    padding-top: 4px;
+    font-size: 16px !important;
+    cursor: pointer !important;
+  }
+
+  .jeemate_widget .iconPlayNotif#id#:hover {
+    color: var(--jeemate-icone-color#id#) !important;
+  }
+
+  /* CSS dedié au panneau actions */
+  #tabActions {
+    display: table;
+    border-collapse: collapse;
+    width: 90%;
+    margin: auto;
+  }
+
+  .jeemate_widget .ligneActions {
+    display: table-row;
+    border-top: solid !important;
+    border-color: rgba(75, 75, 75, 0.3) !important;
+    border-width: 2px !important;
+  }
+
+  .jeemate_widget .cellActions#id# {
+    display: table-cell;
+    padding: 5px;
+    vertical-align: middle;
+    font-size: 14px;
+    text-align: center;
+    color: var(--jeemate-txt-color#id#) !important;
+  }
+
+  .jeemate_widget .cellActionsIcon {
+    display: grid;
+    font-size: 18px;
+    color: var(--txt-color) !important;
+  }
+
+  .jeemate_widget .imputActions {
+    width: 100%;
+    height: 25px;
+    vertical-align: middle;
+  }
+
+  .jeemate_widget .imputActionsApple {
+    width: 100%;
+    height: 40%;
+    vertical-align: middle;
+  }
+
+  .jeemate_widget .radioActions {
+    vertical-align: middle;
+  }
+
+  .jeemate_widget .labelActions {
+    font-size: 14px !important;
+    padding-top: 4px;
+    padding-left: 4px;
+    padding-right: 14px;
+    vertical-align: middle;
+  }
+
+  .jeemate_widget .cellActionsName {
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 12px !important;
+    text-align: center;
+    width: 20%;
+  }
+
+  .jeemate_widget .cellActionsMessage {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    width: 70%;
+    padding: 2px;
+  }
+
+  .jeemate_widget .iconPlayActions#id# {
+    border: none;
+    padding-top: 4px;
+    font-size: 16px !important;
+    cursor: pointer !important;
+  }
+
+  .jeemate_widget .iconPlayActions#id#:hover {
+    color: var(--jeemate-icone-color#id#) !important;
+  }
+
+  /* CSS dedié au panneau notif */
+  #tabAbout {
+    display: table;
+    border-collapse: collapse;
+    width: 90%;
+    height: 75%;
+    margin: auto;
+  }
+
+  .jeemate_widget .ligneAbout {
+    display: table-row;
+    border-top: solid !important;
+    border-color: rgba(75, 75, 75, 0.3) !important;
+    border-width: 2px !important;
+  }
+
+  .jeemate_widget .cellAbout#id# {
+    display: table-cell;
+    padding: 5px;
+    vertical-align: middle;
+    font-size: 14px;
+    text-align: right;
+    color: var(--jeemate-txt-color#id#) !important;
+  }
+
+  .jeemate_widget .cellAboutValue {
+    display: table-cell;
+    padding: 5px;
+    vertical-align: middle;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  /* CSS dedié a la page principale */
+  #tabPrincipal {
+    border-collapse: collapse;
+    width: 90%;
+    margin: auto;
+    table-layout: auto;
+  }
+
+  .jeemate_widget .lignePrincipal {
+    border-top: solid !important;
+    border-color: rgba(230, 230, 230, 0.1) !important;
+    border-width: 2px !important;
+  }
+
+  .jeemate_widget .cellPrincipalIconRegen {
+    display: inline-flex;
+    text-align: left
+  }
+
+  .jeemate_widget .cellPrincipalIconSynthese {
+    display: inline-flex;
+    text-align: left
+  }
+
+  .jeemate_widget .cellPrincipalIconScreen {
+    display: inline-flex;
+    text-align: right;
+  }
+
+  .jeemate_widget .cellPrincipalIconSound {
+    display: inline-flex;
+    text-align: right;
+  }
+
+  .jeemate_widget .iconAction#id# {
+    padding: 15px;
+    font-size: 22px;
+    color: var(--txt-color) !important;
+  }
+
+  .jeemate_widget .iconAction#id#:hover {
+    color: var(--jeemate-icone-color#id#) !important;
+  }
+
+  .jeemate_widget .cellPrincipalText {
+    display: table-cell;
+    font-size: 13px !important;
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px;
+  }
+
+  .jeemate_widget div.eqlogicbackgraph {
+    bottom: 48px !important;
+    height: 210px !important;
+  }
+</style>
