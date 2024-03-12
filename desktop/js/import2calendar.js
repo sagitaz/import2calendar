@@ -114,8 +114,9 @@ function addAction(_action, _type) {
   div += '</div>'
   var actionOption_id = jeedomUtils.uniqId()
   div += '<div class="col-sm-6 actionOptions" id="' + actionOption_id + '"></div>'
-  document.getElementById('div_' + _type).insertAdjacentHTML('beforeend', div)
-  document.querySelectorAll('#div_' + _type + ' .' + _type + '').last().setValues(_action, '.expressionAttr')
+
+  $('#div_' + _type).append(div)
+  $('#div_' + _type + ' .' + _type + '').last().setValues(_action, '.expressionAttr')
 
   if (is_array(actionOptions)) {
     actionOptions.push({
@@ -172,17 +173,17 @@ function saveEqLogic(_eqLogic) {
   }
 
   _eqLogic.configuration.starts = []
-  $('#div_start .start').each(function () {
+  $('#div_start').each(function () {
     let actionStart = $(this).getValues('.startAttr')
     actionStart = $(this).find('.start').getValues('.expressionAttr')
     _eqLogic.configuration.starts.push(actionStart)
   })
 
   _eqLogic.configuration.ends = []
-  $('#div_end .end').each(function () {
-    let actionStart = $(this).getValues('.endAttr')
-    actionStart = $(this).find('.end').getValues('.expressionAttr')
-    _eqLogic.configuration.starts.push(actionStart)
+  $('#div_end').each(function () {
+    let actionEnd = $(this).getValues('.endAttr')
+    actionEnd = $(this).find('.end').getValues('.expressionAttr')
+    _eqLogic.configuration.ends.push(actionEnd)
   })
   return _eqLogic
 }
