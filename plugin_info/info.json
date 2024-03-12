@@ -6,16 +6,16 @@
 		"fr_FR": "import2calendar permet d'importer un calendrier ical dans le plugin agenda"
 	},
 	"licence": "AGPL",
-	"author": "Jeedom SAS",
-	"require": "4.2",
+	"author": "Sagitaz",
+	"require": "4.3",
 	"category": "organization",
 	"hasDependency": false,
 	"hasOwnDeamon": false,
 	"maxDependancyInstallTime": 0,
-	"changelog_beta": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar\/beta\/changelog",
-	"changelog": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar\/changelog",
-	"documentation_beta": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar\/beta",
-	"documentation": "https:\/\/doc.jeedom.com\/#language#\/plugins\/programming\/import2calendar",
+	"changelog_beta": "https://sagitaz.github.io/import2calendar/#language#/changelog",
+	"changelog": "https://sagitaz.github.io/import2calendar/#language#/changelog",
+	"documentation_beta": "https://sagitaz.github.io/import2calendar/#language#/",
+	"documentation": "https://sagitaz.github.io/import2calendar/#language#/",
 	"link": {
 		"forum": "Lien vers le forum",
 		"video": "Lien vers une video"
