@@ -1,17 +1,42 @@
 # Plugin import2calendar
 
-Le "import2calendar de plugin" sert à importer un calendrier au format Ical dans le plugin Agenda officiel (calendar).
+Le plugin sert à importer un calendrier au format Ical dans le plugin Agenda officiel (calendar).
 
-La configuration de celui-ci est trés simple.
+La configuration de celui-ci est très simple.
 
-# créer un équipement
-Une fois l'équipement créé, mettre le lien du fichier ical, définir un cron pour la mise a jour programmé, choisir une icône, les couleurs et les actions de début et de fin d'événement.
+# Créer un équipement
+Commencer par ajouter un équipement et choisir son nom
+### Paramètre d'import
+**ical** : indiquer l'URL du fichier ical à convertir
+**cron** : choisir le rafraîchissement voulu pour le calendrier
 
+### Paramètres d'affichage
+**icône** : l'icône qui sera appliquée à chaque évent
+**couleur de fond** : couleur de fond pour chaque vent
+**couleur de texte** : couleur de texte pour chaque events
+
+### Actions de début et de fin
+Pour tous les événements de votre calendrier seront ajoutés les actions définies ici.
+Vous pouvez réorganiser les actions en glisser/déposer
+
+**Il n'est pas possible de définir des actions différentes pour chaque événement.**
+
+Vous pouvez maintenant cliquer sur **sauvegarder**
 L'agenda correspondant sera créé dans le plugin agenda.
 
-# Action(s) de début et de fin
-les actions configurées ici seront défini pour chaques evénement du calendrier. Il n'est pas possible de définir des actions différentes pour chaques evénement.
+# Édition d'un équipement
+Si vous modifiez une des options suivantes :
+- icône
+- couleur de fond
+- couleur de texte
+- actions de début
+- actions de fin
 
+Les évents seront modifiés dans l'agenda (calendar)
+
+# Gestion des événements
+A chaque sauvegarde ou à chaque fois que le cron défini parse l'ical alors si un événement n'est plus dans l'ical, il est supprimé de l'agenda.
+Les événements passés ne sont pas importés et seront supprimés au fur et à mesure
 # Attention
 - le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
 - la pièce sera identique
