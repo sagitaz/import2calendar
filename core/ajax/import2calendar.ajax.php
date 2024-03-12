@@ -29,10 +29,6 @@ try {
   */
   ajax::init();
 
-  if (init('action') == 'test') {
-    $eqlogicId = init('logicalId');
-    import2calendar::parse_iCal($eqlogicId);
-  }
 
   throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
   /*     * *********Catch exeption*************** */

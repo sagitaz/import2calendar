@@ -297,14 +297,23 @@ class import2calendar extends eqLogic
         if (
           $option['cmd_param']['eventName'] == $existingOption['cmd_param']['eventName'] &&
           $option['startDate'] == $existingOption['startDate'] &&
-          $option['endDate'] == $existingOption['endDate'] &&
-          $option['cmd_param']['start'] == $existingOption['cmd_param']['start'] &&
-          $option['cmd_param']['end'] == $existingOption['cmd_param']['end'] &&
-          $option['cmd_param']['color'] == $existingOption['cmd_param']['color'] &&
-          $option['cmd_param']['icon'] == $existingOption['cmd_param']['icon'] &&
-          $option['cmd_param']['text_color'] == $existingOption['cmd_param']['text_color']
+          $option['endDate'] == $existingOption['endDate']
         ) {
-          $isDuplicate = true;
+          // Vérifier si l'un des paramètres (start, end, color, text_color ou icon) est différent
+          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color'];
+          $isDifferent = false;
+          foreach ($paramsToCheck as $param) {
+            if ($option['cmd_param'][$param] != $existingOption['cmd_param'][$param]) {
+              $isDifferent = true;
+              break;
+            }
+          }
+
+          if ($isDifferent) {
+            $option['id'] = $existingOption['id'];
+          } else {
+            $isDuplicate = true;
+          }
           break;
         }
       }
@@ -316,6 +325,7 @@ class import2calendar extends eqLogic
       }
     }
   }
+
   public static function calendarCreate($eqlogic)
   {
     if (self::testPlugin()) {
@@ -372,6 +382,10 @@ class import2calendar extends eqLogic
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
       log::add(__CLASS__, 'debug', "Le plugin agenda n'est pas installé ou activé.");
     }
+  }
+
+  public static function calendarUpdate($id, $option)
+  {
   }
   public static function calendarRemove($id)
   {
