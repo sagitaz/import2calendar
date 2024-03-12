@@ -7,13 +7,13 @@ La configuration de celui-ci est très simple.
 # Créer un équipement
 Commencer par ajouter un équipement et choisir son nom
 ### Paramètre d'import
-**ical** : indiquer l'URL du fichier ical à convertir
-**cron** : choisir le rafraîchissement voulu pour le calendrier
+- **ical** : indiquer l'URL du fichier ical à convertir
+- **cron** : choisir le rafraîchissement voulu pour le calendrier
 
 ### Paramètres d'affichage
-**icône** : l'icône qui sera appliquée à chaque évent
-**couleur de fond** : couleur de fond pour chaque vent
-**couleur de texte** : couleur de texte pour chaque events
+- **icône** : l'icône qui sera appliquée à chaque évent
+- **couleur de fond** : couleur de fond pour chaque vent
+- **couleur de texte** : couleur de texte pour chaque events
 
 ### Actions de début et de fin
 Pour tous les événements de votre calendrier seront ajoutés les actions définies ici.
