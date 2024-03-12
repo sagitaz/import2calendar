@@ -87,6 +87,12 @@ function addCmdToTable(_cmd) {
 
 var actionOptions = null
 
+document.getElementById('bt_chooseIcon').addEventListener('click', function () {
+  jeedomUtils.chooseIcon(function (_icon) {
+    document.querySelector('.eqLogicAttr[data-l1key=configuration][data-l2key=icon]').innerHTML = _icon
+  })
+})
+
 function addAction(_action, _type) {
   if (!isset(_action)) {
     _action = {}
@@ -126,6 +132,9 @@ function addAction(_action, _type) {
     })
   }
 }
+
+$("#div_start").sortable({ axis: "y", cursor: "move", items: ".start", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
+$("#div_end").sortable({ axis: "y", cursor: "move", items: ".end", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
 
 $('.bt_addActionStart').off('click').on('click', function () {
   addAction({}, 'start')
