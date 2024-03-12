@@ -340,6 +340,11 @@ class import2calendar extends eqLogic
       $object = $eqlogic->getObject_id();
 
       // on vérifie si un calendrier existe déjà dans le plugin Agenda
+      $allCalendar = calendar::byLogicalId('ical2calendar', 'calendar', true);
+      foreach ($allCalendar as $cal) {
+        $cal->setLogicalId(__('import2calendar', __FILE__));
+        $cal->save();
+      }
       $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
       foreach ($allCalendar as $cal) {
         if ($name . '-ical' === $cal->getname()) {
