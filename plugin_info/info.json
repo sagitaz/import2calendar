@@ -1,7 +1,7 @@
 {
 	"id": "import2calendar",
 	"name": "importToCalendar",
-	"pluginVersion": "0.1",
+	"pluginVersion": "0.2",
 	"description": {
 		"fr_FR": "import2calendar permet d'importer un calendrier ical dans le plugin agenda"
 	},
@@ -17,8 +17,7 @@
 	"documentation_beta": "https://sagitaz.github.io/import2calendar/#language#/",
 	"documentation": "https://sagitaz.github.io/import2calendar/#language#/",
 	"link": {
-		"forum": "Lien vers le forum",
-		"video": "Lien vers une video"
+		"forum": "https://community.jeedom.com/tags/plugin-import2calendar"
 	},
 	"language": [
 		"fr_FR"
