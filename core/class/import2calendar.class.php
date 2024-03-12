@@ -124,6 +124,9 @@ class import2calendar extends eqLogic
   // Fonction exécutée automatiquement avant la création de l'équipement
   public function preInsert()
   {
+    $this->setConfiguration('color', '#1212EF');
+    $this->setConfiguration('text_color', '#FFFFFF');
+    $this->setIsEnable(1);
   }
 
   // Fonction exécutée automatiquement après la création de l'équipement
