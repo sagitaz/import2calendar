@@ -187,7 +187,9 @@ class import2calendar extends eqLogic
   {
     $eqlogic = eqLogic::byId($eqlogicId);
 
-    $file = $eqlogic->getConfiguration('ical');
+    $icalConfig = $eqlogic->getConfiguration('ical');
+    $file = ($icalConfig != "") ? $icalConfig : $eqlogic->getConfiguration('icalAuto');
+
     $icon = $eqlogic->getConfiguration('icon');
     $color = $eqlogic->getConfiguration('color');
     $textColor = $eqlogic->getConfiguration('text_color');
@@ -201,9 +203,9 @@ class import2calendar extends eqLogic
 
     $options = [];
 
-    log::add(__CLASS__, 'debug', "ICAL : " . json_encode($icalEvents));
     foreach ($icalEvents as $icalEvent) {
       $lines = preg_split('/\r?\n/', $icalEvent);
+      log::add(__CLASS__, 'info', "ICAL : " . json_encode($lines));
 
       $parsedEvent = [];
 
@@ -219,6 +221,10 @@ class import2calendar extends eqLogic
             $endDateKey = $key;
           }
         }
+      }
+
+      if (!isset($endDateKey)) {
+        $endDateKey = $startDateKey;
       }
 
       $summary = $parsedEvent["SUMMARY"];

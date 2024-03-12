@@ -111,22 +111,9 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								</div>
 							</div>
 							<div class="form-group">
-								<label class="col-sm-4 control-label">{{Catégorie}}</label>
-								<div class="col-sm-6">
-									<?php
-									foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
-										echo '<label class="checkbox-inline">';
-										echo '<input type="checkbox" class="eqLogicAttr" data-l1key="category" data-l2key="' . $key . '" >' . $value['name'];
-										echo '</label>';
-									}
-									?>
-								</div>
-							</div>
-							<div class="form-group">
 								<label class="col-sm-4 control-label">{{Options}}</label>
 								<div class="col-sm-6">
 									<label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isEnable" checked>{{Activer}}</label>
-									<label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isVisible" checked>{{Visible}}</label>
 								</div>
 							</div>
 
@@ -136,6 +123,19 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								</label>
 								<div class="col-sm-6">
 									<input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ical" placeholder="{{ICAL}}">
+								</div>
+								<label class="col-sm-4 control-label">{{ICAL général}}
+								</label>
+								<div class="col-sm-6">
+									<select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="icalAuto">
+										<option value="" selected>{{Aucun}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A-B-C-Corse.ics">{{Vacance scolaire FR zone A-B-C}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics">{{Vacance scolaire FR zone A}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-B.ics">{{Vacance scolaire FR zone B}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-C.ics">{{Vacance scolaire FR zone C}}</option>
+										<option value="https://etalab.github.io/jours-feries-france-data/ics/jours_feries_metropole.ics">{{Jours fériés Métropole}}</option>
+
+									</select>
 								</div>
 							</div>
 							<div class="form-group">
