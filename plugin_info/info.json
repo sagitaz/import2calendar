@@ -6,8 +6,8 @@
 		"fr_FR": "import2calendar permet d'importer un calendrier ical dans le plugin agenda"
 	},
 	"licence": "AGPL",
-	"author": "Jeedom SAS",
-	"require": "4.2",
+	"author": "Sagitaz",
+	"require": "4.3",
 	"category": "organization",
 	"hasDependency": false,
 	"hasOwnDeamon": false,

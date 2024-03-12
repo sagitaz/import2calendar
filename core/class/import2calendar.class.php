@@ -296,7 +296,10 @@ class import2calendar extends eqLogic
           $option['startDate'] == $existingOption['startDate'] &&
           $option['endDate'] == $existingOption['endDate'] &&
           $option['cmd_param']['start'] == $existingOption['cmd_param']['start'] &&
-          $option['cmd_param']['end'] == $existingOption['cmd_param']['end']
+          $option['cmd_param']['end'] == $existingOption['cmd_param']['end'] &&
+          $option['cmd_param']['color'] == $existingOption['cmd_param']['color'] &&
+          $option['cmd_param']['icon'] == $existingOption['cmd_param']['icon'] &&
+          $option['cmd_param']['text_color'] == $existingOption['cmd_param']['text_color']
         ) {
           $isDuplicate = true;
           break;
