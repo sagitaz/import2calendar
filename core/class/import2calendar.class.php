@@ -246,7 +246,7 @@ class import2calendar extends eqLogic
         $options[] = [
           "id" => "",
           "eqLogic_id" => $calendarEqId,
-          "ical2calendar" => $eqlogicId,
+          "import2calendar" => $eqlogicId,
           "cmd_param" => [
             "eventName" => $summary ?? "Aucun nom",
             "icon" => $icon,
@@ -340,7 +340,7 @@ class import2calendar extends eqLogic
       $object = $eqlogic->getObject_id();
 
       // on vérifie si un calendrier existe déjà dans le plugin Agenda
-      $allCalendar = calendar::byLogicalId('ical2calendar', 'calendar', true);
+      $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
       foreach ($allCalendar as $cal) {
         if ($name . '-ical' === $cal->getname()) {
           $eqExist = TRUE;
@@ -353,7 +353,7 @@ class import2calendar extends eqLogic
         $calendar->setName(__($name . '-ical', __FILE__));
         $calendar->setIsEnable(1);
         $calendar->setIsVisible(1);
-        $calendar->setLogicalId(__('ical2calendar', __FILE__));
+        $calendar->setLogicalId(__('import2calendar', __FILE__));
         $calendar->setEqType_name('calendar');
         $calendar->setObject_id($object);
         $calendar->save();
