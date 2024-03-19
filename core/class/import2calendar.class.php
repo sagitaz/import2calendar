@@ -124,8 +124,13 @@ class import2calendar extends eqLogic
   // Fonction exécutée automatiquement avant la création de l'équipement
   public function preInsert()
   {
-    $this->setConfiguration('color', '#1212EF');
-    $this->setConfiguration('text_color', '#FFFFFF');
+    if ($this->getConfiguration('color') === '') {
+      $this->setConfiguration('color', '#1212EF');
+    }
+
+    if ($this->getConfiguration('text_color') === '') {
+      $this->setConfiguration('text_color', '#FFFFFF');
+    }
     $this->setIsEnable(1);
   }
 
@@ -192,7 +197,9 @@ class import2calendar extends eqLogic
 
     $icon = $eqlogic->getConfiguration('icon');
     $color = $eqlogic->getConfiguration('color');
+    log::add(__CLASS__, 'debug', "color : " . $color);
     $textColor = $eqlogic->getConfiguration('text_color');
+    log::add(__CLASS__, 'debug', "text_color : " . $textColor);
     $allCmdStart = $eqlogic->getConfiguration('starts')[0];
     $allCmdEnd = $eqlogic->getConfiguration('ends')[0];
     // création du calendrier si inexistant
@@ -227,22 +234,25 @@ class import2calendar extends eqLogic
         $endDateKey = $startDateKey;
       }
 
-      $summary = $parsedEvent["SUMMARY"];
+      $summary = self::translateName($parsedEvent["SUMMARY"]);
       $startDate = $parsedEvent[$startDateKey];
-      $start = self::convertDate($startDate);
-
       $endDate = $parsedEvent[$endDateKey];
-      if ($startDate === $endDate) {
-        $end = self::convertDate($endDate, "235900Z");
+
+      if (strpos($icalConfig, 'airbnb') !== false) {
+        $start = self::convertDate($startDate, "160000Z");
+        $end = self::convertDate($endDate, "080000Z");
       } else {
+        $start = self::convertDate($startDate);
         $end = self::convertDate($endDate);
       }
-
-
+      if ($start === $end) {
+        $end = date("Y-m-d 23:59:00", strtotime($end));
+      }
       $currentTime = time();
       $endTimestamp = strtotime($end);
+      $threeDaysInSeconds = 3 * 24 * 60 * 60;
 
-      if ($endTimestamp > $currentTime) {
+      if ($endTimestamp > $currentTime || ($currentTime - $endTimestamp) < $threeDaysInSeconds) {
         $options[] = [
           "id" => "",
           "eqLogic_id" => $calendarEqId,
@@ -265,6 +275,8 @@ class import2calendar extends eqLogic
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
     $calendarEqlogic->refreshWidget();
+
+    return $calendarEqId;
   }
 
   public static function cleanDB($calendarEqId, $options)
@@ -448,25 +460,92 @@ class import2calendar extends eqLogic
 
   private static function convertDate($date, $defaultTime = "000000Z")
   {
-    // Si la date ne comporte pas d'heures, on utilise celle par default
-    if (strpos($date, 'T') === false) {
+    // Si la date ne comporte pas d'heures, on utilise celle par défaut
+    if (
+      strpos($date, 'T') === false
+    ) {
       $date .= 'T' . $defaultTime;
-      $date = str_replace('\r', '', $date);
-      $timestamp = strtotime($date);
-      if ($defaultTime === "000000Z") {
-        return date("Y-m-d 00:00:00", $timestamp);
-      } else {
-        return date("Y-m-d 23:59:00", $timestamp);
-      }
-    } else {
-      $timestamp = strtotime($date);
-      return date("Y-m-d H:i:s", $timestamp);
     }
 
-    // Convertir la date au format MySQL
+    $date = str_replace('\r', '', $date);
+    $timestamp = strtotime($date);
+
+    if ($defaultTime === "000000Z") {
+      $formattedDate = gmdate("Y-m-d 00:00:00", $timestamp);
+    } else {
+      $formattedDate = gmdate("Y-m-d H:i:s", $timestamp);
+    }
+    return $formattedDate;
+  }
+
+  private static function translateName($name)
+  {
+    $english = array(
+      "Airbnb (Not available)",
+      "Reserved",
+      "Full moon",
+      "Last quarter",
+      "New moon",
+      "First quarter"
+    );
+    $french = array(
+      "Non disponible",
+      "Réservé",
+      "Pleine lune",
+      "Dernier quartier",
+      "Nouvelle lune",
+      "Premier quartier"
+    );
+
+    $result = str_replace($english, $french, $name);
+
+    return $result;
+  }
+
+  public static function createEqI2C($options)
+  {
+    log::add(__CLASS__, 'debug', "Création d'un nouveau équipement.");
+    $eqExist = FALSE;
+
+    $name = $options['name'];
+    $object = $options['roomId'];
+
+    $allCalendar = import2calendar::byLogicalId('ical', 'import2calendar', true);
+    foreach ($allCalendar as $cal) {
+      if ($name === $cal->getname()) {
+        $eqExist = TRUE;
+        $calendarEqId = $cal->getId();
+      }
+    }
+    // s'il n'exista pas, on le créé
+    if (!$eqExist) {
+
+      $import2calendar = new import2calendar();
+      $import2calendar->setName(__($name, __FILE__));
+      $import2calendar->setIsEnable($options['enable']);
+      $import2calendar->setIsVisible(1);
+      $import2calendar->setLogicalId(__('ical', __FILE__));
+      $import2calendar->setEqType_name('import2calendar');
+      $import2calendar->setObject_id($object);
+      $import2calendar->setConfiguration("ical", $options['icalUrl']);
+      $import2calendar->setConfiguration("icalAuto", $options['icalGeneral']);
+      $import2calendar->setConfiguration("icon", $options['icon']);
+      $import2calendar->setConfiguration("color", $options['backgroundColor']);
+      $import2calendar->setConfiguration("text_color", $options['textColor']);
+      $import2calendar->setConfiguration("autorefresh", $options['cron']);
+      $import2calendar->setConfiguration("starts", [$options['startActions']]);
+      $import2calendar->setConfiguration("ends", [$options['endActions']]);
+      $import2calendar->save();
+
+      $eqlogicId = $import2calendar->getId();
+      log::add(__CLASS__, 'debug', "Equipement créé. ID import2calendar = " . $eqlogicId);
+      $calendarEqId = self::parseIcal($eqlogicId);
+      log::add(__CLASS__, 'debug', "Equipement créé. ID calendar = " . $calendarEqId);
+
+      return $calendarEqId;
+    }
   }
 }
-
 class import2calendarCmd extends cmd
 {
   /*     * *************************Attributs****************************** */
