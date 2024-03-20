@@ -461,20 +461,23 @@ class import2calendar extends eqLogic
   private static function convertDate($date, $defaultTime = "000000Z")
   {
     // Si la date ne comporte pas d'heures, on utilise celle par défaut
-    if (
-      strpos($date, 'T') === false
-    ) {
+    if (strpos($date, 'T') === false) {
       $date .= 'T' . $defaultTime;
-    }
+      $date = str_replace('\r', '', $date);
+      $timestamp = strtotime($date);
 
-    $date = str_replace('\r', '', $date);
-    $timestamp = strtotime($date);
-
-    if ($defaultTime === "000000Z") {
-      $formattedDate = gmdate("Y-m-d 00:00:00", $timestamp);
+      if ($defaultTime === "000000Z") {
+        $formattedDate = gmdate("Y-m-d 00:00:00", $timestamp);
+      } else {
+        $formattedDate = gmdate("Y-m-d H:i:s", $timestamp);
+      }
     } else {
+      $date = str_replace('\r', '', $date);
+      $timestamp = strtotime($date);
       $formattedDate = gmdate("Y-m-d H:i:s", $timestamp);
     }
+
+
     return $formattedDate;
   }
 
