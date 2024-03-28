@@ -72,6 +72,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 		<ul class="nav nav-tabs" role="tablist">
 			<li role="presentation"><a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay"><i class="fas fa-arrow-circle-left"></i></a></li>
 			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
+			<li role="presentation"><a href="#colortab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-brush"></i> {{Couleurs des évènements}}</a></li>
 			<li role="presentation"><a href="#starttab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de début}}</a></li>
 			<li role="presentation"><a href="#endtab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag-checkered"></i> {{Action(s) de fin}}</a></li>
 		</ul>
@@ -187,6 +188,33 @@ $eqLogics = eqLogic::byType($plugin->getId());
 					</fieldset>
 				</form>
 			</div><!-- /.tabpanel #eqlogictab-->
+			<div role="tabpanel" class="tab-pane" id="colortab">
+				<div class="alert alert-info" role="alert">
+					{{Attention, ne pas modifier les couleurs depuis le plugin agenda}}.<br>
+				</div>
+				<div class="colorAttr" id="actionTab">
+					<br>
+					<div class="alert alert-success bt_addColor" role="alert" style="cursor:pointer !important;">
+						{{Ajouter une couleur personnalisé}}.
+					</div>
+					<form class="form-horizontal">
+						<fieldset>
+							<div class="form-group">
+								<a class="col-sm-1">{{}}
+								</a>
+								<a class="col-sm-5">{{Nom de l'évènement}}
+								</a>
+								<a class="col-sm-1 text-center">{{Fond}}
+								</a>
+								<a class="col-sm-1 text-center">{{Texte}}
+								</a>
+							</div>
+							<div id="div_color" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">
+							</div>
+						</fieldset>
+					</form>
+				</div>
+			</div><!-- /.tabpanel  #colortab-->
 			<div role="tabpanel" class="tab-pane" id="starttab">
 				<div class="alert alert-info" role="alert">
 					{{Attention, ne pas modifier les actions depuis le plugin agenda}}.<br>
