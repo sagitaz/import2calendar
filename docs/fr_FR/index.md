@@ -41,5 +41,3 @@ Les événements passés ne sont pas importés et seront supprimés au fur et à
 - le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
 - la pièce sera identique
 - Ne jamais modifier l'agenda créé dans le plugin agenda
-
-

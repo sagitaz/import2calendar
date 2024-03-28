@@ -133,14 +133,49 @@ function addAction(_action, _type) {
   }
 }
 
+function addColor(_color) {
+  if (!isset(_color)) {
+    _color = {}
+  }
+  if (!isset(_color.options)) {
+    _color.options = {}
+  }
+  var div = '<div class=color>'
+  div += '<div class="form-group ">'
+  div += '<span class="input-group-btn">'
+  div += '<div class="col-sm-1">'
+  div += '<div class="btn btn-default btn-sm bt_removeColor pull-left" data-type="color"><i class="fas fa-minus-circle"></i></div>'
+  div += '</div>'
+  div += '<div class="col-sm-5">'
+  div += '<div class="col-sm-10"><input type="text" class="expressionAttr form-control roundedLeft" data-l1key="colorName" placeholder="{{Nom}}"></div>'
+  div += '</div>'
+  div += '<div class="col-sm-1 text-center">'
+  div += '<div><input type="color" class="expressionAttr" data-l1key="colorBackground" value="#2980b9"></div>'
+  div += '</div>'
+  div += '<div class="col-sm-1 text-center">'
+  div += '<div"><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
+  div += '</div>'
+  div += '</span>'
+  div += '</div>'
+  div += '</div>'
+
+  $('#div_color').append(div)
+  $('#div_color .color').last().setValues(_color, '.expressionAttr')
+
+}
+
 $("#div_start").sortable({ axis: "y", cursor: "move", items: ".start", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
 $("#div_end").sortable({ axis: "y", cursor: "move", items: ".end", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
+$("#div_color").sortable({ axis: "y", cursor: "move", items: ".color", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
 
 $('.bt_addActionStart').off('click').on('click', function () {
   addAction({}, 'start')
 })
 $('.bt_addActionEnd').off('click').on('click', function () {
   addAction({}, 'end')
+})
+$('.bt_addColor').off('click').on('click', function () {
+  addColor()
 })
 
 $("body").off('click', ".listAction").on('click', ".listAction", function () {
@@ -176,6 +211,11 @@ $("body").off('click', '.bt_removeAction').on('click', '.bt_removeAction', funct
   $(this).closest('.' + type).remove()
 })
 
+$("body").off('click', '.bt_removeColor').on('click', '.bt_removeColor', function () {
+  var type = $(this).attr('data-type')
+  $(this).closest('.' + type).remove()
+})
+
 function saveEqLogic(_eqLogic) {
   if (!isset(_eqLogic.configuration)) {
     _eqLogic.configuration = {}
@@ -193,6 +233,13 @@ function saveEqLogic(_eqLogic) {
     let actionEnd = $(this).getValues('.endAttr')
     actionEnd = $(this).find('.end').getValues('.expressionAttr')
     _eqLogic.configuration.ends.push(actionEnd)
+  })
+
+  _eqLogic.configuration.colors = []
+  $('#div_color').each(function () {
+    let actionColor = $(this).getValues('.colorAttr')
+    actionColor = $(this).find('.color').getValues('.expressionAttr')
+    _eqLogic.configuration.colors.push(actionColor)
   })
   return _eqLogic
 }
@@ -244,4 +291,29 @@ function printEqLogic(_eqLogic) {
       }
     })
   }
+
+  $('#div_color').empty()
+  COLOR_LIST = []
+  if (isset(_eqLogic.configuration) && isset(_eqLogic.configuration.colors)) {
+    colorOptions = []
+    for (var i in _eqLogic.configuration.colors[0]) {
+      addColor(_eqLogic.configuration.colors[0][i])
+    }
+    COLOR_LIST = null
+    jeedom.cmd.displayActionsOption({
+      params: colorOptions,
+      async: false,
+      error: function (error) {
+        $('#div_alert').showAlert({ message: error.message, level: 'danger' })
+      },
+      success: function (data) {
+        for (var i in data) {
+          $('#' + data[i].id).append(data[i].html.html)
+        }
+        jeedomUtils.taAutosize()
+      }
+    })
+  }
+
+
 }
