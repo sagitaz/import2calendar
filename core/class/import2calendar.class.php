@@ -262,7 +262,7 @@ class import2calendar extends eqLogic
       } else {
         $threeDaysAgo = self::threeDaysAgo($until);
 
-        if ($threeDaysAgo == true) {
+        if ($threeDaysAgo) {
           $options[] = [
             "id" => "",
             "eqLogic_id" => $calendarEqId,
@@ -308,9 +308,16 @@ class import2calendar extends eqLogic
           $addEvent = true;
         }
         if (isset($event['start_date'])) {
-        // Vérifier si l'événement est futur ou s'il s'est produit dans les 3 jours précédents avant de l'ajouter à la liste
-          $threeDaysAgo = self::threeDaysAgo($event['start_date']);
-          if ($threeDaysAgo == true || $addEvent == true) {
+          // Vérifier si la date de début est au maximum 3 jours avant aujourd'hui
+          $threeDaysAgoStart = self::threeDaysAgo($event['start_date']);
+
+          // Vérifier si une date de fin est définie pour l'événement
+          if (isset($event['end_date'])) {
+            // Vérifier si la date de fin est au maximum 3 jours avant aujourd'hui
+            $threeDaysAgoEnd = self::threeDaysAgo($event['end_date']);
+          }
+
+          if ($threeDaysAgoStart || $threeDaysAgoEnd || $addEvent) {
             // Vérifier si l'évènement à un nom sinon lui en donner un par default
             if (!isset($event['summary'])) {
               $event['summary'] = "Aucun nom";
