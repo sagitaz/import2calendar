@@ -140,21 +140,19 @@ function addColor(_color) {
   if (!isset(_color.options)) {
     _color.options = {}
   }
-  var div = '<div class=color>'
-  div += '<div class="form-group ">'
+  var div = '<div class="color form-group">'
   div += '<span class="input-group-btn">'
   div += '<div class="col-sm-1">'
   div += '<div class="btn btn-default btn-sm bt_removeColor pull-left" data-type="color"><i class="fas fa-minus-circle"></i></div>'
   div += '</div>'
   div += '<div class="col-sm-5">'
-  div += '<div class="col-sm-10"><input type="text" class="expressionAttr form-control roundedLeft" data-l1key="colorName" placeholder="{{Nom}}"></div>'
+  div += '<div class="col-sm-10 expressionAttr"><input type="text" class="expressionAttr form-control" style="color: var(--txt-color) !important;" data-l1key="colorName" placeholder="{{Nom}}"></div>'
   div += '</div>'
   div += '<div class="col-sm-1 text-center">'
   div += '<div><input type="color" class="expressionAttr" data-l1key="colorBackground" value="#2980b9"></div>'
   div += '</div>'
   div += '<div class="col-sm-1 text-center">'
   div += '<div"><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
-  div += '</div>'
   div += '</span>'
   div += '</div>'
   div += '</div>'
