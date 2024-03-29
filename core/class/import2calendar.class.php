@@ -239,27 +239,53 @@ class import2calendar extends eqLogic
           $until = self::formatCount($event);
         }
       }
+      // Vérifier la valeur de $until
+      if (is_null($until)) {
+        $options[] = [
+          "id" => "",
+          "eqLogic_id" => $calendarEqId,
+          "import2calendar" => $eqlogicId,
+          "cmd_param" => [
+            "eventName" => $event['summary'],
+            "icon" => $icon,
+            "color" => $color["background"],
+            "text_color" => $color["texte"],
+            "start" => $allCmdStart,
+            "end" => $allCmdEnd,
+            "note" => $event['description'],
+          ],
+          "startDate" => $event['start_date'],
+          "endDate" => $event['end_date'],
+          "until" => $until,
+          "repeat" => $repeat
+        ];
+      } else {
+        $threeDaysAgo = self::threeDaysAgo($until);
 
-      $options[] = [
-        "id" => "",
-        "eqLogic_id" => $calendarEqId,
-        "import2calendar" => $eqlogicId,
-        "cmd_param" => [
-          "eventName" => $event['summary'],
-          "icon" => $icon,
-          "color" => $color["background"],
-          "text_color" => $color["texte"],
-          "start" => $allCmdStart,
-          "end" => $allCmdEnd,
-          "note" => $event['description'],
-        ],
-        "startDate" => $event['start_date'],
-        "endDate" => $event['end_date'],
-        "until" => $until,
-        "repeat" => $repeat
-      ];
+        if ($threeDaysAgo == true) {
+          $options[] = [
+            "id" => "",
+            "eqLogic_id" => $calendarEqId,
+            "import2calendar" => $eqlogicId,
+            "cmd_param" => [
+              "eventName" => $event['summary'],
+              "icon" => $icon,
+              "color" => $color["background"],
+              "text_color" => $color["texte"],
+              "start" => $allCmdStart,
+              "end" => $allCmdEnd,
+              "note" => $event['description'],
+            ],
+            "startDate" => $event['start_date'],
+            "endDate" => $event['end_date'],
+            "until" => $until,
+            "repeat" => $repeat
+          ];
+        }
+      }
     }
 
+    log::add(__CLASS__, 'debug', "Event options : " . json_encode($options));
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
@@ -267,7 +293,7 @@ class import2calendar extends eqLogic
 
     return $calendarEqId;
   }
-  function parse_icalendar_file($icalFile)
+  private static function parse_icalendar_file($icalFile)
   {
     $events = [];
     $lines = preg_split('/\r?\n/', $icalFile);
@@ -281,12 +307,10 @@ class import2calendar extends eqLogic
         if (isset($event['rrule'])) {
           $addEvent = true;
         }
-        // Vérifier si l'événement est futur ou s'il s'est produit dans les 3 jours précédents avant de l'ajouter à la liste
         if (isset($event['start_date'])) {
-          $currentTime = time();
-          $startTimestamp = strtotime($event['start_date']);
-          $threeDaysInSeconds = 3 * 24 * 60 * 60;
-          if ($startTimestamp > $currentTime || ($currentTime - $startTimestamp) < $threeDaysInSeconds || $addEvent == true) {
+        // Vérifier si l'événement est futur ou s'il s'est produit dans les 3 jours précédents avant de l'ajouter à la liste
+          $threeDaysAgo = self::threeDaysAgo($event['start_date']);
+          if ($threeDaysAgo == true || $addEvent == true) {
             // Vérifier si l'évènement à un nom sinon lui en donner un par default
             if (!isset($event['summary'])) {
               $event['summary'] = "Aucun nom";
@@ -329,7 +353,20 @@ class import2calendar extends eqLogic
     return $events;
   }
 
-  function parseEventRrule($rrule, $startDate)
+  private static function threeDaysAgo($date)
+  {
+    $numberOfDays = 3;
+    $currentTime = time();
+    $timestamp = strtotime($date);
+    $threeDaysInSeconds = $numberOfDays * 24 * 60 * 60;
+
+    if (($currentTime - $timestamp) < $threeDaysInSeconds) {
+      return true;
+    }
+    return false;
+  }
+
+  private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
 
@@ -351,7 +388,6 @@ class import2calendar extends eqLogic
       if (isset($rrule['BYDAY'])) {
         $daysArray = explode(",", $rrule['BYDAY']);
         $excludeDay = [];
-
         $daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
         foreach ($daysOfWeek as $key => $day) {
@@ -400,13 +436,13 @@ class import2calendar extends eqLogic
     }
     return $repeat;
   }
-  function formatDate($dateString)
+  private static function formatDate($dateString)
   {
     // Extraire le fuseau horaire de la date s'il est présent
     if (strpos($dateString, "TZID=") !== false) {
       $timezone = substr($dateString, strpos($dateString, "=") + 1, strpos($dateString, ":") - strpos($dateString, "=") - 1);
       $dateString = substr($dateString, strpos($dateString, ":") + 1);
-      $dateTime = new DateTime($dateString);
+      $dateTime = new DateTime($dateString, new DateTimeZone($timezone));
     } elseif (strpos($dateString, "VALUE=DATE:") !== false) {
       // Pour les dates sans indication de fuseau horaire
       $dateString = substr($dateString, strlen("VALUE=DATE:"));
@@ -421,7 +457,7 @@ class import2calendar extends eqLogic
     // Formater la date selon le format spécifié
     return $dateTime->format("Y-m-d H:i:s");
   }
-  function formatCount($event)
+  private static function formatCount($event)
   {
     // Date de début de la répétition
     $startDate = new DateTime($event['start_date']);
@@ -447,6 +483,7 @@ class import2calendar extends eqLogic
         $endDate = null;
         break;
     }
+    log::add(__CLASS__, 'debug', "Until count : " . json_encode($endDate));
     return $endDate->format("Y-m-d H:i:s");
   }
 
@@ -679,7 +716,7 @@ class import2calendar extends eqLogic
     $colors = $eqlogic->getConfiguration('colors');
 
     foreach ($colors[0] as $color) {
-      if (strpos($name, $color['colorName']) !== false) {
+      if (strpos(strtolower($name), strtolower($color['colorName'])) !== false) {
         $result["background"] = $color['colorBackground'];
         $result["texte"] = $color['colorText'];
         return $result;
