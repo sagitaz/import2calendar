@@ -476,15 +476,15 @@ class import2calendar extends eqLogic
     switch ($event['rrule']['FREQ']) {
       case 'DAILY':
         $endDate = clone $startDate;
-        $endDate->add(new DateInterval('P' . ($occurrences - 1) . 'D')); // Soustraire 1 car la date de début compte déjà comme une occurrence
+        $endDate->add(new DateInterval('P' . ($occurrences) . 'D'));
         break;
       case 'WEEKLY':
         $endDate = clone $startDate;
-        $endDate->add(new DateInterval('P' . ($occurrences - 1) . 'W')); // Soustraire 1 car la date de début compte déjà comme une occurrence
+        $endDate->add(new DateInterval('P' . ($occurrences) . 'W'));
         break;
       case 'MONTHLY':
         $endDate = clone $startDate;
-        $endDate->add(new DateInterval('P' . ($occurrences - 1) . 'M')); // Soustraire 1 car la date de début compte déjà comme une occurrence
+        $endDate->add(new DateInterval('P' . ($occurrences) . 'M'));
         break;
       default:
         $endDate = null;
