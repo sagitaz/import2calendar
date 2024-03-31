@@ -4,7 +4,6 @@ Le plugin sert à importer un calendrier au format Ical dans le plugin Agenda of
 
 **Attention : aucune modification du ical est possible, on récupère les infos du ical pour les envoyer au plugin Agenda de Jeedom. Ne faite aucune modification sur l'agenda créé dans le plugin Agenda, elles seraient supprimée au prochain update de votre ical.**
 
-
 La configuration de celui-ci est très simple.
 
 # Créer un équipement
@@ -49,7 +48,6 @@ Les règles défini dans votre ical sont convertit au format Jeedom Agenda. Je n
 # Attention
 - le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
 - la pièce sera identique
-- Ne jamais modifier l'agenda créé dans le plugin agenda
 
 # Support
 - Community Jeedom
