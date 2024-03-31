@@ -87,6 +87,12 @@ function addCmdToTable(_cmd) {
 
 var actionOptions = null
 
+document.getElementById('bt_chooseIcon').addEventListener('click', function () {
+  jeedomUtils.chooseIcon(function (_icon) {
+    document.querySelector('.eqLogicAttr[data-l1key=configuration][data-l2key=icon]').innerHTML = _icon
+  })
+})
+
 function addAction(_action, _type) {
   if (!isset(_action)) {
     _action = {}
@@ -114,8 +120,9 @@ function addAction(_action, _type) {
   div += '</div>'
   var actionOption_id = jeedomUtils.uniqId()
   div += '<div class="col-sm-6 actionOptions" id="' + actionOption_id + '"></div>'
-  document.getElementById('div_' + _type).insertAdjacentHTML('beforeend', div)
-  document.querySelectorAll('#div_' + _type + ' .' + _type + '').last().setJeeValues(_action, '.expressionAttr')
+
+  $('#div_' + _type).append(div)
+  $('#div_' + _type + ' .' + _type + '').last().setValues(_action, '.expressionAttr')
 
   if (is_array(actionOptions)) {
     actionOptions.push({
@@ -126,11 +133,47 @@ function addAction(_action, _type) {
   }
 }
 
+function addColor(_color) {
+  if (!isset(_color)) {
+    _color = {}
+  }
+  if (!isset(_color.options)) {
+    _color.options = {}
+  }
+  var div = '<div class="color form-group">'
+  div += '<span class="input-group-btn">'
+  div += '<div class="col-sm-1">'
+  div += '<div class="btn btn-default btn-sm bt_removeColor pull-left" data-type="color"><i class="fas fa-minus-circle"></i></div>'
+  div += '</div>'
+  div += '<div class="col-sm-5">'
+  div += '<div class="col-sm-10 expressionAttr"><input type="text" class="expressionAttr form-control" style="color: var(--txt-color) !important;" data-l1key="colorName" placeholder="{{Nom}}"></div>'
+  div += '</div>'
+  div += '<div class="col-sm-1 text-center">'
+  div += '<div><input type="color" class="expressionAttr" data-l1key="colorBackground" value="#2980b9"></div>'
+  div += '</div>'
+  div += '<div class="col-sm-1 text-center">'
+  div += '<div"><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
+  div += '</span>'
+  div += '</div>'
+  div += '</div>'
+
+  $('#div_color').append(div)
+  $('#div_color .color').last().setValues(_color, '.expressionAttr')
+
+}
+
+$("#div_start").sortable({ axis: "y", cursor: "move", items: ".start", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
+$("#div_end").sortable({ axis: "y", cursor: "move", items: ".end", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
+$("#div_color").sortable({ axis: "y", cursor: "move", items: ".color", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true })
+
 $('.bt_addActionStart').off('click').on('click', function () {
   addAction({}, 'start')
 })
 $('.bt_addActionEnd').off('click').on('click', function () {
   addAction({}, 'end')
+})
+$('.bt_addColor').off('click').on('click', function () {
+  addColor()
 })
 
 $("body").off('click', ".listAction").on('click', ".listAction", function () {
@@ -166,23 +209,35 @@ $("body").off('click', '.bt_removeAction').on('click', '.bt_removeAction', funct
   $(this).closest('.' + type).remove()
 })
 
+$("body").off('click', '.bt_removeColor').on('click', '.bt_removeColor', function () {
+  var type = $(this).attr('data-type')
+  $(this).closest('.' + type).remove()
+})
+
 function saveEqLogic(_eqLogic) {
   if (!isset(_eqLogic.configuration)) {
     _eqLogic.configuration = {}
   }
 
   _eqLogic.configuration.starts = []
-  document.querySelectorAll('.startAttr').forEach(_action => {
-    let actionStart = _action.getJeeValues('.startAttr')
-    actionStart = _action.querySelectorAll('#div_start .start').getJeeValues('.expressionAttr')
+  $('#div_start').each(function () {
+    let actionStart = $(this).getValues('.startAttr')
+    actionStart = $(this).find('.start').getValues('.expressionAttr')
     _eqLogic.configuration.starts.push(actionStart)
   })
 
   _eqLogic.configuration.ends = []
-  document.querySelectorAll('.endAttr').forEach(_action => {
-    let actionEnd = _action.getJeeValues('.endAttr')
-    actionEnd = _action.querySelectorAll('#div_end .end').getJeeValues('.expressionAttr')
+  $('#div_end').each(function () {
+    let actionEnd = $(this).getValues('.endAttr')
+    actionEnd = $(this).find('.end').getValues('.expressionAttr')
     _eqLogic.configuration.ends.push(actionEnd)
+  })
+
+  _eqLogic.configuration.colors = []
+  $('#div_color').each(function () {
+    let actionColor = $(this).getValues('.colorAttr')
+    actionColor = $(this).find('.color').getValues('.expressionAttr')
+    _eqLogic.configuration.colors.push(actionColor)
   })
   return _eqLogic
 }
@@ -234,4 +289,29 @@ function printEqLogic(_eqLogic) {
       }
     })
   }
+
+  $('#div_color').empty()
+  COLOR_LIST = []
+  if (isset(_eqLogic.configuration) && isset(_eqLogic.configuration.colors)) {
+    colorOptions = []
+    for (var i in _eqLogic.configuration.colors[0]) {
+      addColor(_eqLogic.configuration.colors[0][i])
+    }
+    COLOR_LIST = null
+    jeedom.cmd.displayActionsOption({
+      params: colorOptions,
+      async: false,
+      error: function (error) {
+        $('#div_alert').showAlert({ message: error.message, level: 'danger' })
+      },
+      success: function (data) {
+        for (var i in data) {
+          $('#' + data[i].id).append(data[i].html.html)
+        }
+        jeedomUtils.taAutosize()
+      }
+    })
+  }
+
+
 }
