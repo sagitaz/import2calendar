@@ -192,14 +192,14 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<div class="alert alert-info" role="alert">
 					{{Attention, ne pas modifier les couleurs depuis le plugin agenda}}.<br>
 				</div>
-				<div class="colorAttr" id="actionTab">
+				<div class="colorAttr form-group" id="actionTab">
 					<br>
 					<div class="alert alert-success bt_addColor" role="alert" style="cursor:pointer !important;">
 						{{Ajouter une couleur personnalisé}}.
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
-							<div class="form-group">
+							<div class="form-control">
 								<a class="col-sm-1">{{}}
 								</a>
 								<a class="col-sm-5">{{Nom de l'évènement}}
@@ -208,9 +208,9 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								</a>
 								<a class="col-sm-1 text-center">{{Texte}}
 								</a>
-							</div>
+								</div>
 							<div id="div_color" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">
-							</div>
+								</div>
 						</fieldset>
 					</form>
 				</div>
@@ -219,14 +219,14 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<div class="alert alert-info" role="alert">
 					{{Attention, ne pas modifier les actions depuis le plugin agenda}}.<br>
 				</div>
-				<div class="startAttr" id="actionTab">
+				<div class="startAttr form-group" id="actionTab">
 					<br>
 					<div class="alert alert-success bt_addActionStart" role="alert" style="cursor:pointer !important;">
 						{{Ajouter une action de début}}.
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
-							<div id="div_start" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">
+							<div id="div_start" class="col-xs-12" style="padding:10px;margin-bottom:15px;">
 							</div>
 						</fieldset>
 					</form>
@@ -243,7 +243,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
-							<div id="div_end" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">
+							<div id="div_end" class="col-xs-12" style="padding:10px;margin-bottom:15px;">
 							</div>
 						</fieldset>
 					</form>

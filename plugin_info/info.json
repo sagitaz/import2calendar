@@ -1,7 +1,7 @@
 {
 	"id": "import2calendar",
-	"name": "importToCalendar",
-	"pluginVersion": "0.3",
+	"name": "ical2Calendar",
+	"pluginVersion": "0.5",
 	"description": {
 		"fr_FR": "import2calendar permet d'importer un calendrier ical dans le plugin agenda"
 	},
