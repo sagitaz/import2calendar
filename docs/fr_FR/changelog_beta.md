@@ -1,6 +1,6 @@
 # Changelog plugin import2calendar - beta
 
-# 29/03/2024 Beta
+# 29/03/2024 Beta 0.5
 - correction couleur texte input en dark + petite modif visuel
 - couleur personnalisé, ne pas tenir compte des majuscules et minuscules
 - événements avec occurrence, si le dernier évènement de la série est plus vieux de 3 jours alors la série n'est pas affiché.
