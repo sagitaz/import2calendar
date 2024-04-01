@@ -13,6 +13,11 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
+*
+* @package   sagitaz/import2calendar
+* @author    sagitaz
+* @copyright 2024 sagitaz
+* @create    2024-03-20
 */
 
 /* * ***************************Includes********************************* */
