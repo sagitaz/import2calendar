@@ -14,10 +14,16 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
+*
+* @package   sagitaz/import2calendar
+* @author    sagitaz
+* @copyright 2024 sagitaz
+* @create    2024-03-20
 */
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
 // Fonction exécutée automatiquement avant la mise à jour du plugin
-function import2calendar_pre_update() {
+function import2calendar_pre_update()
+{
 }

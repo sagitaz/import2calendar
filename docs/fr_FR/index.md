@@ -2,7 +2,7 @@
 
 Le plugin sert à importer un calendrier au format Ical dans le plugin Agenda officiel Jeedom (calendar).
 
-**Attention : aucune modification du ical est possible, on récupère les infos du ical pour les envoyer au plugin Agenda de Jeedom. Ne faite aucune modification sur l'agenda créé dans le plugin Agenda, elles seraient supprimée au prochain update de votre ical.**
+**Attention : aucune modification du ical n'est possible, on récupère les infos du ical pour les envoyer au plugin Agenda de Jeedom. Ne faite aucune modification sur l'agenda créé dans le plugin Agenda, elles seraient supprimées au prochain update de votre ical.**
 
 La configuration de celui-ci est très simple.
 
