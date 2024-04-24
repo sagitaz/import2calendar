@@ -98,6 +98,18 @@ document.getElementById('bt_chooseIcon').addEventListener('click', function () {
   })
 })
 
+document.getElementById('bt_documentation').addEventListener('click', function () {
+  window.open('https://sagitaz.github.io/import2calendar/fr_FR/', '_blank');
+});
+
+document.getElementById('bt_changelog').addEventListener('click', function () {
+  window.open('https://sagitaz.github.io/import2calendar/fr_FR/changelog', '_blank');
+});
+
+document.getElementById('bt_discord').addEventListener('click', function () {
+  window.open('https://discord.gg/PGAPDHhdtC', '_blank');
+});
+
 function addAction(_action, _type) {
   if (!isset(_action)) {
     _action = {}
