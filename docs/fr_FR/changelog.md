@@ -4,6 +4,9 @@
 >
 >S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 25/04/2024 Stable 0.7
+- Essaie pour remonter sur doc Jeedom
+
 # 01/04/2024 Beta 0.6
 - Ajout bouton documentation et changelog
 - Ajout bouton vers discord (sur le discord JeeMate, 1 salon dédié)
