@@ -44,6 +44,21 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<br>
 				<span>{{Configuration}}</span>
 			</div>
+			<div class="cursor eqLogicAction" id="bt_documentation">
+				<i class="fas fa-book"></i>
+				<br>
+				<span>{{Documentation}}</span>
+			</div>
+			<div class="cursor eqLogicAction" id="bt_changelog">
+				<i class="fas fa-clipboard-list"></i>
+				<br>
+				<span>{{Changelog}}</span>
+			</div>
+			<div class="cursor eqLogicAction info" id="bt_discord" title="{{Posez vos questions dans le salon dédié, support officiel}}.">
+				<i class="fab fa-discord"></i>
+				<br>
+				<span>{{aide Discord}}</span>
+			</div>
 		</div>
 		<legend><i class="fas fa-table"></i> {{Mes import2calendars}}</legend>
 		<?php
