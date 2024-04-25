@@ -244,6 +244,8 @@ class import2calendar extends eqLogic
           $until = self::formatCount($event);
         }
       }
+      // Nettoyer le nom de l'événement
+      $eventName = self::emojiClean($event['summary']);
       // Vérifier la valeur de $until
       if (is_null($until)) {
         $options[] = [
@@ -251,7 +253,7 @@ class import2calendar extends eqLogic
           "eqLogic_id" => $calendarEqId,
           "import2calendar" => $eqlogicId,
           "cmd_param" => [
-            "eventName" => $event['summary'],
+            "eventName" => $eventName,
             "icon" => $icon,
             "color" => $color["background"],
             "text_color" => $color["texte"],
@@ -273,7 +275,7 @@ class import2calendar extends eqLogic
             "eqLogic_id" => $calendarEqId,
             "import2calendar" => $eqlogicId,
             "cmd_param" => [
-              "eventName" => $event['summary'],
+              "eventName" => $eventName,
               "icon" => $icon,
               "color" => $color["background"],
               "text_color" => $color["texte"],
@@ -719,7 +721,21 @@ class import2calendar extends eqLogic
 
     return $result;
   }
+  private static function emojiClean($string) {
+    // Convertir les bytes UTF-8 en caractères Unicode
+    $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+  // Expression régulière pour identifier les emojis
+    $regex_emojis = '/['
+    . '\x{1F600}-\x{1F64F}' // émoticônes visages
+    . '\x{1F300}-\x{1F5FF}' // symboles & pictogrammes
+    . '\x{1F680}-\x{1F6FF}' // symboles de transport & cartes
+    . '\x{1F1E0}-\x{1F1FF}' // drapeaux (iOS)
+    . ']/u';
+    // Suppression des emojis
+    $texte_sans_emojis = preg_replace($regex_emojis, '', $string);
 
+    return $texte_sans_emojis;
+  }
   private static function getColors($eqlogicId, $name)
   {
     $eqlogic = eqLogic::byId($eqlogicId);
