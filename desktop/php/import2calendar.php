@@ -109,7 +109,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
 			<li role="presentation"><a href="#colortab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-brush"></i> {{Couleurs des évènements}}</a></li>
 			<li role="presentation"><a href="#starttab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de début}}</a></li>
-			<li role="presentation"><a href="#endtab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag-checkered"></i> {{Action(s) de fin}}</a></li>
+			<li role="presentation"><a href="#endtab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de fin}}</a></li>
+
 		</ul>
 		<div class="tab-content">
 			<!-- Onglet de configuration de l'équipement -->
@@ -284,11 +285,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
 					</form>
 				</div>
 			</div><!-- /.tabpanel  #endtab-->
-		</div><!-- /.tab-content -->
-	</div><!-- /.eqLogic -->
-</div><!-- /.row row-overflow -->
+		</div><!-- /.eqLogic -->
+	</div><!-- /.row row-overflow -->
 
-<?php
-include_file('desktop', 'import2calendar', 'js', 'import2calendar');
-include_file('core', 'plugin.template', 'js');
-?>
+	<?php
+	include_file('desktop', 'import2calendar', 'js', 'import2calendar');
+	include_file('core', 'plugin.template', 'js');
+	?>
