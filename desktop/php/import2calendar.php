@@ -244,6 +244,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								</a>
 								<a class="col-sm-1 text-center">{{Texte}}
 								</a>
+								<a class="col-sm-2 text-center">{{Début}}
+								</a>
+								<a class="col-sm-2 text-center">{{Fin}}
+								</a>
 							</div>
 							<div id="div_color" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">
 							</div>

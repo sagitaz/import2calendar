@@ -247,10 +247,12 @@ class import2calendar extends eqLogic
         }
       }
 
-      log::add(__CLASS__, 'warning', "Event options : " . json_encode($event));
+      log::add(__CLASS__, 'debug', "Event options : " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
       $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
       $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
+      $startDate = self::changeDate($eqlogicId, $event['summary'], $event['start_date'], "startEvent");
+      $endDate = self::changeDate($eqlogicId, $event['summary'], $event['end_date'], "endEvent");
       $repeat = null;
       $until = null;
       if (!is_null($event['rrule'])) {
@@ -281,8 +283,8 @@ class import2calendar extends eqLogic
             "note" => $note['htmlFormat'],
             "location" => $event['location'],
           ],
-          "startDate" => $event['start_date'],
-          "endDate" => $event['end_date'],
+          "startDate" => $startDate,
+          "endDate" => $endDate,
           "until" => $until,
           "repeat" => $repeat
         ];
@@ -304,8 +306,8 @@ class import2calendar extends eqLogic
               "note" => $note['htmlFormat'],
               "location" => $event['location'],
             ],
-            "startDate" => $event['start_date'],
-            "endDate" => $event['end_date'],
+            "startDate" => $startDate,
+            "endDate" => $endDate,
             "until" => $until,
             "repeat" => $repeat
           ];
@@ -790,27 +792,39 @@ class import2calendar extends eqLogic
       }
     }
 
-    log::add(__CLASS__, 'error', $name . " ALL CMDS : " . json_encode($allNames));
     foreach ($actions as $action) {
       // Si cmdEventName est vide ou égale à all, on ajoute l'action
       if (($action['cmdEventName'] === "") || (strtolower($action['cmdEventName']) === "all")) {
         $result[] = $action;
-        log::add(__CLASS__, 'warning', $name . " CMD : " . json_encode($action));
       }
       // Si cmdEventName est égale à la chaine de caractères others et si name n'est pas présent dans le tableau allNames, on ajoute l'action
       if ((strtolower($action['cmdEventName']) === "others") && (!in_array(strtolower($name), $allNames))) {
         $result[] = $action;
-        log::add(__CLASS__, 'warning', $name . " CMD : " . json_encode($action));
       }
       // Si cmdEventName est égale à la name on ajoute l'action
       if (strpos(strtolower($name), strtolower($action['cmdEventName'])) !== false) {
         $result[] = $action;
-        log::add(__CLASS__, 'warning', $name . " CMD : " . json_encode($action));
       }
     }
     return $result;
   }
 
+  private static function changeDate($eqlogicId, $name, $date, $type)
+  {
+    $eqlogic = eqLogic::byId($eqlogicId);
+    $colors = $eqlogic->getConfiguration('colors');
+
+    foreach ($colors[0] as $color) {
+      if (strpos(strtolower($name), strtolower($color['colorName'])) !== false) {
+        if ($type === "startEvent") {
+          $date = date("Y-m-d H:i:s", strtotime($date) - ($color['startEvent'] * 3600));
+        } elseif ($type === "endEvent") {
+          $date = date("Y-m-d H:i:s", strtotime($date) + ($color['endEvent'] * 3600));
+        }
+      }
+    }
+    return $date;
+  }
   private static function convertTimezone($timezone)
   {
     $timezones = array(
