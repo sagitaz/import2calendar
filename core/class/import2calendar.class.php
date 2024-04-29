@@ -781,10 +781,31 @@ class import2calendar extends eqLogic
   {
     $eqlogic = eqLogic::byId($eqlogicId);
     $actions = $eqlogic->getConfiguration($type)[0];
-
+    $allNames = [];
+    $result = [];
     foreach ($actions as $action) {
-      if ((strpos(strtolower($name), strtolower($action['cmdEventName'])) !== false) || ($action['cmdEventName'] === "")) {
+      // si cmdEventName n'est pas all ou others on l'ajoute dans le tableau allNames
+      if (($action['cmdEventName'] !== "all") && ($action['cmdEventName'] !== "others")) {
+        $allNames[] = strtolower($action['cmdEventName']);
+      }
+    }
+
+    log::add(__CLASS__, 'error', $name . " ALL CMDS : " . json_encode($allNames));
+    foreach ($actions as $action) {
+      // Si cmdEventName est vide ou égale à all, on ajoute l'action
+      if (($action['cmdEventName'] === "") || (strtolower($action['cmdEventName']) === "all")) {
         $result[] = $action;
+        log::add(__CLASS__, 'warning', $name . " CMD : " . json_encode($action));
+      }
+      // Si cmdEventName est égale à la chaine de caractères others et si name n'est pas présent dans le tableau allNames, on ajoute l'action
+      if ((strtolower($action['cmdEventName']) === "others") && (!in_array(strtolower($name), $allNames))) {
+        $result[] = $action;
+        log::add(__CLASS__, 'warning', $name . " CMD : " . json_encode($action));
+      }
+      // Si cmdEventName est égale à la name on ajoute l'action
+      if (strpos(strtolower($name), strtolower($action['cmdEventName'])) !== false) {
+        $result[] = $action;
+        log::add(__CLASS__, 'warning', $name . " CMD : " . json_encode($action));
       }
     }
     return $result;

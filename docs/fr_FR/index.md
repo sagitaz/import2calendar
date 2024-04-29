@@ -15,16 +15,26 @@ Commencer par ajouter un équipement et choisir son nom
 
 ### Paramètres d'affichage
 - **icône** : l'icône qui sera appliquée à chaque event
-- **couleur de fond** : couleur de fond pour chaque event
-- **couleur de texte** : couleur de texte pour chaque event
+- **couleur de fond** : couleur de fond par défault pour chaque event
+- **couleur de texte** : couleur de texte par défault pour chaque event
 
 ### Couleurs des évènements
 Ici vous pouvez choisir de personnaliser la couleur pour certain évènement de votre ical.
+Indiquer juste le nom de l'évènement pour lui affecter une couleur personnalisée.
+
 ### Actions de début et de fin
 Pour tous les événements de votre calendrier seront ajoutées les actions définies ici.
-Vous pouvez réorganiser les actions en glisser/déposer
+Vous pouvez réorganiser les actions en glisser/déposer.
 
-**Il n'est pas possible de définir des actions différentes pour chaque événement.**
+
+![Configurations des actions](../images/import2calendar-config-actions.png)
+
+Vous pouvez indiquer dans la case **nom**, l'évènement pour lequel l'action est prévu.
+
+**1** et **2** - Laisser vide ou mettre **all** pour que l'action soit ajoutée à tous les évènement de l'agenda.
+**4** - Mettre **others** pour que l'action soit ajoutée à tous les évènement de l'agenda sauf ceux pour lesquels une action personnalisée est prévu.
+**3** et **5** - Mettre le **nom de l'évènement** pour que l'action ne soit ajoutée que pour eux.
+
 
 Vous pouvez maintenant cliquer sur **sauvegarder**.
 L'agenda correspondant sera créé dans le plugin agenda.
@@ -46,10 +56,12 @@ Les événements passés de plus de 3 jours ne sont pas importés et seront supp
 # Occurrences
 Les règles défini dans votre ical sont convertit au format Jeedom Agenda. Je n'ai pas tester toutes les possibilités, si jamais certaines ne passent pas, merci de joindre la ligne du log import2calendar : **event options** (mettre vos log en warning ou debug).
 
+# JeeMate
+- la description et le lieu seront visible dans l'agenda importé dans JeeMate.
 # Attention
 - le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
 - la pièce sera identique
-- Ne jamais modifier l'agenda créé dans le plugin agenda
+- **Ne jamais modifier l'agenda créé dans le plugin agenda**
 
 # Support
 - Community Jeedom
