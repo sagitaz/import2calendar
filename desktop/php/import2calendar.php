@@ -107,7 +107,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 		<ul class="nav nav-tabs" role="tablist">
 			<li role="presentation"><a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay"><i class="fas fa-arrow-circle-left"></i></a></li>
 			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
-			<li role="presentation"><a href="#colortab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-brush"></i> {{Couleurs des évènements}}</a></li>
+			<li role="presentation"><a href="#colortab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-brush"></i> {{Personnalisation des évènements}}</a></li>
 			<li role="presentation"><a href="#starttab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de début}}</a></li>
 			<li role="presentation"><a href="#endtab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de fin}}</a></li>
 

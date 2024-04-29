@@ -148,20 +148,6 @@ function addAction(_action, _type) {
   }
 }
 
-function addMessage(_type) {
-  var div = '<div class="' + _type + '">'
-  div += '<div class="form-group ">'
-  div += '<div class="col-sm-12">'
-  div += '<a class="btn btn-default btn-sm bt_removeAction" data-type="' + _type + '"><i class="fas fa-minus-circle"></i></a>'
-  div += '<div class="col-sm-10">'
-  div += '<input class="expressionAttr form-control cmdAction input-sm" data-l1key="cmdEventName" data-type="' + _type + '" />'
-  div += '</div>'
-  div += '</div>'
-
-  $('#div_' + _type).append(div)
-
-}
-
 function addColor(_color) {
   if (!isset(_color)) {
     _color = {}
@@ -175,10 +161,6 @@ function addColor(_color) {
   div += '<div class="btn btn-default btn-sm bt_removeColor pull-left" data-type="color"><i class="fas fa-minus-circle"></i></div>'
   div += '</div>'
   div += '<div class="col-sm-5">'
-  div += '<div class="col-sm-1" >'
-  div += '<span class="expressionAttr" data-l1key="icon"></span>'
-  div += '<a class="btn btn-default btn-sm bt_chooseIcon2" data-type="color"><i class="fas fa-icons"></i></a>'
-  div += '</div >'
   div += '<div class="col-sm-10 expressionAttr"><input type="text" class="expressionAttr form-control" style="color: var(--txt-color) !important;" data-l1key="colorName" placeholder="{{Nom}}"></div>'
   div += '</div>'
   div += '<div class="col-sm-1 text-center">'
@@ -227,16 +209,8 @@ $('.bt_addActionStart').off('click').on('click', function () {
 $('.bt_addActionEnd').off('click').on('click', function () {
   addAction({}, 'end')
 })
-$('.bt_addMessageEnd').off('click').on('click', function () {
-  addMessage('end')
-})
 $('.bt_addColor').off('click').on('click', function () {
   addColor()
-})
-$('.bt_chooseIcon2').off('click').on('click', function () {
-  jeedomUtils.chooseIcon(function (_icon) {
-    document.querySelector('.expressionAttr[data-l1key=icon]').innerHTML = _icon
-  })
 })
 
 $("body").off('click', ".listAction").on('click', ".listAction", function () {

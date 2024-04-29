@@ -17,9 +17,14 @@ Commencer par ajouter un équipement et choisir son nom
 - **couleur de fond** : couleur de fond par défault pour chaque event
 - **couleur de texte** : couleur de texte par défault pour chaque event
 
-### Couleurs des évènements
-Ici vous pouvez choisir de personnaliser la couleur pour certain évènement de votre ical.
-Indiquer juste le nom de l'évènement pour lui affecter une couleur personnalisée.
+### Personnalisation des évènements
+Ici vous pouvez choisir de personnaliser certain évènement de votre ical.
+
+- Couleur du fond et couleur du texte.
+
+Ici par default, rien n'est modifié, ces options permettent de modifier l'heure de début et de fin pour par exemple anticipé les actions programmées.
+- Heure de début : l'évènement verra son heure de début commencer X h avant.
+- Heure de fin : l'évènement verra son heure de fin finir X h après.
 
 ### Actions de début et de fin
 Pour tous les événements de votre calendrier seront ajoutées les actions définies ici.
