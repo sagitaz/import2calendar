@@ -107,7 +107,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 		<ul class="nav nav-tabs" role="tablist">
 			<li role="presentation"><a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay"><i class="fas fa-arrow-circle-left"></i></a></li>
 			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
-			<li role="presentation"><a href="#colortab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-brush"></i> {{Couleurs des évènements}}</a></li>
+			<li role="presentation"><a href="#colortab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-brush"></i> {{Personnalisation des évènements}}</a></li>
 			<li role="presentation"><a href="#starttab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de début}}</a></li>
 			<li role="presentation"><a href="#endtab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-flag"></i> {{Action(s) de fin}}</a></li>
 
@@ -243,6 +243,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								<a class="col-sm-1 text-center">{{Fond}}
 								</a>
 								<a class="col-sm-1 text-center">{{Texte}}
+								</a>
+								<a class="col-sm-2 text-center">{{Début}}
+								</a>
+								<a class="col-sm-2 text-center">{{Fin}}
 								</a>
 							</div>
 							<div id="div_color" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">

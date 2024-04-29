@@ -9,6 +9,7 @@
 - Conversion des timezones au format Windows (style Romance Standard Time)
 - Ajoût d'options pour les actions (all, others, évènement)
 - Prise en compte du lieu (visible dans JeeMate v3)
+- Possibilité de configurer un début et fin modifié.
 
 # 25/04/2024 Beta 0.8.0
 - Suppression des émojis dans le nom de l'évènement (erreur mySQL 22007)

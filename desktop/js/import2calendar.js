@@ -41,11 +41,6 @@ function addCmdToTable(_cmd) {
   tr += '<span class="cmdAttr" data-l1key="id"></span>'
   tr += '</td>'
   tr += '<td>'
-  tr += '<div class="input-group">'
-  tr += '<input class="cmdAttr form-control input-sm roundedLeft" data-l1key="name" placeholder="{{Nom de la commande}}">'
-  tr += '<span class="input-group-btn"><a class="cmdAction btn btn-sm btn-default" data-l1key="chooseIcon" title="{{Choisir une icône}}"><i class="fas fa-icons"></i></a></span>'
-  tr += '<span class="cmdAttr input-group-addon roundedRight" data-l1key="display" data-l2key="icon" style="font-size:19px;padding:0 5px 0 0!important;"></span>'
-  tr += '</div>'
   tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display:none;margin-top:5px;" title="{{Commande info liée}}">'
   tr += '<option value="">{{Aucune}}</option>'
   tr += '</select>'
@@ -153,20 +148,6 @@ function addAction(_action, _type) {
   }
 }
 
-function addMessage(_type) {
-  var div = '<div class="' + _type + '">'
-  div += '<div class="form-group ">'
-  div += '<div class="col-sm-12">'
-  div += '<a class="btn btn-default btn-sm bt_removeAction" data-type="' + _type + '"><i class="fas fa-minus-circle"></i></a>'
-  div += '<div class="col-sm-10">'
-  div += '<input class="expressionAttr form-control cmdAction input-sm" data-l1key="cmdEventName" data-type="' + _type + '" />'
-  div += '</div>'
-  div += '</div>'
-
-  $('#div_' + _type).append(div)
-
-}
-
 function addColor(_color) {
   if (!isset(_color)) {
     _color = {}
@@ -186,7 +167,29 @@ function addColor(_color) {
   div += '<div><input type="color" class="expressionAttr" data-l1key="colorBackground" value="#2980b9"></div>'
   div += '</div>'
   div += '<div class="col-sm-1 text-center">'
-  div += '<div"><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
+  div += '<div><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
+  div += '</div>'
+  div += '<div class="col-sm-2">'
+  div += '<div><select class="expressionAttr form-control col-sm-10" data-l1key="startEvent">'
+  div += '<option value="0" selected>{{A l\'heure}}</option>'
+  div += '<option value="1">{{1 heure avant}}</option>'
+  div += '<option value="2">{{2 heures avant}}</option>'
+  div += '<option value="3">{{3 heures avant}}</option>'
+  div += '<option value="4">{{4 heures avant}}</option>'
+  div += '<option value="5">{{5 heures avant}}</option>'
+  div += '<option value="6">{{6 heures avant}}</option>'
+  div += '</select></div>'
+  div += '</div>'
+  div += '<div class="col-sm-2">'
+  div += '<div><select class="expressionAttr form-control col-sm-10" data-l1key="endEvent">'
+  div += '<option value="0" selected>{{A l\'heure}}</option>'
+  div += '<option value="1">{{1 heure après}}</option>'
+  div += '<option value="2">{{2 heures après}}</option>'
+  div += '<option value="3">{{3 heures après}}</option>'
+  div += '<option value="4">{{4 heures après}}</option>'
+  div += '<option value="5">{{5 heures après}}</option>'
+  div += '<option value="6">{{6 heures après}}</option>'
+  div += '</select></div>'
   div += '</div>'
   div += '</span>'
   div += '</div>'
@@ -205,9 +208,6 @@ $('.bt_addActionStart').off('click').on('click', function () {
 })
 $('.bt_addActionEnd').off('click').on('click', function () {
   addAction({}, 'end')
-})
-$('.bt_addMessageEnd').off('click').on('click', function () {
-  addMessage('end')
 })
 $('.bt_addColor').off('click').on('click', function () {
   addColor()
