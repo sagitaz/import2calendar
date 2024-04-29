@@ -174,6 +174,8 @@ class import2calendar extends eqLogic
   // Fonction exécutée automatiquement après la suppression de l'équipement
   public function postRemove()
   {
+    message::add(__CLASS__, __("Vous venez de supprimer l'équipement ical :b:" . $this->getName() . ":/b: ,l'agenda associé n'est pas supprimé dans le plugin agenda(calendar).", __FILE__), null, null);
+    log::add(__CLASS__, 'warning', "Vous venez de supprimer l'équipement ical :b:" . $this->getName() . ":/b: ,l'agenda associé n'est pas supprimé dans le plugin agenda(calendar).");
   }
 
   /*
@@ -200,12 +202,26 @@ class import2calendar extends eqLogic
     $calendarEqId = self::calendarCreate($eqlogic);
     // récupèration des valeurs communes à tous les évènement    
     $icon = $eqlogic->getConfiguration('icon');
-    $allCmdStart = $eqlogic->getConfiguration('starts')[0];
-    $allCmdEnd = $eqlogic->getConfiguration('ends')[0];
     // récupèration du fichier ical
     $icalConfig = $eqlogic->getConfiguration('ical');
     $file = ($icalConfig != "") ? $icalConfig : $eqlogic->getConfiguration('icalAuto');
-    $icalData = file_get_contents($file);
+    // Open file in read-only mode and place file pointer at the beginning 
+    $fh = fopen($file, 'r');
+    // Check if fopen() was successful
+    if ($fh === false) {
+      log::add(__CLASS__, 'error', 'Impossible d\'ouvrir le fichier ical => ' . $file);
+      return null;
+    }
+    // Read the whole file into a string
+    $icalData = stream_get_contents($fh);
+    // Check if stream_get_contents() was successful
+    if ($icalData === false) {
+      log::add(__CLASS__, 'error', 'Impossible de parser le fichier ical => ' . $file);
+      return null;
+    }
+
+    // Close the file handle
+    fclose($fh);
 
     log::add(__CLASS__, 'debug', '01 => ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
@@ -233,6 +249,8 @@ class import2calendar extends eqLogic
 
       log::add(__CLASS__, 'warning', "Event options : " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
+      $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
+      $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
       $repeat = null;
       $until = null;
       if (!is_null($event['rrule'])) {
@@ -244,8 +262,9 @@ class import2calendar extends eqLogic
           $until = self::formatCount($event);
         }
       }
-      // Nettoyer le nom de l'événement
+      // Nettoyer le nom de l'événement && de la description
       $eventName = self::emojiClean($event['summary']);
+      $note = self::emojiClean($event['description']);
       // Vérifier la valeur de $until
       if (is_null($until)) {
         $options[] = [
@@ -253,13 +272,14 @@ class import2calendar extends eqLogic
           "eqLogic_id" => $calendarEqId,
           "import2calendar" => $eqlogicId,
           "cmd_param" => [
-            "eventName" => $eventName,
+            "eventName" => $eventName['htmlFormat'],
             "icon" => $icon,
             "color" => $color["background"],
             "text_color" => $color["texte"],
             "start" => $allCmdStart,
             "end" => $allCmdEnd,
-            "note" => $event['description'],
+            "note" => $note['htmlFormat'],
+            "location" => $event['location'],
           ],
           "startDate" => $event['start_date'],
           "endDate" => $event['end_date'],
@@ -275,13 +295,14 @@ class import2calendar extends eqLogic
             "eqLogic_id" => $calendarEqId,
             "import2calendar" => $eqlogicId,
             "cmd_param" => [
-              "eventName" => $eventName,
+              "eventName" => $eventName['htmlFormat'],
               "icon" => $icon,
               "color" => $color["background"],
               "text_color" => $color["texte"],
               "start" => $allCmdStart,
               "end" => $allCmdEnd,
-              "note" => $event['description'],
+              "note" => $note['htmlFormat'],
+              "location" => $event['location'],
             ],
             "startDate" => $event['start_date'],
             "endDate" => $event['end_date'],
@@ -306,6 +327,7 @@ class import2calendar extends eqLogic
     $lines = preg_split('/\r?\n/', $icalFile);
     $event = [];
     $description = '';
+    log::add(__CLASS__, 'debug', "parse_icalendar_file : " . json_encode($lines));
     foreach ($lines as $line) {
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
         $event = [];
@@ -354,6 +376,10 @@ class import2calendar extends eqLogic
       } elseif (strpos($line, 'DESCRIPTION') === 0) {
         $description = substr($line, strlen('DESCRIPTION:'));
         $event['description'] = $description;
+      } elseif (strpos($line, 'LOCATION') === 0) {
+        $location = substr($line, strlen('LOCATION:'));
+        $location = str_replace("\,", ",", $location);
+        $event['location'] = $location;
       } elseif (strpos($line, 'RRULE') === 0) {
         $rrule = substr($line, strlen('RRULE:'));
         $rrule_params = explode(';', $rrule);
@@ -452,6 +478,8 @@ class import2calendar extends eqLogic
   }
   private static function formatDate($dateString)
   {
+    // remplace 
+    $dateString = self::convertTimezone($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
     if (strpos($dateString, "TZID=") !== false) {
       $timezone = substr($dateString, strpos($dateString, "=") + 1, strpos($dateString, ":") - strpos($dateString, "=") - 1);
@@ -471,6 +499,7 @@ class import2calendar extends eqLogic
     // Formater la date selon le format spécifié
     return $dateTime->format("Y-m-d H:i:s");
   }
+
   private static function formatCount($event)
   {
     // Date de début de la répétition
@@ -540,7 +569,7 @@ class import2calendar extends eqLogic
           $option['endDate'] == $existingOption['endDate']
         ) {
           // Vérifier si l'un des paramètres (start, end, color, text_color ou icon) est différent
-          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', "colors", "note"];
+          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', "colors", "note", "location"];
           $isDifferent = false;
           foreach ($paramsToCheck as $param) {
             if ($option['cmd_param'][$param] != $existingOption['cmd_param'][$param]) {
@@ -721,20 +750,15 @@ class import2calendar extends eqLogic
 
     return $result;
   }
-  private static function emojiClean($string) {
-    // Convertir les bytes UTF-8 en caractères Unicode
-    $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
-  // Expression régulière pour identifier les emojis
-    $regex_emojis = '/['
-    . '\x{1F600}-\x{1F64F}' // émoticônes visages
-    . '\x{1F300}-\x{1F5FF}' // symboles & pictogrammes
-    . '\x{1F680}-\x{1F6FF}' // symboles de transport & cartes
-    . '\x{1F1E0}-\x{1F1FF}' // drapeaux (iOS)
-    . ']/u';
-    // Suppression des emojis
-    $texte_sans_emojis = preg_replace($regex_emojis, '', $string);
+  private static function emojiClean($string)
+  {
+    // Convertir les séquences d'échappement Unicode en caractères UTF-8
+    $string_utf8 = json_decode('"' . $string . '"');
 
-    return $texte_sans_emojis;
+    // Convertir en format HTML
+    $result['htmlFormat'] = mb_convert_encoding($string_utf8, 'HTML-ENTITIES', 'UTF-8');
+
+    return $result;
   }
   private static function getColors($eqlogicId, $name)
   {
@@ -753,6 +777,142 @@ class import2calendar extends eqLogic
     return $result;
   }
 
+  private static function getActionCmd($eqlogicId, $name, $type)
+  {
+    $eqlogic = eqLogic::byId($eqlogicId);
+    $actions = $eqlogic->getConfiguration($type)[0];
+
+    foreach ($actions as $action) {
+      if ((strpos(strtolower($name), strtolower($action['cmdEventName'])) !== false) || ($action['cmdEventName'] === "")) {
+        $result[] = $action;
+      }
+    }
+    return $result;
+  }
+
+  private static function convertTimezone($timezone)
+  {
+    $timezones = array(
+      'Dateline Standard Time' => 'Etc/GMT+12',
+      'UTC-11' => 'Etc/GMT+11',
+      'Aleutian Standard Time' => 'America/Adak',
+      'Hawaiian Standard Time' => 'Pacific/Honolulu',
+      'Marquesas Standard Time' => 'Pacific/Marquesas',
+      'Alaskan Standard Time' => 'America/Anchorage',
+      'UTC-09' => 'Etc/GMT+9',
+      'Pacific Standard Time (Mexico)' => 'America/Tijuana',
+      'UTC-08' => 'Etc/GMT+8',
+      'Pacific Standard Time' => 'America/Los_Angeles',
+      'US Mountain Standard Time' => 'America/Phoenix',
+      'Mountain Standard Time (Mexico)' => 'America/Chihuahua',
+      'Mountain Standard Time' => 'America/Denver',
+      'Central America Standard Time' => 'America/Guatemala',
+      'Central Standard Time' => 'America/Chicago',
+      'Easter Island Standard Time' => 'Pacific/Easter',
+      'Central Standard Time (Mexico)' => 'America/Mexico_City',
+      'Canada Central Standard Time' => 'America/Regina',
+      'SA Pacific Standard Time' => 'America/Bogota',
+      'Eastern Standard Time (Mexico)' => 'America/Cancun',
+      'Eastern Standard Time' => 'America/New_York',
+      'Haiti Standard Time' => 'America/Port-au-Prince',
+      'Cuba Standard Time' => 'America/Havana',
+      'US Eastern Standard Time' => 'America/Indianapolis',
+      'Turks And Caicos Standard Time' => 'America/Grand_Turk',
+      'Paraguay Standard Time' => 'America/Asuncion',
+      'Atlantic Standard Time' => 'America/Halifax',
+      'Venezuela Standard Time' => 'America/Caracas',
+      'Central Brazilian Standard Time' => 'America/Cuiaba',
+      'SA Western Standard Time' => 'America/La_Paz',
+      'Pacific SA Standard Time' => 'America/Santiago',
+      'Newfoundland Standard Time' => 'America/St_Johns',
+      'Tocantins Standard Time' => 'America/Araguaina',
+      'E. South America Standard Time' => 'America/Sao_Paulo',
+      'SA Eastern Standard Time' => 'America/Cayenne',
+      'Argentina Standard Time' => 'America/Buenos_Aires',
+      'Greenland Standard Time' => 'America/Godthab',
+      'Montevideo Standard Time' => 'America/Montevideo',
+      'Magallanes Standard Time' => 'America/Punta_Arenas',
+      'Saint Pierre Standard Time' => 'America/Miquelon',
+      'Bahia Standard Time' => 'America/Bahia',
+      'UTC-02' => 'Etc/GMT+2',
+      'Azores Standard Time' => 'Atlantic/Azores',
+      'Cape Verde Standard Time' => 'Atlantic/Cape_Verde',
+      'UTC' => 'Etc/GMT',
+      'GMT Standard Time' => 'Europe/London',
+      'Greenwich Standard Time' => 'Atlantic/Reykjavik',
+      'W. Europe Standard Time' => 'Europe/Berlin',
+      'Central Europe Standard Time' => 'Europe/Budapest',
+      'Romance Standard Time' => 'Europe/Paris',
+      'Morocco Standard Time' => 'Africa/Casablanca',
+      'W. Central Africa Standard Time' => 'Africa/Lagos',
+      'Jordan Standard Time' => 'Asia/Amman',
+      'GTB Standard Time' => 'Europe/Bucharest',
+      'Middle East Standard Time' => 'Asia/Beirut',
+      'Egypt Standard Time' => 'Africa/Cairo',
+      'E. Europe Standard Time' => 'Europe/Chisinau',
+      'Syria Standard Time' => 'Asia/Damascus',
+      'West Bank Standard Time' => 'Asia/Hebron',
+      'South Africa Standard Time' => 'Africa/Johannesburg',
+      'FLE Standard Time' => 'Europe/Kiev',
+      'Israel Standard Time' => 'Asia/Jerusalem',
+      'Kaliningrad Standard Time' => 'Europe/Kaliningrad',
+      'Sudan Standard Time' => 'Africa/Khartoum',
+      'Libya Standard Time' => 'Africa/Tripoli',
+      'Namibia Standard Time' => 'Africa/Windhoek',
+      'Arabic Standard Time' => 'Asia/Baghdad',
+      'Turkey Standard Time' => 'Europe/Istanbul',
+      'Arab Standard Time' => 'Asia/Riyadh',
+      'Belarus Standard Time' => 'Europe/Minsk',
+      'Russian Standard Time' => 'Europe/Moscow',
+      'E. Africa Standard Time' => 'Africa/Nairobi',
+      'Iran Standard Time' => 'Asia/Tehran',
+      'Arabian Standard Time' => 'Asia/Dubai',
+      'Azerbaijan Standard Time' => 'Asia/Baku',
+      'Mauritius Standard Time' => 'Indian/Mauritius',
+      'Georgian Standard Time' => 'Asia/Tbilisi',
+      'Caucasus Standard Time' => 'Asia/Yerevan',
+      'Afghanistan Standard Time' => 'Asia/Kabul',
+      'West Asia Standard Time' => 'Asia/Tashkent',
+      'Pakistan Standard Time' => 'Asia/Karachi',
+      'India Standard Time' => 'Asia/Calcutta',
+      'Sri Lanka Standard Time' => 'Asia/Colombo',
+      'Nepal Standard Time' => 'Asia/Katmandu',
+      'Central Asia Standard Time' => 'Asia/Almaty',
+      'Bangladesh Standard Time' => 'Asia/Dhaka',
+      'Ekaterinburg Standard Time' => 'Asia/Yekaterinburg',
+      'Myanmar Standard Time' => 'Asia/Rangoon',
+      'SE Asia Standard Time' => 'Asia/Bangkok',
+      'N. Central Asia Standard Time' => 'Asia/Novosibirsk',
+      'China Standard Time' => 'Asia/Shanghai',
+      'North Asia Standard Time' => 'Asia/Krasnoyarsk',
+      'Singapore Standard Time' => 'Asia/Singapore',
+      'W. Australia Standard Time' => 'Australia/Perth',
+      'Taipei Standard Time' => 'Asia/Taipei',
+      'Ulaanbaatar Standard Time' => 'Asia/Ulaanbaatar',
+      'North Asia East Standard Time' => 'Asia/Irkutsk',
+      'Tokyo Standard Time' => 'Asia/Tokyo',
+      'Korea Standard Time' => 'Asia/Seoul',
+      'Cen. Australia Standard Time' => 'Australia/Adelaide',
+      'AUS Central Standard Time' => 'Australia/Darwin',
+      'E. Australia Standard Time' => 'Australia/Brisbane',
+      'AUS Eastern Standard Time' => 'Australia/Sydney',
+      'West Pacific Standard Time' => 'Pacific/Port_Moresby',
+      'Tasmania Standard Time' => 'Australia/Hobart',
+      'Yakutsk Standard Time' => 'Asia/Yakutsk',
+      'Central Pacific Standard Time' => 'Pacific/Guadalcanal',
+      'Vladivostok Standard Time' => 'Asia/Vladivostok',
+      'New Zealand Standard Time' => 'Pacific/Auckland',
+      'UTC+12' => 'Etc/GMT-12',
+      'Fiji Standard Time' => 'Pacific/Fiji',
+      'Kamchatka Standard Time' => 'Asia/Kamchatka',
+      'Tonga Standard Time' => 'Pacific/Tongatapu',
+      'Samoa Standard Time' => 'Pacific/Apia',
+    );
+    foreach ($timezones as $key => $value) {
+      $timezone = str_replace($key, $value, $timezone);
+    }
+    return $timezone;
+  }
   public static function createEqI2C($options)
   {
     log::add(__CLASS__, 'debug', "Création d'un nouveau équipement.");

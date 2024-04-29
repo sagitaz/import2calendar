@@ -123,7 +123,10 @@ function addAction(_action, _type) {
   div += '<input type="checkbox" class="expressionAttr" data-l1key="options" data-l2key="enable" checked title="{{Décocher la case pour désactiver l\'action}}">'
   div += '<input type="checkbox" class="expressionAttr" data-l1key="options" data-l2key="background" title="{{Cocher la case pour que la commande s\'exécute en parallèle des autres actions}}">'
   div += '</div>'
-  div += '<div class="col-sm-5">'
+  div += '<div class="col-sm-1">'
+  div += '<input class="expressionAttr form-control cmdAction input-sm" data-l1key="cmdEventName" data-type="' + _type + '" />'
+  div += '</div>'
+  div += '<div class="col-sm-4">'
   div += '<div class="input-group input-group-sm">'
   div += '<span class="input-group-btn">'
   div += '<a class="btn btn-default btn-sm bt_removeAction roundedLeft" data-type="' + _type + '"><i class="fas fa-minus-circle"></i></a>'
@@ -150,6 +153,20 @@ function addAction(_action, _type) {
   }
 }
 
+function addMessage(_type) {
+  var div = '<div class="' + _type + '">'
+  div += '<div class="form-group ">'
+  div += '<div class="col-sm-12">'
+  div += '<a class="btn btn-default btn-sm bt_removeAction" data-type="' + _type + '"><i class="fas fa-minus-circle"></i></a>'
+  div += '<div class="col-sm-10">'
+  div += '<input class="expressionAttr form-control cmdAction input-sm" data-l1key="cmdEventName" data-type="' + _type + '" />'
+  div += '</div>'
+  div += '</div>'
+
+  $('#div_' + _type).append(div)
+
+}
+
 function addColor(_color) {
   if (!isset(_color)) {
     _color = {}
@@ -170,8 +187,8 @@ function addColor(_color) {
   div += '</div>'
   div += '<div class="col-sm-1 text-center">'
   div += '<div"><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
-  div += '</span>'
   div += '</div>'
+  div += '</span>'
   div += '</div>'
 
   $('#div_color').append(div)
@@ -188,6 +205,9 @@ $('.bt_addActionStart').off('click').on('click', function () {
 })
 $('.bt_addActionEnd').off('click').on('click', function () {
   addAction({}, 'end')
+})
+$('.bt_addMessageEnd').off('click').on('click', function () {
+  addMessage('end')
 })
 $('.bt_addColor').off('click').on('click', function () {
   addColor()
