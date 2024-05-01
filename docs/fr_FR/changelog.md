@@ -3,6 +3,9 @@
 >**IMPORTANT**
 >
 >S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
+# 01/05/2024 Beta 1.0.5
+- Prise en compte des dates exclus dans les récurrences
+- Prise en compte des dates modifiées dans les récurrences
 
 # 29/04/2024 Stable 1.0.0
 - Conversion des émojis en html (visible dans le nom de l'évènement et dans la description (JeeMate v3))
