@@ -398,8 +398,18 @@ class import2calendar extends eqLogic
         $recurrenceId = self::formatDate(substr($line, strlen('RECURRENCE-ID:')), 'Y-m-d');
         $event['recurrenceId'] = $recurrenceId;
       } elseif (strpos($line, 'EXDATE') === 0) {
-        $exdate = self::formatDate(substr($line, strlen('EXDATE:')), 'Y-m-d');
-        $event['exdate'] .= ',' . $exdate . ',';
+        // Si la ligne EXDATE contient plusieurs dates séparées par des virgules
+        if (strpos($line, ',') !== false) {
+          // Convertir en deux lignes distinctes
+          $line = self::separateLigne($line);
+        }
+        // Extraire les dates et les formater
+        $dates = explode(',', substr($line, strlen('EXDATE:')));
+        foreach ($dates as $date) {
+          $exdate = self::formatDate($date, 'Y-m-d');
+          $event['exdate'] .= ',' . $exdate . ',';
+        }
+
         // Supprimer les virgules en début et en fin de chaîne
         $event['exdate'] = trim($event['exdate'], ',');
       } elseif (strpos($line, 'RRULE') === 0) {
@@ -414,7 +424,25 @@ class import2calendar extends eqLogic
 
     return $events;
   }
+  private static function separateLigne($chaine)
+  {
+    // Trouver le préfixe dans la chaîne
+    preg_match('/^(.*?):/', $chaine, $matches);
+    $prefixe = $matches[1] . ':';
 
+    // Supprimer le préfixe de la chaîne
+    $chaine = preg_replace('/^(.*?):/', '', $chaine);
+    // Séparer la chaîne en deux parties, en utilisant le préfixe comme délimiteur
+    $parties = explode($prefixe, $chaine);
+
+    // Ajouter le préfixe à chaque partie, sauf la première
+    $resultat = $prefixe . $parties[0];
+    for ($i = 1; $i < count($parties); $i++) {
+      $resultat .= "\n" . $prefixe . $parties[$i];
+    }
+
+    return $resultat;
+  }
   private static function threeDaysAgo($date)
   {
     $numberOfDays = 3;
