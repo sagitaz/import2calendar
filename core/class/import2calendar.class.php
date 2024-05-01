@@ -285,6 +285,7 @@ class import2calendar extends eqLogic
             "location" => $event['location'],
             "uid" => $event['uid'],
             "recurrenceId" => $event['recurrenceId'],
+            "exdate" => $event['exdate'],
           ],
           "startDate" => $startDate,
           "endDate" => $endDate,
@@ -310,6 +311,7 @@ class import2calendar extends eqLogic
               "location" => $event['location'],
               "uid" => $event['uid'],
               "recurrenceId" => $event['recurrenceId'],
+              "exdate" => $event['exdate'],
             ],
             "startDate" => $startDate,
             "endDate" => $endDate,
@@ -335,6 +337,7 @@ class import2calendar extends eqLogic
     $lines = preg_split('/\r?\n/', $icalFile);
     $event = [];
     $description = '';
+    $exdates = "";
     log::add(__CLASS__, 'debug', "parse_icalendar_file : " . json_encode($lines));
     foreach ($lines as $line) {
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
@@ -394,6 +397,11 @@ class import2calendar extends eqLogic
       } elseif (strpos($line, 'RECURRENCE-ID') === 0) {
         $recurrenceId = self::formatDate(substr($line, strlen('RECURRENCE-ID:')), 'Y-m-d');
         $event['recurrenceId'] = $recurrenceId;
+      } elseif (strpos($line, 'EXDATE') === 0) {
+        $exdate = self::formatDate(substr($line, strlen('EXDATE:')), 'Y-m-d');
+        $event['exdate'] .= ',' . $exdate . ',';
+        // Supprimer les virgules en début et en fin de chaîne
+        $event['exdate'] = trim($event['exdate'], ',');
       } elseif (strpos($line, 'RRULE') === 0) {
         $rrule = substr($line, strlen('RRULE:'));
         $rrule_params = explode(';', $rrule);
@@ -607,7 +615,25 @@ class import2calendar extends eqLogic
           }
         }
       }
+      // Si exdate est présent alors ajouter date à l'event
+      if (!is_null($option['cmd_param']['exdate'])) {
 
+        $excludeDates = $option['repeat']['excludeDate'];
+        // Ajouter une virgule avant d'ajouter la nouvelle date
+        if (!empty($excludeDates)) {
+          $excludeDates .= ',';
+        }
+        $excludeDates .= $option['cmd_param']['exdate'];
+        // Convertir la chaîne en un tableau de dates uniques
+        $dateArray = array_unique(explode(',', $excludeDates));
+        // Réassembler les dates uniques en une chaîne
+        $excludeDates = implode(',', $dateArray);
+        // Supprimer les espaces et les virgules en début et en fin de chaîne
+        $excludeDates = trim($excludeDates, ', ');
+
+        $option['repeat']['excludeDate'] = $excludeDates;
+        unset($option['cmd_param']['exdate']);
+      }
       foreach ($inDB as $existingOption) {
         if (
           $option['cmd_param']['eventName'] == $existingOption['cmd_param']['eventName'] &&
