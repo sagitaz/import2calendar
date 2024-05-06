@@ -161,6 +161,38 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								<div class="col-sm-6">
 									<input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ical" placeholder="{{ICAL}}">
 								</div>
+								</br>
+								<label class="col-sm-4 control-label">{{Heures de début forcées}}
+								</label>
+								<div class="col-sm-6">
+									<select class="eqLogicAttr form-control startTime" data-l1key="configuration" data-l2key="startTime">
+										<option value="" selected>{{Aucun}}</option>
+										<script>
+											for (let i = 0; i < 24; i++) {
+												let hour = (i < 10) ? "0" + i : i; // Ajoute un zéro devant les nombres < 10
+												let option = new Option(hour + 'h00', hour);
+												document.querySelector('.startTime').appendChild(option);
+											}
+										</script>
+									</select>
+								</div>
+								</br>
+								<label class="col-sm-4 control-label">{{Heures de fin forcées}}
+								</label>
+								<div class="col-sm-6">
+									<select class="eqLogicAttr form-control endTime" data-l1key="configuration" data-l2key="endTime">
+										<option value="" selected>{{Aucun}}</option>
+										<script>
+											for (let i = 0; i < 24; i++) {
+												let hour = (i < 10) ? "0" + i : i; // Ajoute un zéro devant les nombres < 10
+												let option = new Option(hour + 'h00', hour);
+												document.querySelector('.endTime').appendChild(option);
+											}
+										</script>
+									</select>
+								</div>
+								</br>
+								</br>
 								<label class="col-sm-4 control-label">{{ICAL général}}
 								</label>
 								<div class="col-sm-6">
