@@ -202,6 +202,8 @@ class import2calendar extends eqLogic
     $calendarEqId = self::calendarCreate($eqlogic);
     // récupèration des valeurs communes à tous les évènement    
     $icon = $eqlogic->getConfiguration('icon');
+    $startTime = $eqlogic->getConfiguration('startTime');
+    $endTime = $eqlogic->getConfiguration('endTime');
     // récupèration du fichier ical
     $icalConfig = $eqlogic->getConfiguration('ical');
     $file = ($icalConfig != "") ? $icalConfig : $eqlogic->getConfiguration('icalAuto');
@@ -231,21 +233,25 @@ class import2calendar extends eqLogic
 
     foreach ($events as $event) {
       // Vérifier si le fichier iCal provient d'Airbnb
-      if (strpos($icalConfig, 'airbnb') !== false) {
-        log::add(__CLASS__, 'debug', '03 => modification horaire AirBnB');
-        // Mettre à jour l'heure de début sur 16:00:00
+     // if (strpos($icalConfig, 'airbnb') !== false) {
+
+      if (!is_null($startTime)) {
+        log::add(__CLASS__, 'debug', '03 => modification horaire de début d\'èvénement');
         if (isset($event['start_date'])) {
           $startDateTime = new DateTime($event['start_date']);
-          $startDateTime->setTime(16, 0, 0);
+          $startDateTime->setTime($startTime, 0, 0);
           $event['start_date'] = $startDateTime->format('Y-m-d H:i:s');
         }
-        // Mettre à jour l'heure de fin sur 10:00:00
+      }
+      if (!is_null($endTime)) {
+        log::add(__CLASS__, 'debug', '04 => modification horaire de fin d\'èvénement');
         if (isset($event['end_date'])) {
           $endDateTime = new DateTime($event['end_date']);
-          $endDateTime->setTime(10, 0, 0);
+          $endDateTime->setTime($endTime, 0, 0);
           $event['end_date'] = $endDateTime->format('Y-m-d H:i:s');
         }
       }
+      
 
       log::add(__CLASS__, 'debug', "Event options : " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
@@ -398,8 +404,18 @@ class import2calendar extends eqLogic
         $recurrenceId = self::formatDate(substr($line, strlen('RECURRENCE-ID:')), 'Y-m-d');
         $event['recurrenceId'] = $recurrenceId;
       } elseif (strpos($line, 'EXDATE') === 0) {
-        $exdate = self::formatDate(substr($line, strlen('EXDATE:')), 'Y-m-d');
-        $event['exdate'] .= ',' . $exdate . ',';
+        // Si la ligne EXDATE contient plusieurs dates séparées par des virgules
+        if (strpos($line, ',') !== false) {
+          // Convertir en deux lignes distinctes
+          $line = self::separateLigne($line);
+        }
+        // Extraire les dates et les formater
+        $dates = explode(',', substr($line, strlen('EXDATE:')));
+        foreach ($dates as $date) {
+          $exdate = self::formatDate($date, 'Y-m-d');
+          $event['exdate'] .= ',' . $exdate . ',';
+        }
+
         // Supprimer les virgules en début et en fin de chaîne
         $event['exdate'] = trim($event['exdate'], ',');
       } elseif (strpos($line, 'RRULE') === 0) {
@@ -414,7 +430,25 @@ class import2calendar extends eqLogic
 
     return $events;
   }
+  private static function separateLigne($chaine)
+  {
+    // Trouver le préfixe dans la chaîne
+    preg_match('/^(.*?):/', $chaine, $matches);
+    $prefixe = $matches[1] . ':';
 
+    // Supprimer le préfixe de la chaîne
+    $chaine = preg_replace('/^(.*?):/', '', $chaine);
+    // Séparer la chaîne en deux parties, en utilisant le préfixe comme délimiteur
+    $parties = explode($prefixe, $chaine);
+
+    // Ajouter le préfixe à chaque partie, sauf la première
+    $resultat = $prefixe . $parties[0];
+    for ($i = 1; $i < count($parties); $i++) {
+      $resultat .= "\n" . $prefixe . $parties[$i];
+    }
+
+    return $resultat;
+  }
   private static function threeDaysAgo($date)
   {
     $numberOfDays = 3;
