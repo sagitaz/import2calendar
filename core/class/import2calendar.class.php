@@ -202,6 +202,8 @@ class import2calendar extends eqLogic
     $calendarEqId = self::calendarCreate($eqlogic);
     // récupèration des valeurs communes à tous les évènement    
     $icon = $eqlogic->getConfiguration('icon');
+    $startTime = $eqlogic->getConfiguration('startTime');
+    $endTime = $eqlogic->getConfiguration('endTime');
     // récupèration du fichier ical
     $icalConfig = $eqlogic->getConfiguration('ical');
     $file = ($icalConfig != "") ? $icalConfig : $eqlogic->getConfiguration('icalAuto');
@@ -231,21 +233,25 @@ class import2calendar extends eqLogic
 
     foreach ($events as $event) {
       // Vérifier si le fichier iCal provient d'Airbnb
-      if (strpos($icalConfig, 'airbnb') !== false) {
-        log::add(__CLASS__, 'debug', '03 => modification horaire AirBnB');
-        // Mettre à jour l'heure de début sur 16:00:00
+     // if (strpos($icalConfig, 'airbnb') !== false) {
+
+      if (!is_null($startTime)) {
+        log::add(__CLASS__, 'debug', '03 => modification horaire de début d\'èvénement');
         if (isset($event['start_date'])) {
           $startDateTime = new DateTime($event['start_date']);
-          $startDateTime->setTime(16, 0, 0);
+          $startDateTime->setTime($startTime, 0, 0);
           $event['start_date'] = $startDateTime->format('Y-m-d H:i:s');
         }
-        // Mettre à jour l'heure de fin sur 10:00:00
+      }
+      if (!is_null($endTime)) {
+        log::add(__CLASS__, 'debug', '04 => modification horaire de fin d\'èvénement');
         if (isset($event['end_date'])) {
           $endDateTime = new DateTime($event['end_date']);
-          $endDateTime->setTime(10, 0, 0);
+          $endDateTime->setTime($endTime, 0, 0);
           $event['end_date'] = $endDateTime->format('Y-m-d H:i:s');
         }
       }
+      
 
       log::add(__CLASS__, 'debug', "Event options : " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
@@ -267,6 +273,7 @@ class import2calendar extends eqLogic
       // Nettoyer le nom de l'événement && de la description
       $eventName = self::emojiClean($event['summary']);
       $note = self::emojiClean($event['description']);
+
       // Vérifier la valeur de $until
       if (is_null($until)) {
         $options[] = [
@@ -282,6 +289,9 @@ class import2calendar extends eqLogic
             "end" => $allCmdEnd,
             "note" => $note['htmlFormat'],
             "location" => $event['location'],
+            "uid" => $event['uid'],
+            "recurrenceId" => $event['recurrenceId'],
+            "exdate" => $event['exdate'],
           ],
           "startDate" => $startDate,
           "endDate" => $endDate,
@@ -305,6 +315,9 @@ class import2calendar extends eqLogic
               "end" => $allCmdEnd,
               "note" => $note['htmlFormat'],
               "location" => $event['location'],
+              "uid" => $event['uid'],
+              "recurrenceId" => $event['recurrenceId'],
+              "exdate" => $event['exdate'],
             ],
             "startDate" => $startDate,
             "endDate" => $endDate,
@@ -326,9 +339,11 @@ class import2calendar extends eqLogic
   private static function parse_icalendar_file($icalFile)
   {
     $events = [];
+    $icalFile = str_replace("\r\n ", "", $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
     $event = [];
     $description = '';
+    $exdates = "";
     log::add(__CLASS__, 'debug', "parse_icalendar_file : " . json_encode($lines));
     foreach ($lines as $line) {
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
@@ -382,6 +397,27 @@ class import2calendar extends eqLogic
         $location = substr($line, strlen('LOCATION:'));
         $location = str_replace("\,", ",", $location);
         $event['location'] = $location;
+      } elseif (strpos($line, 'UID') === 0) {
+        $uid = substr($line, strlen('UID:'));
+        $event['uid'] = $uid;
+      } elseif (strpos($line, 'RECURRENCE-ID') === 0) {
+        $recurrenceId = self::formatDate(substr($line, strlen('RECURRENCE-ID:')), 'Y-m-d');
+        $event['recurrenceId'] = $recurrenceId;
+      } elseif (strpos($line, 'EXDATE') === 0) {
+        // Si la ligne EXDATE contient plusieurs dates séparées par des virgules
+        if (strpos($line, ',') !== false) {
+          // Convertir en deux lignes distinctes
+          $line = self::separateLigne($line);
+        }
+        // Extraire les dates et les formater
+        $dates = explode(',', substr($line, strlen('EXDATE:')));
+        foreach ($dates as $date) {
+          $exdate = self::formatDate($date, 'Y-m-d');
+          $event['exdate'] .= ',' . $exdate . ',';
+        }
+
+        // Supprimer les virgules en début et en fin de chaîne
+        $event['exdate'] = trim($event['exdate'], ',');
       } elseif (strpos($line, 'RRULE') === 0) {
         $rrule = substr($line, strlen('RRULE:'));
         $rrule_params = explode(';', $rrule);
@@ -394,7 +430,25 @@ class import2calendar extends eqLogic
 
     return $events;
   }
+  private static function separateLigne($chaine)
+  {
+    // Trouver le préfixe dans la chaîne
+    preg_match('/^(.*?):/', $chaine, $matches);
+    $prefixe = $matches[1] . ':';
 
+    // Supprimer le préfixe de la chaîne
+    $chaine = preg_replace('/^(.*?):/', '', $chaine);
+    // Séparer la chaîne en deux parties, en utilisant le préfixe comme délimiteur
+    $parties = explode($prefixe, $chaine);
+
+    // Ajouter le préfixe à chaque partie, sauf la première
+    $resultat = $prefixe . $parties[0];
+    for ($i = 1; $i < count($parties); $i++) {
+      $resultat .= "\n" . $prefixe . $parties[$i];
+    }
+
+    return $resultat;
+  }
   private static function threeDaysAgo($date)
   {
     $numberOfDays = 3;
@@ -478,7 +532,7 @@ class import2calendar extends eqLogic
     }
     return $repeat;
   }
-  private static function formatDate($dateString)
+  private static function formatDate($dateString, $format = 'Y-m-d H:i:s')
   {
     // remplace 
     $dateString = self::convertTimezone($dateString);
@@ -499,7 +553,7 @@ class import2calendar extends eqLogic
     $jeedomTimezone = config::byKey('timezone');
     $dateTime->setTimezone(new DateTimeZone($jeedomTimezone));
     // Formater la date selon le format spécifié
-    return $dateTime->format("Y-m-d H:i:s");
+    return $dateTime->format($format);
   }
 
   private static function formatCount($event)
@@ -559,11 +613,61 @@ class import2calendar extends eqLogic
   }
   public static function saveDB($calendarEqId, $options)
   {
-    $inDB = self::calendarGetEventsByEqId($calendarEqId);
     // Enregistrer les options dans le calendrier
     foreach ($options as $option) {
+      $inDB = self::calendarGetEventsByEqId($calendarEqId);
+      log::add(__CLASS__, 'debug', "01 = Verification des options de : " . json_encode($option['cmd_param']['eventName']));
       $isDuplicate = false;
+      // Si recurrenceId est présent alors ajouter date à l'event d'origine (uid)
+      if (!is_null($option['cmd_param']['recurrenceId'])) {
+        $uid = $option['cmd_param']['uid'];
+        $recurrenceId = $option['cmd_param']['recurrenceId'];
+        log::add(__CLASS__, 'debug', "02 = recurrence trouvé pour : " . json_encode($option['cmd_param']['eventName']));
+        // chercher dans inDB le calendrier ayant le meme uid et ayant until non null
+        foreach ($inDB as $existingOption) {
+          if (
+            $existingOption['cmd_param']['uid'] == $uid &&
+            $existingOption['repeat']['enable'] == 1
+          ) {
+            $excludeDates = $existingOption['repeat']['excludeDate'];
+            // Ajouter une virgule avant d'ajouter la nouvelle date
+            if (!empty($excludeDates)) {
+              $excludeDates .= ',';
+            }
+            $excludeDates .= $recurrenceId;
+            // Convertir la chaîne en un tableau de dates uniques
+            $dateArray = array_unique(explode(',', $excludeDates));
+            // Réassembler les dates uniques en une chaîne
+            $excludeDates = implode(',', $dateArray);
+            // Supprimer les espaces et les virgules en début et en fin de chaîne
+            $excludeDates = trim($excludeDates, ', ');
 
+            $existingOption['repeat']['excludeDate'] = $excludeDates;
+            log::add(__CLASS__, 'debug', "03 = Calendar original modifié avec date d\'exclusion.");
+            self::calendarSave($existingOption);
+            break;
+          }
+        }
+      }
+      // Si exdate est présent alors ajouter date à l'event
+      if (!is_null($option['cmd_param']['exdate'])) {
+
+        $excludeDates = $option['repeat']['excludeDate'];
+        // Ajouter une virgule avant d'ajouter la nouvelle date
+        if (!empty($excludeDates)) {
+          $excludeDates .= ',';
+        }
+        $excludeDates .= $option['cmd_param']['exdate'];
+        // Convertir la chaîne en un tableau de dates uniques
+        $dateArray = array_unique(explode(',', $excludeDates));
+        // Réassembler les dates uniques en une chaîne
+        $excludeDates = implode(',', $dateArray);
+        // Supprimer les espaces et les virgules en début et en fin de chaîne
+        $excludeDates = trim($excludeDates, ', ');
+
+        $option['repeat']['excludeDate'] = $excludeDates;
+        unset($option['cmd_param']['exdate']);
+      }
       foreach ($inDB as $existingOption) {
         if (
           $option['cmd_param']['eventName'] == $existingOption['cmd_param']['eventName'] &&
@@ -571,23 +675,23 @@ class import2calendar extends eqLogic
           $option['endDate'] == $existingOption['endDate']
         ) {
           // Vérifier si l'un des paramètres (start, end, color, text_color ou icon) est différent
-          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', "colors", "note", "location"];
+          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', "colors", "note", "location", "uid", "recurrenceId"];
           $isDifferent = false;
           foreach ($paramsToCheck as $param) {
             if ($option['cmd_param'][$param] != $existingOption['cmd_param'][$param]) {
-              log::add(__CLASS__, 'debug', "Event existant, changement : " . $param);
+              log::add(__CLASS__, 'debug', "04 =Event existant, changement : " . $param);
               $isDifferent = true;
               break;
             }
           }
 
           if ($option['until'] != $existingOption['until']) {
-            log::add(__CLASS__, 'debug', "Event existant, changement until ");
+            log::add(__CLASS__, 'debug', "04 = Event existant, changement until ");
             $isDifferent = true;
           }
 
           if ($option['repeat'] != $existingOption['repeat']) {
-            log::add(__CLASS__, 'debug', "Event existant, changement repeat");
+            log::add(__CLASS__, 'debug', "04 = Event existant, changement repeat");
             $isDifferent = true;
           }
 
@@ -602,9 +706,9 @@ class import2calendar extends eqLogic
 
       if (!$isDuplicate) {
         self::calendarSave($option);
-        log::add(__CLASS__, 'info', "Event existant, les modifications sont sauvegardées.");
+        log::add(__CLASS__, 'info', "05 = Event existant, les modifications sont sauvegardées.");
       } else {
-        log::add(__CLASS__, 'debug', "Event existant, aucune modification.");
+        log::add(__CLASS__, 'debug', "05 = Event existant, aucune modification.");
       }
     }
   }
@@ -656,7 +760,6 @@ class import2calendar extends eqLogic
 
   public static function calendarSave($option)
   {
-
     if (self::testPlugin()) {
       $event = null;
       if (!empty($option['id'])) {
@@ -676,9 +779,6 @@ class import2calendar extends eqLogic
     }
   }
 
-  public static function calendarUpdate($id, $option)
-  {
-  }
   public static function calendarRemove($id)
   {
     if (self::testPlugin()) {

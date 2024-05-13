@@ -9,13 +9,16 @@ La configuration de celui-ci est très simple.
 # Créer un équipement
 Commencer par ajouter un équipement et choisir son nom
 ### Paramètre d'import
-- **ical** : indiquer l'URL du fichier ical à convertir
-- **cron** : choisir le temps de rafraîchissement voulu pour le calendrier
+- **ical** : indiquer l'URL du fichier ical à convertir.
+- **heure de début forcées** : choisir une heure de début d'évènement pour tous ceux du calendrier.
+- **heure de fin forcées** : choisir une heure de fin d'évènement pour tous ceux du calendrier.
+- **ical auto** : vacances Française et jours fériés. Si sélectionner alors ne rien indiqué dans la zone ical.
+- **cron** : choisir le temps de rafraîchissement voulu pour le calendrier.
 
 ### Paramètres d'affichage
-- **icône** : l'icône qui sera appliquée à chaque event
-- **couleur de fond** : couleur de fond par défault pour chaque event
-- **couleur de texte** : couleur de texte par défault pour chaque event
+- **icône** : l'icône qui sera appliquée à chaque event.
+- **couleur de fond** : couleur de fond par défault pour chaque event.
+- **couleur de texte** : couleur de texte par défault pour chaque event.
 
 ### Personnalisation des évènements
 Ici vous pouvez choisir de personnaliser certain évènement de votre ical.
