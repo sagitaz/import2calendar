@@ -478,7 +478,7 @@ class import2calendar extends eqLogic
       elseif ($icalUnit === 'YEARLY') $unit = 'years';
       elseif ($icalUnit === 'WEEKLY') {
         $unit = 'days';
-        $frequence = 1;
+        $frequence = $frequence * 7;
       }
 
       if (isset($rrule['BYDAY'])) {
