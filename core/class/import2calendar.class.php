@@ -233,25 +233,25 @@ class import2calendar extends eqLogic
 
     foreach ($events as $event) {
       // Vérifier si le fichier iCal provient d'Airbnb
-     // if (strpos($icalConfig, 'airbnb') !== false) {
+      // if (strpos($icalConfig, 'airbnb') !== false) {
 
-      if (!is_null($startTime)) {
+      if (!is_null($startTime) && $startTime != "") {
         log::add(__CLASS__, 'debug', '03 => modification horaire de début d\'èvénement');
         if (isset($event['start_date'])) {
           $startDateTime = new DateTime($event['start_date']);
-          $startDateTime->setTime($startTime, 0, 0);
+          $startDateTime->setTime((int)$startTime, 0, 0);
           $event['start_date'] = $startDateTime->format('Y-m-d H:i:s');
         }
       }
-      if (!is_null($endTime)) {
+      if (!is_null($endTime) && $endTime != "") {
         log::add(__CLASS__, 'debug', '04 => modification horaire de fin d\'èvénement');
         if (isset($event['end_date'])) {
           $endDateTime = new DateTime($event['end_date']);
-          $endDateTime->setTime($endTime, 0, 0);
+          $endDateTime->setTime((int)$endTime, 0, 0);
           $event['end_date'] = $endDateTime->format('Y-m-d H:i:s');
         }
       }
-      
+
 
       log::add(__CLASS__, 'debug', "Event options : " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
