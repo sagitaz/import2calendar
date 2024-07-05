@@ -3,6 +3,9 @@
 >**IMPORTANT**
 >
 >S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
+# 06/05/2024 Stable 1.0.7
+- Fix error setTime.
+
 # 06/05/2024 Beta 1.0.6
 - Ajout possibilité de forcer heure de début et de fin d'évènement.
 
