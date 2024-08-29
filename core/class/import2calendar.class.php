@@ -23,12 +23,14 @@
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
 
-use log;
+/*
+
 use calendar;
 use calendar_event;
 use utils;
 use plugin;
 use message;
+*/
 
 class import2calendar extends eqLogic
 {
@@ -140,14 +142,10 @@ class import2calendar extends eqLogic
   }
 
   // Fonction exécutée automatiquement après la création de l'équipement
-  public function postInsert()
-  {
-  }
+  public function postInsert() {}
 
   // Fonction exécutée automatiquement avant la mise à jour de l'équipement
-  public function preUpdate()
-  {
-  }
+  public function preUpdate() {}
 
   // Fonction exécutée automatiquement après la mise à jour de l'équipement
   public function postUpdate()
@@ -157,19 +155,13 @@ class import2calendar extends eqLogic
   }
 
   // Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
-  public function preSave()
-  {
-  }
+  public function preSave() {}
 
   // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
-  public function postSave()
-  {
-  }
+  public function postSave() {}
 
   // Fonction exécutée automatiquement avant la suppression de l'équipement
-  public function preRemove()
-  {
-  }
+  public function preRemove() {}
 
   // Fonction exécutée automatiquement après la suppression de l'équipement
   public function postRemove()
@@ -1114,9 +1106,7 @@ class import2calendarCmd extends cmd
       }
      */
 
-  public function execute($_options = array())
-  {
-  }
+  public function execute($_options = array()) {}
 
   /*     * **********************Getteur Setteur*************************** */
 }
