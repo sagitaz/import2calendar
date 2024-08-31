@@ -264,7 +264,9 @@ class import2calendar extends eqLogic
       }
       // Nettoyer le nom de l'événement && de la description
       $eventName = self::emojiClean($event['summary']);
-      $note = self::emojiClean($event['description']);
+      if (isset($event['description']) && !is_null($event['description'])) {
+        $note = self::emojiClean($event['description']);
+      }
 
       // Vérifier la valeur de $until
       if (is_null($until)) {
@@ -282,10 +284,10 @@ class import2calendar extends eqLogic
             "transparent" => "0",
             "noDisplayOnDashboard" => "0",
             "note" => $note['htmlFormat'],
-            "location" => $event['location'],
-            "uid" => $event['uid'],
-            "recurrenceId" => $event['recurrenceId'],
-            "exdate" => $event['exdate'],
+            "location" => isset($event['location']) ? $event['location'] : '',
+            "uid" => isset($event['uid']) ? $event['uid'] : '',
+            "recurrenceId" => isset($event['recurrenceId']) ? $event['recurrenceId'] : '',
+            "exdate" => isset($event['exdate']) ? $event['exdate'] : '',
           ],
           "startDate" => $startDate,
           "endDate" => $endDate,
@@ -310,10 +312,10 @@ class import2calendar extends eqLogic
               "transparent" => "0",
               "noDisplayOnDashboard" => "0",
               "note" => $note['htmlFormat'],
-              "location" => $event['location'],
-              "uid" => $event['uid'],
-              "recurrenceId" => $event['recurrenceId'],
-              "exdate" => $event['exdate'],
+              "location" => isset($event['location']) ? $event['location'] : '',
+              "uid" => isset($event['uid']) ? $event['uid'] : '',
+              "recurrenceId" => isset($event['recurrenceId']) ? $event['recurrenceId'] : '',
+              "exdate" => isset($event['exdate']) ? $event['exdate'] : '',
             ],
             "startDate" => $startDate,
             "endDate" => $endDate,
