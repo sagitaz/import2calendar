@@ -510,9 +510,11 @@ class import2calendar extends eqLogic
           }
         }
         // On exclut le jour correspondant à la position spécifiée
-        $dayIndex = array_search(ucfirst(strtolower($matches[2])), $daysOfWeek);
-        if ($dayIndex !== false) {
-          $excludeDay[$dayIndex + 1] = "1";
+        if (isset($matches[2])) {
+          $dayIndex = array_search(ucfirst(strtolower($matches[2])), $daysOfWeek);
+          if ($dayIndex !== false) {
+            $excludeDay[$dayIndex + 1] = "1";
+          }
         }
       } else {
         $excludeDay = ["1" => "1", "2" => "1", "3" => "1", "4" => "1", "5" => "1", "6" => "1", "7" => "1"];
