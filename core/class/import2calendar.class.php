@@ -255,10 +255,10 @@ class import2calendar extends eqLogic
       $until = null;
       if (!is_null($event['rrule'])) {
         $repeat = self::parseEventRrule($event['rrule'], $event['start_date']);
-        if (!is_null($event['rrule']['UNTIL'])) {
+        if (isset($event['rrule']['UNTIL']) && !is_null($event['rrule']['UNTIL'])) {
           $until = self::formatDate($event['rrule']['UNTIL']);
         }
-        if (!is_null($event['rrule']['COUNT'])) {
+        if (isset($event['rrule']['COUNT']) && !is_null($event['rrule']['COUNT'])) {
           $until = self::formatCount($event);
         }
       }
@@ -402,19 +402,26 @@ class import2calendar extends eqLogic
       } elseif (strpos($line, 'EXDATE') === 0) {
         // Si la ligne EXDATE contient plusieurs dates séparées par des virgules
         if (strpos($line, ',') !== false) {
-          // Convertir en deux lignes distinctes
+          // Convertir en deux lignes distinctes (supposons que separateLigne retourne une ligne formatée correctement)
           $line = self::separateLigne($line);
         }
         // Extraire les dates et les formater
         $dates = explode(',', substr($line, strlen('EXDATE:')));
-        foreach ($dates as $date) {
-          $exdate = self::formatDate($date, 'Y-m-d');
-          $event['exdate'] .= ',' . $exdate . ',';
+        // Initialiser 'exdate' s'il n'est pas déjà défini
+        if (!isset($event['exdate'])) {
+          $event['exdate'] = '';
         }
-
-        // Supprimer les virgules en début et en fin de chaîne
+        // Créer un tableau pour stocker les dates formatées
+        $formattedDates = [];
+        foreach ($dates as $date) {
+          $formattedDates[] = self::formatDate($date, 'Y-m-d');
+        }
+        // Joindre les dates formatées avec une virgule et les ajouter à 'exdate'
+        $event['exdate'] .= implode(',', $formattedDates);
+        // Supprimer les éventuelles virgules en début et en fin de chaîne (au cas où)
         $event['exdate'] = trim($event['exdate'], ',');
-      } elseif (strpos($line, 'RRULE') === 0) {
+      }
+ elseif (strpos($line, 'RRULE') === 0) {
         $rrule = substr($line, strlen('RRULE:'));
         $rrule_params = explode(';', $rrule);
         foreach ($rrule_params as $param) {
@@ -671,15 +678,22 @@ class import2calendar extends eqLogic
           $option['endDate'] == $existingOption['endDate']
         ) {
           // Vérifier si l'un des paramètres (start, end, color, text_color ou icon) est différent
-          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', "colors", "note", "location", "uid", "recurrenceId"];
+          $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId'];
           $isDifferent = false;
+
           foreach ($paramsToCheck as $param) {
-            if ($option['cmd_param'][$param] != $existingOption['cmd_param'][$param]) {
-              log::add(__CLASS__, 'debug', "04 =Event existant, changement : " . $param);
+            // Vérifier si les clés existent dans les deux tableaux
+            $optionValue = isset($option['cmd_param'][$param]) ? $option['cmd_param'][$param] : null;
+            $existingOptionValue = isset($existingOption['cmd_param'][$param]) ? $existingOption['cmd_param'][$param] : null;
+
+            // Comparer les valeurs
+            if ($optionValue != $existingOptionValue) {
+              log::add(__CLASS__, 'debug', "04 = Event existant, changement : " . $param);
               $isDifferent = true;
               break;
             }
           }
+
 
           if ($option['until'] != $existingOption['until']) {
             log::add(__CLASS__, 'debug', "04 = Event existant, changement until ");
