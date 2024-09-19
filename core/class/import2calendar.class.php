@@ -936,19 +936,38 @@ class import2calendar extends eqLogic
   private static function getColors($eqlogicId, $name)
   {
     $eqlogic = eqLogic::byId($eqlogicId);
-    $result["background"] = $eqlogic->getConfiguration('color');
-    $result["texte"] = $eqlogic->getConfiguration('text_color');
-    $colors = $eqlogic->getConfiguration('colors');
 
-    foreach ($colors[0] as $color) {
-      if (strpos(strtolower($name), strtolower($color['colorName'])) !== false) {
-        $result["background"] = $color['colorBackground'];
-        $result["texte"] = $color['colorText'];
-        return $result;
+    // Définir des couleurs par défaut si aucune couleur n'est trouvée dans la configuration
+    $defaultBackground = '#581845';
+    $defaultText = '#FFFFFF';
+
+    // Récupérer les couleurs définies dans la configuration, ou utiliser les couleurs par défaut
+    $result = [
+      "background" => $eqlogic->getConfiguration('color') ?: $defaultBackground,
+      "texte" => $eqlogic->getConfiguration('text_color') ?: $defaultText
+    ];
+
+    // Récupérer les configurations des couleurs
+    $colors = $eqlogic->getConfiguration('colors');
+    $nameLower = strtolower($name); // Convertir le nom en minuscule une seule fois
+
+    // Vérifier que colors n'est pas vide et itérer dessus
+    if (!empty($colors[0])) {
+      foreach ($colors[0] as $color) {
+        $colorName = strtolower($color['colorName'] ?? ''); // Gérer les cas où colorName est vide ou absent
+        if ($colorName !== '' && strpos($nameLower, $colorName) !== false) {
+          // Si une correspondance est trouvée, on met à jour les couleurs et on retourne le résultat
+          $result["background"] = $color['colorBackground'] ?: $defaultBackground;
+          $result["texte"] = $color['colorText'] ?: $defaultText;
+          return $result;
+        }
       }
     }
+
+    // Retourner les couleurs (soit par défaut, soit personnalisées)
     return $result;
   }
+
   private static function getActionCmd($eqlogicId, $name, $type)
   {
     // Récupérer l'objet eqLogic et les actions
@@ -997,20 +1016,36 @@ class import2calendar extends eqLogic
 
   private static function changeDate($eqlogicId, $name, $date, $type)
   {
+    // Récupérer l'objet eqLogic
     $eqlogic = eqLogic::byId($eqlogicId);
-    $colors = $eqlogic->getConfiguration('colors');
 
-    foreach ($colors[0] as $color) {
-      if (strpos(strtolower($name), strtolower($color['colorName'])) !== false) {
-        if ($type === "startEvent") {
-          $date = date("Y-m-d H:i:s", strtotime($date) - ($color['startEvent'] * 3600));
-        } elseif ($type === "endEvent") {
-          $date = date("Y-m-d H:i:s", strtotime($date) + ($color['endEvent'] * 3600));
+    // Récupérer les configurations de couleurs
+    $colors = $eqlogic->getConfiguration('colors');
+    $nameLower = strtolower($name); // Mettre le nom en minuscule une fois pour éviter des appels répétés
+
+    // Vérifier que colors n'est pas vide et itérer dessus
+    if (!empty($colors[0])) {
+      foreach ($colors[0] as $color) {
+        $colorName = strtolower($color['colorName'] ?? ''); // Gérer les cas où colorName est vide ou absent
+        if ($colorName !== '' && strpos($nameLower, $colorName) !== false
+        ) {
+          // Vérifier le type d'événement et ajuster la date
+          if ($type === "startEvent" && !empty($color['startEvent'])
+          ) {
+            // On modifie la date pour startEvent
+            $date = date("Y-m-d H:i:s", strtotime($date) - ($color['startEvent'] * 3600));
+          } elseif ($type === "endEvent" && !empty($color['endEvent'])
+          ) {
+            // On modifie la date pour endEvent
+            $date = date("Y-m-d H:i:s", strtotime($date) + ($color['endEvent'] * 3600));
+          }
+          return $date;
         }
       }
     }
     return $date;
   }
+
   private static function convertTimezone($timezone)
   {
     $timezones = array(
