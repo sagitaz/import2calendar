@@ -949,36 +949,51 @@ class import2calendar extends eqLogic
     }
     return $result;
   }
-
   private static function getActionCmd($eqlogicId, $name, $type)
   {
+    // Récupérer l'objet eqLogic et les actions
     $eqlogic = eqLogic::byId($eqlogicId);
     $actions = $eqlogic->getConfiguration($type)[0];
+
     $allNames = [];
     $result = [];
+    $nameLower = strtolower($name); // Pour éviter de répéter strtolower()
+
+    // Première boucle : On collecte tous les cmdEventName non "all" et "others" en minuscules
     foreach ($actions as $action) {
-      // si cmdEventName n'est pas all ou others on l'ajoute dans le tableau allNames
-      if (($action['cmdEventName'] !== "all") && ($action['cmdEventName'] !== "others")) {
-        $allNames[] = strtolower($action['cmdEventName']);
+      $cmdEventName = strtolower($action['cmdEventName'] ?? '');
+      if ($cmdEventName !== "all" && $cmdEventName !== "others" && $cmdEventName !== ''
+      ) {
+        $allNames[] = $cmdEventName;
       }
     }
 
+    // Deuxième boucle : On traite chaque action en fonction de cmdEventName
     foreach ($actions as $action) {
-      // Si cmdEventName est vide ou égale à all, on ajoute l'action
-      if (($action['cmdEventName'] === "") || (strtolower($action['cmdEventName']) === "all")) {
+      $cmdEventName = strtolower($action['cmdEventName'] ?? '');
+
+      // Si cmdEventName est vide ou égale à "all", on ajoute l'action
+      if ($cmdEventName === '' || $cmdEventName === "all") {
         $result[] = $action;
+        continue; // On passe à l'action suivante
       }
-      // Si cmdEventName est égale à la chaine de caractères others et si name n'est pas présent dans le tableau allNames, on ajoute l'action
-      if ((strtolower($action['cmdEventName']) === "others") && (!in_array(strtolower($name), $allNames))) {
+
+      // Si cmdEventName est "others" et si name n'est pas dans allNames, on ajoute l'action
+      if ($cmdEventName === "others" && !in_array($nameLower, $allNames)) {
         $result[] = $action;
+        continue;
       }
-      // Si cmdEventName est égale à la name on ajoute l'action
-      if (strpos(strtolower($name), strtolower($action['cmdEventName'])) !== false) {
+
+      // Si cmdEventName correspond à name, on ajoute l'action
+      if ($cmdEventName !== '' && strpos($nameLower, $cmdEventName) !== false
+      ) {
         $result[] = $action;
       }
     }
+
     return $result;
   }
+
 
   private static function changeDate($eqlogicId, $name, $date, $type)
   {
