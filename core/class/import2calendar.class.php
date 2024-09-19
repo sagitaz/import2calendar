@@ -189,6 +189,7 @@ class import2calendar extends eqLogic
   /*     * **********************Getteur Setteur*************************** */
   public static function parseIcal($eqlogicId)
   {
+    $options =[];
     $eqlogic = eqLogic::byId($eqlogicId);
     // création du calendrier si inexistant
     $calendarEqId = self::calendarCreate($eqlogic);
@@ -629,9 +630,12 @@ class import2calendar extends eqLogic
   {
     $inDB = self::calendarGetEventsByEqId($calendarEqId);
     // Enregistrer les options dans le calendrier
+    if (is_array($inDB) && !empty($inDB)) {
     foreach ($inDB as $existingOption) {
       $isPresentInOptions = false;
 
+      // On regarde si l'option existe dans la liste d'options
+      if (is_array($options) && !empty($options)) {
       foreach ($options as $option) {
         if (
           $existingOption['cmd_param']['eventName'] == $option['cmd_param']['eventName'] &&
@@ -642,6 +646,7 @@ class import2calendar extends eqLogic
           break;
         }
       }
+    }
 
       if (!$isPresentInOptions) {
         $eventId = $existingOption['id'];
@@ -649,10 +654,12 @@ class import2calendar extends eqLogic
         self::calendarRemove($eventId);
       }
     }
+    }
   }
   public static function saveDB($calendarEqId, $options)
   {
     // Enregistrer les options dans le calendrier
+    if (is_array($options) && !empty($options)) {
     foreach ($options as $option) {
       $inDB = self::calendarGetEventsByEqId($calendarEqId);
       log::add(__CLASS__, 'debug', "01 = Verification des options de : " . json_encode($option['cmd_param']['eventName']));
@@ -772,6 +779,8 @@ class import2calendar extends eqLogic
         log::add(__CLASS__, 'debug', "05 = Event existant, aucune modification.");
       }
     }
+  }
+
   }
 
   public static function calendarCreate($eqlogic)
