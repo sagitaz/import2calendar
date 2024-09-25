@@ -118,13 +118,17 @@ class import2calendar extends eqLogic
   }
   */
 
-  /*
-   * Permet d'indiquer des éléments supplémentaires à remonter dans les informations de configuration
-   * lors de la création semi-automatique d'un post sur le forum community
+
    public static function getConfigForCommunity() {
-      return "les infos essentiel de mon plugin";
+    $system = system::getOsVersion();
+
+    $CommunityInfo = "```\n";
+    $CommunityInfo = $CommunityInfo . 'Debian : ' . $system . "\n";
+    $CommunityInfo = $CommunityInfo . 'Plugin : ' . config::byKey('pluginVersion', 'import2calendar') . "\n";
+    $CommunityInfo = $CommunityInfo . "```";
+    return $CommunityInfo;
    }
-   */
+   
 
   /*     * *********************Méthodes d'instance************************* */
 
@@ -1212,6 +1216,30 @@ class import2calendar extends eqLogic
     $calendarEqId = self::parseIcal($eqlogicId);
 
     return $calendarEqId;
+  }
+  public static function getPluginVersion()
+  {
+    $pluginVersion = '0.0.0';
+    try {
+      if (!file_exists(dirname(__FILE__) . '/../../plugin_info/info.json')) {
+        log::add('frigate', 'warning', '[Plugin-Version] fichier info.json manquant');
+      }
+      $data = json_decode(file_get_contents(dirname(__FILE__) . '/../../plugin_info/info.json'),
+        true
+      );
+      if (!is_array($data)) {
+        log::add('import2calendar', 'warning', '[Plugin-Version] Impossible de décoder le fichier info.json');
+      }
+      try {
+        $pluginVersion = $data['pluginVersion'];
+      } catch (\Exception $e) {
+        log::add('import2calendar', 'warning', '[Plugin-Version] Impossible de récupérer la version du plugin');
+      }
+    } catch (\Exception $e) {
+      log::add('import2calendar', 'debug', '[Plugin-Version] Get ERROR :: ' . $e->getMessage());
+    }
+    log::add('import2calendar', 'info', '[Plugin-Version] PluginVersion :: ' . $pluginVersion);
+    return $pluginVersion;
   }
 }
 class import2calendarCmd extends cmd
