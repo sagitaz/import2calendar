@@ -26,3 +26,16 @@ if (!isConnect()) {
   include_file('desktop', '404', 'php');
   die();
 }
+?>
+<form class="form-horizontal">
+  <fieldset>
+      <div class="form-group">
+        <label class="col-md-4 control-label">{{Version Plugin}}
+          <sup><i class="fas fa-question-circle tooltips" title="{{Version du Plugin (A indiquer sur Community)}}"></i></sup>
+        </label>
+        <div class="col-lg-1">
+          <input class="configKey form-control" data-l1key="pluginVersion" readonly />
+        </div>
+      </div>
+  </fieldset>
+</form>
