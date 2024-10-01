@@ -210,14 +210,14 @@ class import2calendar extends eqLogic
     $fh = fopen($file, 'r');
     // Check if fopen() was successful
     if ($fh === false) {
-      log::add(__CLASS__, 'error', 'Impossible d\'ouvrir le fichier ical => ' . $file);
+      log::add(__CLASS__, 'error', '| Impossible d\'ouvrir le fichier ical => ' . $file);
       return null;
     }
     // Read the whole file into a string
     $icalData = stream_get_contents($fh);
     // Check if stream_get_contents() was successful
     if ($icalData === false) {
-      log::add(__CLASS__, 'error', 'Impossible de parser le fichier ical => ' . $file);
+      log::add(__CLASS__, 'error', '| Impossible de parser le fichier ical => ' . $file);
       return null;
     }
 
@@ -600,7 +600,7 @@ class import2calendar extends eqLogic
         $endDate = null;
         break;
     }
-    log::add(__CLASS__, 'debug', "Until count : " . json_encode($endDate));
+    log::add(__CLASS__, 'debug', "| Until count : " . json_encode($endDate));
     return $endDate->format("Y-m-d H:i:s");
   }
 
@@ -628,7 +628,7 @@ class import2calendar extends eqLogic
 
         if (!$isPresentInOptions) {
           $eventId = $existingOption['id'];
-          log::add(__CLASS__, 'debug', "Event : " . $existingOption['id'] . " est supprimé.");
+          log::add(__CLASS__, 'debug', "| Event : " . $existingOption['id'] . " est supprimé.");
           self::calendarRemove($eventId);
         }
       }
@@ -636,99 +636,121 @@ class import2calendar extends eqLogic
   }
   public static function saveDB($calendarEqId, $options)
   {
-
-    // Enregistrer les options dans le calendrier
+    // Vérifier si les options sont un tableau non vide
     if (is_array($options) && !empty($options)) {
+      // Récupérer les événements existants pour l'ID de calendrier donné
+      $inDB = self::calendarGetEventsByEqId($calendarEqId);
+
       foreach ($options as $option) {
-        $inDB = self::calendarGetEventsByEqId($calendarEqId);
-        //  log::add(__CLASS__, 'debug', "| Options : " . json_encode($option));
-        $isDuplicate = false;
-        // Si recurrenceId est présent alors ajouter date à l'event d'origine (uid)
+        // Gestion des dates d'exclusion (exdate)
+        self::handleExdate($option);
+
+        // Gestion des événements récurrents (recurrenceId)
         if (!is_null($option['cmd_param']['recurrenceId'])) {
-          $uid = $option['cmd_param']['uid'];
-          $recurrenceId = $option['cmd_param']['recurrenceId'];
-          //    log::add(__CLASS__, 'debug', "| Recurrence trouvé pour : " . json_encode($option['cmd_param']['eventName']));
-          // Chercher dans inDB le calendrier ayant le même uid et ayant until non null
-          if (is_array($inDB) && !empty($inDB)) {
-            foreach ($inDB as $existingOption) {
-              if (
-                isset($existingOption['cmd_param']['uid'], $existingOption['repeat']['enable']) &&  // Vérifier que 'uid' et 'enable' existent
-                $existingOption['cmd_param']['uid'] == $uid &&
-                $existingOption['repeat']['enable'] == 1
-              ) {
-                // Mettre à jour la date d'exclusion
-                $existingOption['repeat']['excludeDate'] = implode(',', $option['cmd_param']['exdate']);
-                self::calendarSave($existingOption);
-                break;
-              }
-            }
-          }
-        }
-        // Si exdate est présent alors ajouter date à l'event
-        if (!is_null($option['cmd_param']['exdate'])) {
-          if (!isset($option['repeat'])) {
-            $option['repeat'] = [];
-          }
-          // Mettre à jour la date d'exclusion implode(',', $exdate);
-          $option['repeat']['excludeDate'] = implode(',', $option['cmd_param']['exdate']);
-          // Supprimer 'exdate' après traitement
-          unset($option['cmd_param']['exdate']);
-        }
-        if (is_array($inDB) && !empty($inDB)) {
-          foreach ($inDB as $existingOption) {
-            if (
-              isset($option['cmd_param'], $existingOption['cmd_param']) &&  // Vérifie que cmd_param existe
-              $option['cmd_param']['eventName'] == $existingOption['cmd_param']['eventName'] &&
-              $option['startDate'] == $existingOption['startDate'] &&
-              $option['endDate'] == $existingOption['endDate']
-            ) {
-              // Vérifier si l'un des paramètres (start, end, color, text_color ou icon) est différent
-              $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId'];
-              $isDifferent = false;
-
-              foreach ($paramsToCheck as $param) {
-                // Vérifie que la clé cmd_param existe pour les deux objets
-                if (isset($option['cmd_param'][$param]) || isset($existingOption['cmd_param'][$param])) {
-                  // Récupérer les valeurs avec gestion des cas où les paramètres peuvent être manquants
-                  $optionValue = $option['cmd_param'][$param] ?? null;
-                  $existingOptionValue = $existingOption['cmd_param'][$param] ?? null;
-
-                  // Comparer les valeurs
-                  if ($optionValue != $existingOptionValue) {
-                    //   log::add(__CLASS__, 'debug', "| Event existant, changement : " . $param);
-                    $isDifferent = true;
-                    break;
-                  }
-                }
-              }
-
-              if ($option['until'] != $existingOption['until']) {
-                //    log::add(__CLASS__, 'debug', "| Event existant, changement until ");
-                $isDifferent = true;
-              }
-
-              if ($option['repeat'] != $existingOption['repeat']) {
-                //    log::add(__CLASS__, 'debug', "| Event existant, changement repeat");
-                $isDifferent = true;
-              }
-
-              if ($isDifferent) {
-                $option['id'] = $existingOption['id'];
-              } else {
-                $isDuplicate = true;
-              }
-              break;
-            }
-          }
+          self::handleRecurrence($option, $inDB);
         }
 
+        // Comparaison et détection des duplicatas
+        $existingEventId = self::isDuplicateEvent($option, $inDB);
+        if ($existingEventId === true) {
+          continue; // Sauter cet événement s'il est un duplicata
+        } elseif ($existingEventId !== false) {
+          // Si une différence est détectée, ajouter l'ID existant à l'option
+          $option['id'] = $existingEventId;
+        }
 
-        if (!$isDuplicate) {
-          self::calendarSave($option);
+        // Sauvegarder l'événement s'il n'est pas un duplicata
+        self::calendarSave($option);
+      }
+    }
+  }
+
+  private static function handleExdate(&$option)
+  {
+    // Si exdate est présent, ajouter la date d'exclusion à l'événement
+    if (!is_null($option['cmd_param']['exdate'])) {
+      if (!isset($option['repeat'])) {
+        $option['repeat'] = [];
+      }
+      // Mise à jour de la date d'exclusion et suppression d'exdate après traitement
+      $option['repeat']['excludeDate'] = implode(',', $option['cmd_param']['exdate']);
+    }
+  }
+
+  private static function handleRecurrence($option, $inDB)
+  {
+    $uid = $option['cmd_param']['uid'];
+    $recurrenceId = $option['cmd_param']['recurrenceId'];
+
+    if (is_array($inDB) && !empty($inDB)) {
+      foreach ($inDB as $existingOption) {
+        // Vérifier si l'événement existe déjà avec le même UID et si la répétition est activée
+        if (
+          isset($existingOption['cmd_param']['uid'], $existingOption['repeat']['enable']) &&
+          $existingOption['cmd_param']['uid'] == $uid &&
+          $existingOption['repeat']['enable'] == 1
+        ) {
+          // Comparer les dates d'exclusion existantes avec celles de l'option actuelle
+          $existingExdate = $existingOption['repeat']['excludeDate'];
+          $newExdate = implode(',', $option['cmd_param']['exdate']);
+
+          // 	log::add(__CLASS__, 'info', '| OLD : ' . $existingExdate);
+          // 	log::add(__CLASS__, 'info', '| NEW : ' . $newExdate);
+          // Vérifier si les exdate sont différentes
+          if ($existingExdate != $newExdate) {
+            // Si elles sont différentes, mettre à jour l'événement avec les nouvelles dates d'exclusion
+            $existingOption['repeat']['excludeDate'] = $newExdate;
+            // Sauvegarder la mise à jour dans la base de données
+            self::calendarSave($existingOption);
+          }
+
+          break; // Sortir de la boucle une fois l'événement trouvé et mis à jour
         }
       }
     }
   }
+
+
+  private static function isDuplicateEvent(&$option, $inDB)
+  {
+    if (is_array($inDB) && !empty($inDB)) {
+      foreach ($inDB as $existingOption) {
+        if (
+          isset($option['cmd_param'], $existingOption['cmd_param']) &&
+          $option['cmd_param']['eventName'] == $existingOption['cmd_param']['eventName'] &&
+          $option['startDate'] == $existingOption['startDate'] &&
+          $option['endDate'] == $existingOption['endDate']
+        ) {
+          // Vérifier si un changement existe dans les paramètres de l'événement, y compris 'exdate'
+          if (self::isEventDifferent($option, $existingOption)) {
+            // Retourner l'ID de l'événement existant s'il y a une différence
+            return $existingOption['id'];
+          }
+          return true; // Duplicata détecté
+        }
+      }
+    }
+    return false; // Pas de duplicata
+  }
+
+  private static function isEventDifferent($option, $existingOption)
+  {
+    // Liste des paramètres à vérifier pour détecter les changements
+    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId'];
+    foreach ($paramsToCheck as $param) {
+      // Comparer les valeurs des paramètres si elles existent
+      $optionValue = $option['cmd_param'][$param] ?? null;
+      $existingOptionValue = $existingOption['cmd_param'][$param] ?? null;
+
+      if ($optionValue != $existingOptionValue) {
+        log::add(__CLASS__, 'info', '| Différence sur : ' . $param);
+        return true; // Différence détectée
+      }
+    }
+
+    return false; // Aucune différence détectée
+  }
+
 
   public static function calendarCreate($eqlogic)
   {
@@ -781,11 +803,11 @@ class import2calendar extends eqLogic
       $event = null;
       if (!empty($option['id'])) {
         $event = calendar_event::byId($option['id']);
-        log::add(__CLASS__, 'debug', "| Evènement :b:" . json_encode($option['cmd_param']['eventName']) . ":/b: mis à jour : " . json_encode($option));
+        log::add(__CLASS__, 'debug', "| Evènement :b:" . json_encode($option['cmd_param']['eventName']) . ":/b: mis à jour.");
       }
       if (!is_object($event)) {
         $event = new calendar_event();
-        log::add(__CLASS__, 'debug', "| Evènement :b:" . json_encode($option['cmd_param']['eventName']) . ":/b: créé : " . json_encode($option));
+        log::add(__CLASS__, 'debug', "| Evènement :b:" . json_encode($option['cmd_param']['eventName']) . ":/b: créé.");
       }
       utils::a2o($event, jeedom::fromHumanReadable($option));
 
@@ -821,7 +843,7 @@ class import2calendar extends eqLogic
       $getAllEvents = calendar_event::getEventsByEqLogic($calendarEqId);
 
       if (count($getAllEvents) <= 0) {
-        log::add(__CLASS__, 'debug', "Aucun calendrier correspondant à : " . $calendarEqId);
+        log::add(__CLASS__, 'debug', "| Aucun calendrier correspondant à : " . $calendarEqId);
       } else {
         $result = [];
         foreach ($getAllEvents as $event) {
@@ -831,7 +853,7 @@ class import2calendar extends eqLogic
       return $result;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
-      log::add(__CLASS__, 'error', "Le plugin agenda n'est pas installé ou activé.");
+      log::add(__CLASS__, 'error', "| Le plugin agenda n'est pas installé ou activé.");
     }
   }
 
@@ -1123,7 +1145,7 @@ class import2calendar extends eqLogic
   }
   public static function createEqI2C($options)
   {
-    log::add(__CLASS__, 'debug', "Création d'un nouveau équipement.");
+    log::add(__CLASS__, 'debug', "| Création d'un nouveau équipement.");
     $eqExist = FALSE;
 
     $name = $options['name'];
@@ -1134,7 +1156,7 @@ class import2calendar extends eqLogic
       if ($name === $cal->getname()) {
         $eqExist = TRUE;
         $calendarEqId = $cal->getId();
-        log::add(__CLASS__, 'debug', "Equipement agenda mis à jour.");
+        log::add(__CLASS__, 'debug', "| Equipement agenda mis à jour.");
       }
     }
 
@@ -1147,7 +1169,7 @@ class import2calendar extends eqLogic
       $import2calendar->setLogicalId(__('ical', __FILE__));
       $import2calendar->setEqType_name('import2calendar');
       $import2calendar->setIsVisible(1);
-      log::add(__CLASS__, 'debug', "Equipement agenda créé");
+      log::add(__CLASS__, 'debug', "| Equipement agenda créé");
     }
     $import2calendar->setIsEnable($options['enable']);
     $import2calendar->setConfiguration("ical", $options['icalUrl']);
