@@ -3,9 +3,10 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
-# 26/09/2024 Beta 1.0.9
+# 01/10/2024 Beta 1.0.9
 - Corrections de warning PHP
 - Ajout numéro de version du plugin
+- Correction sur maj de l'évènement
 
 # 17/08/2024 Stable 1.0.8
 - Traduction Anglais, Allemand, Espagnol, Italien, Portugais. merci @mips
