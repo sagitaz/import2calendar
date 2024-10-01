@@ -94,5 +94,9 @@
         "Vacance scolaire FR zone B": "Vacaciones escolares FR zona B",
         "Vacance scolaire FR zone C": "Vacaciones escolares FR zona C",
         "aide Discord": "ayuda Discordia"
+    },
+    "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Version Plugin": "Versión Plugin",
+        "Version du Plugin (A indiquer sur Community)": "Versión del plugin (Se indicará en la Comunidad)"
     }
 }

@@ -25,7 +25,10 @@ require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
 function import2calendar_install()
 {
+    $pluginVersion = import2calendar::getPluginVersion();
+    config::save('pluginVersion', $pluginVersion, 'import2calendar');
     $cron = cron::byClassAndFunction('import2calendar', 'update');
+
     if (!is_object($cron)) {
         $cron = new cron();
         $cron->setClass('import2calendar');
@@ -40,6 +43,8 @@ function import2calendar_install()
 
 function import2calendar_update()
 {
+    $pluginVersion = import2calendar::getPluginVersion();
+    config::save('pluginVersion', $pluginVersion, 'import2calendar');
     $cron = cron::byClassAndFunction('import2calendar', 'update');
     if (!is_object($cron)) {
         $cron = new cron();
