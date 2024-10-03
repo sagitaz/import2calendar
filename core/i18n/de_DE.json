@@ -94,5 +94,9 @@
         "Vacance scolaire FR zone B": "Schulferien DE Zone B",
         "Vacance scolaire FR zone C": "Schulferien DE Zone C",
         "aide Discord": "discord-Hilfe"
+    },
+    "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Version Plugin": "Plugin-Version",
+        "Version du Plugin (A indiquer sur Community)": "Version des Plugins (Auf Community anzugeben)"
     }
 }
