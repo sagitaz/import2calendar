@@ -10,8 +10,8 @@ La configuration de celui-ci est très simple.
 Commencer par ajouter un équipement et choisir son nom
 ### Paramètre d'import
 - **ical** : indiquer l'URL du fichier ical à convertir.
-- **heure de début forcées** : choisir une heure de début d'évènement pour tous ceux du calendrier.
-- **heure de fin forcées** : choisir une heure de fin d'évènement pour tous ceux du calendrier.
+- **heure de début forcées** : choisir une heure de début d'évènement pour tous ceux du calendrier. Par défault ce seront les heures de début de l'évènement enregistré dans l'ical.
+- **heure de fin forcées** : choisir une heure de fin d'évènement pour tous ceux du calendrier. Par défault ce seront les heures de fin de l'évènement enregistré dans l'ical.
 - **ical auto** : vacances Française et jours fériés. Si sélectionner alors ne rien indiqué dans la zone ical.
 - **cron** : choisir le temps de rafraîchissement voulu pour le calendrier.
 
@@ -63,8 +63,13 @@ Les événements passés de plus de 3 jours ne sont pas importés et seront supp
 # Occurrences
 Les règles défini dans votre ical sont convertit au format Jeedom Agenda. Je n'ai pas tester toutes les possibilités, si jamais certaines ne passent pas, merci de joindre la ligne du log import2calendar : **event options** (mettre vos log en warning ou debug).
 
+Les évènements présent dans l'occurence reste visible sur le calendrier tant que l'ocurrence est valide.
+
+Exemple : 1 évènement tous les 5 jours du 01-03-2024 au 24-11-2024. Tous les évènements sont visibles sur le calendrier jusqu'au 27-11-2024 (3 jours après la fin de l'occurence).
+
 # JeeMate
 - la description et le lieu seront visible dans l'agenda importé dans JeeMate.
+
 # Attention
 - le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
 - la pièce sera identique
