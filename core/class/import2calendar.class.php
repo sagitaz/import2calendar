@@ -295,8 +295,9 @@ class import2calendar extends eqLogic
       }
 
 
+      $summary = str_replace("\\", "", $event['summary']);
       // Nettoyer le nom de l'événement && de la description
-      $eventName = self::emojiClean($event['summary']);
+      $eventName = self::emojiClean($summary);
       $note = ''; // Valeur par défaut pour éviter les erreurs
 
       if (isset($event['description']) && !is_null($event['description'])) {
@@ -407,9 +408,10 @@ class import2calendar extends eqLogic
 
           if ($threeDaysAgoStart || $threeDaysAgoEnd || $addEvent) {
             // Vérifier si l'évènement à un nom sinon lui en donner un par default
-            if (!isset($event['summary'])) {
+            if (!isset($event['summary']) || trim($event['summary']) === '') {
               $event['summary'] = "Aucun nom";
             }
+
             // Vérifier si l'événement a une date de fin ou si la date de fin est identique à la date de début, lui donner une date de fin par défaut
             if (!isset($event['end_date']) || $event['start_date'] === $event['end_date']) {
               $startDateTime = new DateTime($event['start_date']);
