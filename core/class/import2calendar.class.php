@@ -598,6 +598,10 @@ class import2calendar extends eqLogic
         $endDate = clone $startDate;
         $endDate->add(new DateInterval('P' . ($occurrences) . 'M'));
         break;
+      case 'YEARLY':
+        $endDate = clone $startDate;
+        $endDate->add(new DateInterval('P' . ($occurrences) . 'Y'));
+        break;
       default:
         $endDate = null;
         break;
