@@ -206,23 +206,16 @@ class import2calendar extends eqLogic
     // récupèration du fichier ical
     $icalConfig = $eqlogic->getConfiguration('ical');
     $file = ($icalConfig != "") ? $icalConfig : $eqlogic->getConfiguration('icalAuto');
-    // Open file in read-only mode and place file pointer at the beginning 
-    $fh = fopen($file, 'r');
-    // Check if fopen() was successful
-    if ($fh === false) {
-      log::add(__CLASS__, 'error', '| Impossible d\'ouvrir le fichier ical => ' . $file);
-      return null;
-    }
-    // Read the whole file into a string
-    $icalData = stream_get_contents($fh);
-    // Check if stream_get_contents() was successful
+    // Remplacer 'webcal://' par 'https://' si nécessaire
+    $file = str_replace('webcal://', 'https://', $file);
+
+    $icalData = @file_get_contents($file);
+  
+    // Vérifier si file_get_contents a réussi
     if ($icalData === false) {
       log::add(__CLASS__, 'error', '| Impossible de parser le fichier ical => ' . $file);
       return null;
     }
-
-    // Close the file handle
-    fclose($fh);
 
     log::add(__CLASS__, 'debug', '| ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
