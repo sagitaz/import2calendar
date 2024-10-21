@@ -3,7 +3,10 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
-# 07/10/2024 Stable 1.1.2
+# 21/10/2024 Stable 1.1.3
+- Correction si l'évènement comporte une alarme, le titre et la description étaient modifiés.
+
+# 16/10/2024 Stable 1.1.2
 - Correction sur la récupération des évènements sur plusieurs années
 
 # 07/10/2024 Stable 1.1.1
