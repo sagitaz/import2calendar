@@ -5,6 +5,7 @@ S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne un
 
 # 21/10/2024 Stable 1.1.3
 - Correction si l'évènement comporte une alarme, le titre et la description étaient modifiés.
+- Correction de l'importation des liens webcal.
 
 # 16/10/2024 Stable 1.1.2
 - Correction sur la récupération des évènements sur plusieurs années
