@@ -384,6 +384,19 @@ class import2calendar extends eqLogic
     $exdates = "";
     $formattedDates = [];
     foreach ($lines as $line) {
+      // Ignorer les lignes si on est dans une section VALARM
+      if (strpos($line, 'BEGIN:VALARM') === 0) {
+        $inAlarm = true;
+        continue;
+      }
+      if (strpos($line, 'END:VALARM') === 0) {
+        $inAlarm = false;
+        continue;
+      }
+      if ($inAlarm) {
+        continue; // Ignorer cette ligne si on est dans une section VALARM
+      }
+      
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
         $event = [];
         $exdates = [];
