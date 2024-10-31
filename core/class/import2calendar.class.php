@@ -210,7 +210,7 @@ class import2calendar extends eqLogic
     $file = str_replace('webcal://', 'https://', $file);
 
     $icalData = @file_get_contents($file);
-  
+
     // Vérifier si file_get_contents a réussi
     if ($icalData === false) {
       log::add(__CLASS__, 'error', '| Impossible de parser le fichier ical => ' . $file);
@@ -389,7 +389,7 @@ class import2calendar extends eqLogic
       if ($inAlarm) {
         continue; // Ignorer cette ligne si on est dans une section VALARM
       }
-      
+
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
         $event = [];
         $exdates = [];
@@ -489,11 +489,12 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-
+    //  log::add(__CLASS__, 'debug', "| rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
       $frequence = $rrule['INTERVAL'] ?? 1;
+      $nationalDay = "all";
       $unit = 'days';
       $mode = "simple";
       $position = "first";
@@ -502,7 +503,17 @@ class import2calendar extends eqLogic
       elseif ($icalUnit === 'YEARLY') $unit = 'years';
       elseif ($icalUnit === 'WEEKLY') {
         $unit = 'days';
-        $frequence = $frequence * 7;
+        // si frequence est 1 alors on laisse 1, si frequence est 2 alors on met 1 et on exclue le type de semaine pair ou impair, si 3 alors on multiplis par 7 jours.
+        if ($frequence == 2) {
+          // Déterminer si la semaine est paire ou impaire
+          $weekNumber = date('W', strtotime($startDate));
+          $nationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
+          $frequence = 1;
+        } elseif ($frequence > 2) {
+          $frequence = $frequence * 7;
+        } else {
+          $frequence = 1;
+        }
       }
 
       if (isset($rrule['BYDAY'])) {
@@ -553,9 +564,10 @@ class import2calendar extends eqLogic
         'freq' => $frequence,
         'unite' => $unit,
         'excludeDay' => $excludeDay,
-        'nationalDay' => 'all',
+        'nationalDay' => $nationalDay,
       ];
     }
+ //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
     return $repeat;
   }
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s')
