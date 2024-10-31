@@ -489,12 +489,14 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-    //  log::add(__CLASS__, 'debug', "| rrule : " . json_encode($rrule));
+      //  log::add(__CLASS__, 'debug', "| rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
       $frequence = $rrule['INTERVAL'] ?? 1;
       $nationalDay = "all";
+      $includeDate = "";
+      $enable = 1;
       $unit = 'days';
       $mode = "simple";
       $position = "first";
@@ -511,6 +513,9 @@ class import2calendar extends eqLogic
           $frequence = 1;
         } elseif ($frequence > 2) {
           $frequence = $frequence * 7;
+          // lister les jours sur 6 mois
+          $includeDate = self::occurrenceMultipleWeek($rrule, $startDate);
+          $enable = 0;
         } else {
           $frequence = 1;
         }
@@ -551,13 +556,13 @@ class import2calendar extends eqLogic
       }
 
       $repeat =  [
-        'includeDate' => '',
+        'includeDate' => $includeDate,
         'includeDateFromCalendar' => '',
         'includeDateFromEvent' => '',
         'excludeDate' => '',
         'excludeDateFromCalendar' => '',
         'excludeDateFromEvent' => '',
-        'enable' => '1',
+        'enable' => $enable,
         'mode' => $mode,
         'positionAt' => $position,
         'day' => $dayOfWeek,
@@ -567,8 +572,52 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
- //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
+    //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
     return $repeat;
+  }
+
+  // fonctions pour les occurence de plus de 2 semaines
+  private static function occurrenceMultipleWeek($rrule, $startDate)
+  {
+
+    // Dates de début et de fin sur un an
+    $startDate = new DateTime($startDate);
+    $endDate = (new DateTime('now'))->modify('+1 year');
+
+    // Configuration de l'intervalle et des jours de la semaine
+    $intervalWeeks = (int)$rrule['INTERVAL'];
+    $daysOfWeek = explode(',', $rrule['BYDAY']);
+    $dayMap = [
+      "MO" => "Monday",
+      "TU" => "Tuesday",
+      "WE" => "Wednesday",
+      "TH" => "Thursday",
+      "FR" => "Friday",
+      "SA" => "Saturday",
+      "SU" => "Sunday"
+    ];
+
+    // Fonction pour générer les occurrences
+    $occurrenceDates = [];
+    $currentDate = clone $startDate;
+
+    while ($currentDate <= $endDate) {
+      foreach ($daysOfWeek as $dayCode) {
+        $occurrence = (clone $currentDate)->modify($dayMap[$dayCode]);
+        if ($occurrence >= $currentDate && $occurrence <= $endDate) {
+          $occurrenceDates[] = $occurrence->format('Y-m-d');
+        }
+      }
+      // Passer à la prochaine série de jours dans 7 semaines
+      $currentDate->modify("+$intervalWeeks week");
+    }
+    // Supprimer le premier jour de la liste des occurrences
+    array_shift($occurrenceDates);
+    // Trier les dates et les convertir en une chaîne de caractères
+    sort($occurrenceDates);
+    $dates = implode(',', $occurrenceDates);
+    // Affichage des résultats
+    return $dates;
   }
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s')
   {
