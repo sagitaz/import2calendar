@@ -67,6 +67,14 @@ Les évènements présent dans l'occurence reste visible sur le calendrier tant 
 
 Exemple : 1 évènement tous les 5 jours du 01-03-2024 au 24-11-2024. Tous les évènements sont visibles sur le calendrier jusqu'au 27-11-2024 (3 jours après la fin de l'occurence).
 
+## ical <-> jeedom
+Pour certaine occurence, il ne sera pas possible de convertir au format Jeedom, il faut donc adapter vos calendrier.
+C'est le cas par exemple sur ceci :
+- mardi et mercredi toutes les 3 semaines
+Pour que cela soit remonté dans jeedom il vous faut créer :
+- mardi toute les 3 semaines
+- mercredi toutes les 3 semaines
+
 # JeeMate
 - la description et le lieu seront visible dans l'agenda importé dans JeeMate.
 
