@@ -582,7 +582,11 @@ class import2calendar extends eqLogic
 
     // Dates de début et de fin sur un an
     $startDate = new DateTime($startDate);
-    $endDate = (new DateTime('now'))->modify('+1 year');
+    if (!empty($rrule['UNTIL'])) {
+      $endDate = new DateTime($rrule['UNTIL']);
+    } else {
+      $endDate = (new DateTime('now'))->modify('+1 year');
+    }
 
     // Configuration de l'intervalle et des jours de la semaine
     $intervalWeeks = (int)$rrule['INTERVAL'];
@@ -600,6 +604,9 @@ class import2calendar extends eqLogic
     // Fonction pour générer les occurrences
     $occurrenceDates = [];
     $currentDate = clone $startDate;
+
+    // S'assurer que la partie heure est à 00:00:00 pour éviter les erreurs
+    $currentDate->setTime(0, 0);
 
     while ($currentDate <= $endDate) {
       foreach ($daysOfWeek as $dayCode) {
