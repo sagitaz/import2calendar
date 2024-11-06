@@ -12,7 +12,7 @@ Commencer par ajouter un équipement et choisir son nom
 - **ical** : indiquer l'URL du fichier ical à convertir.
 - **heure de début forcées** : choisir une heure de début d'évènement pour tous ceux du calendrier. Par défault ce seront les heures de début de l'évènement enregistré dans l'ical.
 - **heure de fin forcées** : choisir une heure de fin d'évènement pour tous ceux du calendrier. Par défault ce seront les heures de fin de l'évènement enregistré dans l'ical.
-- **ical auto** : vacances Française et jours fériés. Si sélectionner alors ne rien indiqué dans la zone ical.
+- **ical auto** : vacances Française et jours fériés. Si sélectionné alors ne rien indiquer dans la zone ical.
 - **cron** : choisir le temps de rafraîchissement voulu pour le calendrier.
 
 ### Paramètres d'affichage
