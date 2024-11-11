@@ -201,20 +201,20 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								<div class="col-sm-6">
 									<select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="icalAuto">
 										<option value="" selected>{{Aucun}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A-B-C-Corse.ics">{{Vacance scolaire FR zone A-B-C}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics">{{Vacance scolaire FR zone A}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-B.ics">{{Vacance scolaire FR zone B}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-C.ics">{{Vacance scolaire FR zone C}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A-B-C-Corse.ics">{{Vacances scolaires FR zone A-B-C}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-A.ics">{{Vacances scolaires FR zone A}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-B.ics">{{Vacances scolaires FR zone B}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Zone-C.ics">{{Vacances scolaires FR zone C}}</option>
 										<option value="https://etalab.github.io/jours-feries-france-data/ics/jours_feries_metropole.ics">{{Jours fériés Métropole}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Guadeloupe.ics">{{Vacance scolaire FR Guadeloupe}}</option>
-										<option value="https://www.data.gouv.fr/fr/datasets/r/62349221-4996-4284-857d-f6ac02082fc1">{{Vacance scolaire FR Guyane}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Martinique.ics">{{Vacance scolaire FR Martinique}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Mayotte.ics">{{Vacance scolaire FR Mayotte}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/NouvelleCaledonie.ics">{{Vacance scolaire FR Nouvelle Calédonie}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Polynesie.ics">{{Vacance scolaire FR Polynésie}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Reunion.ics">{{Vacance scolaire FR Réunion}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/SaintPierreEtMiquelon.ics">{{Vacance scolaire FR Saint-Pierre et Miquelon}}</option>
-										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/WallisEtFutuna.ics">{{Vacance scolaire FR Wallis et Futuna}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Guadeloupe.ics">{{Vacances scolaires FR Guadeloupe}}</option>
+										<option value="https://www.data.gouv.fr/fr/datasets/r/62349221-4996-4284-857d-f6ac02082fc1">{{Vacances scolaires FR Guyane}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Martinique.ics">{{Vacances scolaires FR Martinique}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Mayotte.ics">{{Vacances scolaires FR Mayotte}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/NouvelleCaledonie.ics">{{Vacances scolaires FR Nouvelle Calédonie}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Polynesie.ics">{{Vacances scolaires FR Polynésie}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/Reunion.ics">{{Vacances scolaires FR Réunion}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/SaintPierreEtMiquelon.ics">{{Vacances scolaires FR Saint-Pierre et Miquelon}}</option>
+										<option value="https://fr.ftp.opendatasoft.com/openscol/fr-en-calendrier-scolaire/WallisEtFutuna.ics">{{Vacances scolaires FR Wallis et Futuna}}</option>
 									</select>
 								</div>
 							</div>
