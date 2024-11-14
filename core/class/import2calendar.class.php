@@ -522,7 +522,14 @@ class import2calendar extends eqLogic
       }
 
       if (isset($rrule['BYDAY'])) {
-        $daysArray = explode(",", $rrule['BYDAY']);
+        // Si BYDAY est vide, utiliser le jour de startDate
+        if (empty($rrule['BYDAY'])) {
+          $dayOfWeek = date('D', strtotime($startDate));
+          $daysArray = [strtoupper($dayOfWeek)];
+          log::add(__CLASS__, 'debug', "| BYDAY est vide, on défini le jour a celui de startDate : " . json_encode($dayOfWeek));
+        } else {
+          $daysArray = explode(",", $rrule['BYDAY']);
+        }
         $excludeDay = [];
         $daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
