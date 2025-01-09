@@ -868,7 +868,7 @@ class import2calendar extends eqLogic
   private static function isEventDifferent($option, $existingOption)
   {
     // Liste des paramètres à vérifier pour détecter les changements
-    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId'];
+    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid','recurrenceId', 'exdate'];
     foreach ($paramsToCheck as $param) {
       // Comparer les valeurs des paramètres si elles existent
       $optionValue = $option['cmd_param'][$param] ?? null;
