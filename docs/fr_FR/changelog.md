@@ -3,6 +3,12 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 09/01/2024 Beta 1.1.7
+- Correction mise à jour calendrier avec date exclus
+
+# 07/01/2024 Beta 1.1.6
+- Correction heure de fin journée entière
+
 # 06/11/2024 Stable 1.1.5
 - Ajout des vacances scolaires DOM TOM
 

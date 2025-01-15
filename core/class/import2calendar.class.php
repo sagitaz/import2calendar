@@ -155,7 +155,9 @@ class import2calendar extends eqLogic
   // Fonction exécutée automatiquement après la mise à jour de l'équipement
   public function postUpdate()
   {
-    //  self::parseIcal($this->getId());
+    if ($this->getIsEnable() == 0) {
+      return;
+    }
     self::parseIcal($this->getId());
   }
 
@@ -375,7 +377,12 @@ class import2calendar extends eqLogic
     $event = [];
     $description = '';
     $exdates = "";
+    $dtStart = "";
+    $dtEnd = "";
+    $dtEqual = "";
     $formattedDates = [];
+    $inAlarm = false;
+    
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
       if (strpos($line, 'BEGIN:VALARM') === 0) {
@@ -431,10 +438,16 @@ class import2calendar extends eqLogic
           }
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
-        $event['start_date'] = self::formatDate(substr($line, strlen('DTSTART:')));
+        $dtStart = substr($line, strlen('DTSTART:'));
+   // log::add(__CLASS__, 'debug', "| Date START : " . json_encode($dtStart));
+        $event['start_date'] = self::formatDate($dtStart);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
-        $event['end_date'] = self::formatDate(substr($line, strlen('DTEND:')));
+        $dtEnd = substr($line, strlen('DTEND:'));
+   // log::add(__CLASS__, 'debug', "| Date END : " . json_encode($dtEnd));
+        $dtEqual = ($dtStart === $dtEnd) ? 1 : 0;
+   // log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
+        $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
         $summary = self::translateName(substr($line, strlen('SUMMARY:')));
@@ -522,7 +535,14 @@ class import2calendar extends eqLogic
       }
 
       if (isset($rrule['BYDAY'])) {
-        $daysArray = explode(",", $rrule['BYDAY']);
+        // Si BYDAY est vide, utiliser le jour de startDate
+        if (empty($rrule['BYDAY'])) {
+          $dayOfWeek = date('D', strtotime($startDate));
+          $daysArray = [strtoupper($dayOfWeek)];
+          log::add(__CLASS__, 'debug', "| BYDAY est vide, on défini le jour a celui de startDate : " . json_encode($dayOfWeek));
+        } else {
+          $daysArray = explode(",", $rrule['BYDAY']);
+        }
         $excludeDay = [];
         $daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -626,10 +646,12 @@ class import2calendar extends eqLogic
     // Affichage des résultats
     return $dates;
   }
-  private static function formatDate($dateString, $format = 'Y-m-d H:i:s')
+  private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
     // remplace 
+    
     $dateString = self::convertTimezone($dateString);
+    $hasTimeinfo = self::hasTimeInfo($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
     if (strpos($dateString, "TZID=") !== false) {
       $timezone = substr($dateString, strpos($dateString, "=") + 1, strpos($dateString, ":") - strpos($dateString, "=") - 1);
@@ -638,7 +660,8 @@ class import2calendar extends eqLogic
     } elseif (strpos($dateString, "VALUE=DATE:") !== false) {
       // Pour les dates sans indication de fuseau horaire
       $dateString = substr($dateString, strlen("VALUE=DATE:"));
-      $dateTime = new DateTime($dateString);
+    $dateTime = new DateTime($dateString);
+	
     } else {
       // Pour les dates en format UTC
       $dateTime = new DateTime($dateString);
@@ -647,9 +670,22 @@ class import2calendar extends eqLogic
     $jeedomTimezone = config::byKey('timezone');
     $dateTime->setTimezone(new DateTimeZone($jeedomTimezone));
     // Formater la date selon le format spécifié
-    return $dateTime->format($format);
+	$date = $dateTime->format($format);
+ //   log::add(__CLASS__, 'debug', "| Date : " . json_encode($date));
+    // Vérifier et corriger l'heure de fin
+    if (($end == 1) && ($hasTimeinfo == 0) && ($dtEqual == 0)) {
+      $dateTime = new DateTime($date);
+	  $date = $dateTime->modify('-1 minute');
+		$date = $dateTime->format($format);
+    } 
+    return $date;
   }
 
+  private static function hasTimeInfo($date) {
+    // Vérifier si la chaîne contient "T" suivi de chiffres pour heures, minutes, ou secondes
+    return preg_match('/T\d{2}/', $date) ? 1 : 0;
+}
+  
   private static function formatCount($event)
   {
     // Date de début de la répétition
@@ -836,7 +872,7 @@ class import2calendar extends eqLogic
   private static function isEventDifferent($option, $existingOption)
   {
     // Liste des paramètres à vérifier pour détecter les changements
-    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId'];
+    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid','recurrenceId', 'exdate'];
     foreach ($paramsToCheck as $param) {
       // Comparer les valeurs des paramètres si elles existent
       $optionValue = $option['cmd_param'][$param] ?? null;
