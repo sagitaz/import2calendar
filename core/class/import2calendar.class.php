@@ -155,7 +155,9 @@ class import2calendar extends eqLogic
   // Fonction exécutée automatiquement après la mise à jour de l'équipement
   public function postUpdate()
   {
-    //  self::parseIcal($this->getId());
+    if ($this->getIsEnable() == 0) {
+      return;
+    }
     self::parseIcal($this->getId());
   }
 
@@ -379,6 +381,8 @@ class import2calendar extends eqLogic
     $dtEnd = "";
     $dtEqual = "";
     $formattedDates = [];
+    $inAlarm = false;
+    
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
       if (strpos($line, 'BEGIN:VALARM') === 0) {
