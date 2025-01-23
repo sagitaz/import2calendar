@@ -34,7 +34,7 @@ Pour tous les événements de votre calendrier seront ajoutées les actions déf
 Vous pouvez réorganiser les actions en glisser/déposer.
 
 
-![Configurations des actions](../images/import2calendar-config-actions.png)
+![Configurations des actions](../images/import2calendar_screenshot03.png)
 
 Vous pouvez indiquer dans la case **nom**, l'évènement pour lequel l'action est prévu.
 
