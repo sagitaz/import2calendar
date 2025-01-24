@@ -1104,9 +1104,18 @@ class import2calendar extends eqLogic
         continue; // On passe à l'action suivante
       }
 
-      // Si cmdEventName est "others" et si name n'est pas dans allNames, on ajoute l'action
-      if ($cmdEventName === "others" && !in_array($nameLower, $allNames)) {
-        $result[] = $action;
+      // Si cmdEventName est "others" et si name ne contient aucun des noms dans allNames, on ajoute l'action
+      if ($cmdEventName === "others") {
+        $matchFound = false;
+        foreach ($allNames as $allowedName) {
+          if (strpos($nameLower, $allowedName) !== false) {
+            $matchFound = true;
+            break;
+          }
+        }
+        if (!$matchFound) {
+          $result[] = $action;
+        }
         continue;
       }
 
