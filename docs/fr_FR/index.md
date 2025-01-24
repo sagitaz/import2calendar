@@ -36,7 +36,9 @@ Vous pouvez réorganiser les actions en glisser/déposer.
 
 ![Configurations des actions](../images/import2calendar_screenshot03.png)
 
-Vous pouvez indiquer dans la case **nom**, l'évènement pour lequel l'action est prévu.
+Vous pouvez indiquer dans la case **nom**, l'évènement pour lequel l'action est prévu. 
+- Accepte un nom partiel
+- Ne tiens pas compte des majuscules
 
 **1** et **2** - Laisser vide ou mettre **all** pour que l'action soit ajoutée à tous les évènement de l'agenda.
 **4** - Mettre **others** pour que l'action soit ajoutée à tous les évènement de l'agenda sauf ceux pour lesquels une action personnalisée est prévu.
@@ -45,6 +47,21 @@ Vous pouvez indiquer dans la case **nom**, l'évènement pour lequel l'action es
 
 Vous pouvez maintenant cliquer sur **sauvegarder**.
 L'agenda correspondant sera créé dans le plugin agenda.
+
+Exemple :
+
+Ici, nous voyons les évènement dans le plugin Agenda, on voit par ailleurs que j’ai personnalisé la couleur également.
+
+![Agenda](../images/Agenda-exemple.png)
+
+La configuration dans le plugin import2calendar
+
+![Couleurs](../images/personnalisation-couleurs.png)
+
+![Actions](../images/personnalisation-actions.png)
+
+On retourne sur l'agenda pour vérifier les actions
+![Agenda vérification](../images/import2calendarActions.gif)
 
 # Édition d'un équipement
 Si vous modifiez une des options suivantes :

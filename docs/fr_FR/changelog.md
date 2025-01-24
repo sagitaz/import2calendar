@@ -3,7 +3,10 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
-# 09/01/2024 Beta 1.1.7
+# 24/01/2025 Stable 1.1.8
+- Correction de **others** sur les actions
+
+# 09/01/2025 Beta 1.1.7
 - Correction mise à jour calendrier avec date exclus
 
 # 07/01/2024 Beta 1.1.6
