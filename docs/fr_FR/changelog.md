@@ -3,6 +3,9 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 30/01/2025 Beta 1.1.9
+- Correction sur evenement recurrent 1 semaine provenant d'un calendrier infomaniak
+
 # 24/01/2025 Stable 1.1.8
 - Correction de **others** sur les actions
 
