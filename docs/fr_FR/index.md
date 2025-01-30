@@ -102,3 +102,6 @@ Pour que cela soit remonté dans jeedom il vous faut créer :
 # Support
 - Community Jeedom
 - Discord JeeMate
+
+# Demande d'aide
+Afin de me simplifier la tâche lors du débug d'une erreur de conversion, je vous demanderai de créer un aganda de test avec seulement l'événement qui pose problème et de me donner un accès à cet ICAL.
