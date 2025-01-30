@@ -382,7 +382,7 @@ class import2calendar extends eqLogic
     $dtEqual = "";
     $formattedDates = [];
     $inAlarm = false;
-    
+
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
       if (strpos($line, 'BEGIN:VALARM') === 0) {
@@ -439,14 +439,14 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-   // log::add(__CLASS__, 'debug', "| Date START : " . json_encode($dtStart));
+        // log::add(__CLASS__, 'debug', "| Date START : " . json_encode($dtStart));
         $event['start_date'] = self::formatDate($dtStart);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
         $dtEnd = substr($line, strlen('DTEND:'));
-   // log::add(__CLASS__, 'debug', "| Date END : " . json_encode($dtEnd));
+        // log::add(__CLASS__, 'debug', "| Date END : " . json_encode($dtEnd));
         $dtEqual = ($dtStart === $dtEnd) ? 1 : 0;
-   // log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
+        // log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
         $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
@@ -510,6 +510,7 @@ class import2calendar extends eqLogic
       $nationalDay = "all";
       $includeDate = "";
       $enable = 1;
+      $byDay = 0;
       $unit = 'days';
       $mode = "simple";
       $position = "first";
@@ -531,15 +532,17 @@ class import2calendar extends eqLogic
           $enable = 0;
         } else {
           $frequence = 1;
+          $byDay = isset($rrule['BYDAY']) ? 0 : 1;
         }
       }
 
-      if (isset($rrule['BYDAY'])) {
+      if (isset($rrule['BYDAY']) || $byDay == 1) {
         // Si BYDAY est vide, utiliser le jour de startDate
         if (empty($rrule['BYDAY'])) {
-          $dayOfWeek = date('D', strtotime($startDate));
-          $daysArray = [strtoupper($dayOfWeek)];
+          //   $dayOfWeek = date('D', strtotime($startDate));
+          $daysArray = [strtoupper(substr($dayOfWeek, 0, 2))];
           log::add(__CLASS__, 'debug', "| BYDAY est vide, on défini le jour a celui de startDate : " . json_encode($dayOfWeek));
+          //   $rrule['BYDAY'] = $dayOfWeek;
         } else {
           $daysArray = explode(",", $rrule['BYDAY']);
         }
@@ -592,7 +595,7 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
-    //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
+ //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -649,7 +652,7 @@ class import2calendar extends eqLogic
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
     // remplace 
-    
+
     $dateString = self::convertTimezone($dateString);
     $hasTimeinfo = self::hasTimeInfo($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
@@ -660,8 +663,7 @@ class import2calendar extends eqLogic
     } elseif (strpos($dateString, "VALUE=DATE:") !== false) {
       // Pour les dates sans indication de fuseau horaire
       $dateString = substr($dateString, strlen("VALUE=DATE:"));
-    $dateTime = new DateTime($dateString);
-	
+      $dateTime = new DateTime($dateString);
     } else {
       // Pour les dates en format UTC
       $dateTime = new DateTime($dateString);
@@ -670,22 +672,23 @@ class import2calendar extends eqLogic
     $jeedomTimezone = config::byKey('timezone');
     $dateTime->setTimezone(new DateTimeZone($jeedomTimezone));
     // Formater la date selon le format spécifié
-	$date = $dateTime->format($format);
- //   log::add(__CLASS__, 'debug', "| Date : " . json_encode($date));
+    $date = $dateTime->format($format);
+    //   log::add(__CLASS__, 'debug', "| Date : " . json_encode($date));
     // Vérifier et corriger l'heure de fin
     if (($end == 1) && ($hasTimeinfo == 0) && ($dtEqual == 0)) {
       $dateTime = new DateTime($date);
-	  $date = $dateTime->modify('-1 minute');
-		$date = $dateTime->format($format);
-    } 
+      $date = $dateTime->modify('-1 minute');
+      $date = $dateTime->format($format);
+    }
     return $date;
   }
 
-  private static function hasTimeInfo($date) {
+  private static function hasTimeInfo($date)
+  {
     // Vérifier si la chaîne contient "T" suivi de chiffres pour heures, minutes, ou secondes
     return preg_match('/T\d{2}/', $date) ? 1 : 0;
-}
-  
+  }
+
   private static function formatCount($event)
   {
     // Date de début de la répétition
@@ -871,12 +874,26 @@ class import2calendar extends eqLogic
 
   private static function isEventDifferent($option, $existingOption)
   {
-    // Liste des paramètres à vérifier pour détecter les changements
-    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid','recurrenceId', 'exdate'];
+
+    // Liste des paramètres à vérifier pour détecter les changements dans cmd_param
+    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId', 'exdate'];
     foreach ($paramsToCheck as $param) {
       // Comparer les valeurs des paramètres si elles existent
       $optionValue = $option['cmd_param'][$param] ?? null;
       $existingOptionValue = $existingOption['cmd_param'][$param] ?? null;
+
+      if ($optionValue != $existingOptionValue) {
+        log::add(__CLASS__, 'debug', '| Différence sur : ' . $param);
+        return true; // Différence détectée
+      }
+    }
+
+    // Liste des paramètres à vérifier pour détecter les changements dans repeat
+    $paramsToCheck = ['day', 'excludeDay'];
+    foreach ($paramsToCheck as $param) {
+      // Comparer les valeurs des paramètres si elles existent
+      $optionValue = $option['repeat'][$param] ?? null;
+      $existingOptionValue = $existingOption['repeat'][$param] ?? null;
 
       if ($optionValue != $existingOptionValue) {
         log::add(__CLASS__, 'debug', '| Différence sur : ' . $param);
