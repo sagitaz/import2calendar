@@ -652,7 +652,7 @@ class import2calendar extends eqLogic
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
     // remplace 
-
+    $dateString = str_replace('"','',$dateString );
     $dateString = self::convertTimezone($dateString);
     $hasTimeinfo = self::hasTimeInfo($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
