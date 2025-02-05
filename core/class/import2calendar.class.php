@@ -429,8 +429,8 @@ class import2calendar extends eqLogic
             if (!isset($event['end_date']) || $event['start_date'] === $event['end_date']) {
               $startDateTime = new DateTime($event['start_date']);
               $endDateTime = clone $startDateTime;
-              $endDateTime->add(new DateInterval('PT30M'));
-              $event['end_date'] = $endDateTime->format('Y-m-d H:i:s');
+         //     $endDateTime->add(new DateInterval('PT30M'));
+              $event['end_date'] = $endDateTime->format('Y-m-d 23:59:59');
             }
 
             // Ajouter l'évenement à la liste
