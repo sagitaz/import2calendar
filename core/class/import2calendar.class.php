@@ -677,8 +677,7 @@ class import2calendar extends eqLogic
     // Vérifier et corriger l'heure de fin
     if (($end == 1) && ($hasTimeinfo == 0) && ($dtEqual == 0)) {
       $dateTime = new DateTime($date);
-      $date = $dateTime->modify('-1 minute');
-      $date = $dateTime->format($format);
+      $date = $dateTime->format('Y-m-d 23:59:59');
     }
     return $date;
   }
@@ -1025,6 +1024,7 @@ class import2calendar extends eqLogic
   {
     $english = array(
       "Airbnb (Not available)",
+      "CLOSED - Not available",
       "Reserved",
       "Full moon",
       "Last quarter",
@@ -1033,7 +1033,8 @@ class import2calendar extends eqLogic
       "\, "
     );
     $french = array(
-      "Non disponible",
+      "Airbnb - Non disponible",
+      "Booking - Non disponible",
       "Réservé",
       "Pleine lune",
       "Dernier quartier",
