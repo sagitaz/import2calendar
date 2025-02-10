@@ -295,6 +295,11 @@ class import2calendar extends eqLogic
       $eventName = self::emojiClean($summary);
       $note = ''; // Valeur par défaut pour éviter les erreurs
 
+      if (isset($event['location']) && !is_null($event['location'])) {
+        $location = self::emojiClean($event['location']);
+        $location = str_replace("LANGUAGE=fr:", "", $location);
+      }
+
       if (isset($event['description']) && !is_null($event['description'])) {
         $note = self::emojiClean($event['description']);
       }
@@ -316,7 +321,7 @@ class import2calendar extends eqLogic
             "transparent" => "0",
             "noDisplayOnDashboard" => "0",
             "note" => isset($note['htmlFormat']) ? $note['htmlFormat'] : '', // Vérification supplémentaire
-            "location" => isset($event['location']) ? $event['location'] : '',
+            "location" => isset($location['htmlFormat']) ? $location['htmlFormat'] : '',
             "uid" => isset($event['uid']) ? $event['uid'] : '',
             "recurrenceId" => isset($event['recurrenceId']) ? $event['recurrenceId'] : '',
             "exdate" => isset($event['exdate']) ? $event['exdate'] : '',
@@ -345,7 +350,7 @@ class import2calendar extends eqLogic
               "transparent" => "0",
               "noDisplayOnDashboard" => "0",
               "note" => isset($note['htmlFormat']) ? $note['htmlFormat'] : '', // Vérification supplémentaire
-              "location" => isset($event['location']) ? $event['location'] : '',
+              "location" => isset($location['htmlFormat']) ? $location['htmlFormat'] : '',
               "uid" => isset($event['uid']) ? $event['uid'] : '',
               "recurrenceId" => isset($event['recurrenceId']) ? $event['recurrenceId'] : '',
               "exdate" => isset($event['exdate']) ? $event['exdate'] : '',
@@ -429,7 +434,7 @@ class import2calendar extends eqLogic
             if (!isset($event['end_date']) || $event['start_date'] === $event['end_date']) {
               $startDateTime = new DateTime($event['start_date']);
               $endDateTime = clone $startDateTime;
-         //     $endDateTime->add(new DateInterval('PT30M'));
+              //     $endDateTime->add(new DateInterval('PT30M'));
               $event['end_date'] = $endDateTime->format('Y-m-d 23:59:59');
             }
 
@@ -595,7 +600,7 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
- //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
+    //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -652,7 +657,7 @@ class import2calendar extends eqLogic
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
     // remplace 
-    $dateString = str_replace('"','',$dateString );
+    $dateString = str_replace('"', '', $dateString);
     $dateString = self::convertTimezone($dateString);
     $hasTimeinfo = self::hasTimeInfo($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
@@ -1030,6 +1035,7 @@ class import2calendar extends eqLogic
       "Last quarter",
       "New moon",
       "First quarter",
+      "LANGUAGE=fr:",
       "\, "
     );
     $french = array(
@@ -1040,6 +1046,7 @@ class import2calendar extends eqLogic
       "Dernier quartier",
       "Nouvelle lune",
       "Premier quartier",
+      "",
       ", "
     );
 
