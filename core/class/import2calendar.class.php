@@ -78,8 +78,36 @@ class import2calendar extends eqLogic
 
   /*
   * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
-  public static function cron10() {}
   */
+
+  public static function cron10()
+  {
+    // On récupère tous les calendrier créé par le plugin
+    $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
+    foreach ($allCalendar as $calendar) {
+      $id = $calendar->getid();
+      log::add("import2calendar_cron", 'debug', 'Calendar : ' . $id);
+      $inDB = self::calendarGetEventsByEqId($id);
+      foreach ($inDB as $event) {
+        // Créer des objets DateTime pour une comparaison plus précise
+        $startDate = new DateTime($event['startDate']);
+        $endDate = new DateTime($event['endDate']);
+        $today = new DateTime();
+
+        // Normaliser les dates pour comparer uniquement les dates (sans les heures)
+        $startDate->setTime(0, 0, 0);
+        $endDate->setTime(23, 59, 59);
+        $today->setTime(0, 0, 0);
+
+        // Vérifier si l'événement est en cours (aujourd'hui est entre la date de début et de fin)
+        if ($today >= $startDate && $today <= $endDate) {
+          log::add("import2calendar_cron", 'debug', 'Event en cours : ' . $event['cmd_param']['eventName'] .
+            ", début : " . $event['startDate'] .
+            ", fin : " . $event['endDate']);
+        }
+      }
+    }
+  }
 
   /*
   * Fonction exécutée automatiquement toutes les 15 minutes par Jeedom
@@ -226,8 +254,6 @@ class import2calendar extends eqLogic
     //  log::add(__CLASS__, 'debug', '| EVENTS = ' . json_encode($events));
     $n = 1;
     foreach ($events as $event) {
-      // Vérifier si le fichier iCal provient d'Airbnb
-      // if (strpos($icalConfig, 'airbnb') !== false) {
 
       if (!is_null($startTime) && $startTime != "") {
         log::add(__CLASS__, 'debug', '| modification horaire de début d\'èvénement');
@@ -388,6 +414,11 @@ class import2calendar extends eqLogic
     $formattedDates = [];
     $inAlarm = false;
 
+    // Extraire le PRODID
+    preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
+    $prodId = isset($matches[1]) ? trim($matches[1]) : 'Unknown';
+    log::add(__CLASS__, 'debug', '| PRODID = ' . $prodId);
+
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
       if (strpos($line, 'BEGIN:VALARM') === 0) {
@@ -449,10 +480,23 @@ class import2calendar extends eqLogic
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
         $dtEnd = substr($line, strlen('DTEND:'));
-        // log::add(__CLASS__, 'debug', "| Date END : " . json_encode($dtEnd));
+        log::add("import2calendar_date", 'debug', "| Date END 00 : " . json_encode($dtEnd));
         $dtEqual = ($dtStart === $dtEnd) ? 1 : 0;
-        // log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
+        log::add("import2calendar_date", 'debug', "| Date Identique : " . json_encode($dtEqual));
+
+        // Vérifier si c'est un événement Airbnb et ajuster la date de fin
+        if (stripos($prodId, 'Airbnb') !== false) {
+          // Nettoyer la date si elle contient VALUE=DATE:
+          if (strpos($dtEnd, 'VALUE=DATE:') !== false) {
+            $dtEnd = substr($dtEnd, strlen('VALUE=DATE:'));
+          }
+          $tempDate = new DateTime($dtEnd);
+          $dtEnd = $tempDate->format('Y-m-d 23:59:59');
+          log::add("import2calendar_date", 'debug', "| Airbnb détecté - Date de fin ajustée à 23:59:59");
+        }
+
         $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
+        log::add("import2calendar_date", 'debug', "| Date END 01 : " . json_encode($event['end_date']));
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
         $summary = self::translateName(substr($line, strlen('SUMMARY:')));
@@ -682,7 +726,11 @@ class import2calendar extends eqLogic
     // Vérifier et corriger l'heure de fin
     if (($end == 1) && ($hasTimeinfo == 0) && ($dtEqual == 0)) {
       $dateTime = new DateTime($date);
-      $date = $dateTime->format('Y-m-d 23:59:59');
+      // Vérifier si l'heure est minuit (00:00:00)
+      if ($dateTime->format('H:i:s') === '00:00:00') {
+        $dateTime->modify('-1 minute');
+        $date = $dateTime->format($format);
+      }
     }
     return $date;
   }
