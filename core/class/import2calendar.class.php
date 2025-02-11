@@ -24,12 +24,12 @@
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
 
 /*
-
 use calendar;
 use calendar_event;
 use utils;
 use plugin;
 use message;
+use calendarCmd;
 */
 
 class import2calendar extends eqLogic
@@ -80,35 +80,161 @@ class import2calendar extends eqLogic
   * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
   */
 
-  public static function cron10()
+  public static function cron()
   {
     // On récupère tous les calendrier créé par le plugin
     $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
     foreach ($allCalendar as $calendar) {
       $id = $calendar->getid();
-      log::add("import2calendar_cron", 'debug', 'Calendar : ' . $id);
+      $name = $calendar->getName();
       $inDB = self::calendarGetEventsByEqId($id);
+      $eventsToday = [];
+      $eventsTomorrow = [];
+
+      // Créer les objets DateTime pour aujourd'hui et demain
+      $today = new DateTime();
+      $tomorrow = (new DateTime())->modify('+1 day');
+
+      // Normaliser les dates
+      $today->setTime(
+        0,
+        0,
+        0
+      );
+      $tomorrow->setTime(0, 0, 0);
+
       foreach ($inDB as $event) {
-        // Créer des objets DateTime pour une comparaison plus précise
-        $startDate = new DateTime($event['startDate']);
-        $endDate = new DateTime($event['endDate']);
-        $today = new DateTime();
-
-        // Normaliser les dates pour comparer uniquement les dates (sans les heures)
-        $startDate->setTime(0, 0, 0);
-        $endDate->setTime(23, 59, 59);
-        $today->setTime(0, 0, 0);
-
-        // Vérifier si l'événement est en cours (aujourd'hui est entre la date de début et de fin)
-        if ($today >= $startDate && $today <= $endDate) {
-          log::add("import2calendar_cron", 'debug', 'Event en cours : ' . $event['cmd_param']['eventName'] .
-            ", début : " . $event['startDate'] .
-            ", fin : " . $event['endDate']);
+        // Vérifier pour aujourd'hui
+        $todayEvents = self::checkEventForDate($event, $today);
+        if ($todayEvents !== null) {
+          $eventsToday = array_merge($eventsToday, $todayEvents);
         }
+
+        // Vérifier pour demain
+        $tomorrowEvents = self::checkEventForDate($event, $tomorrow);
+        if ($tomorrowEvents !== null) {
+          $eventsTomorrow = array_merge(
+            $eventsTomorrow,
+            $tomorrowEvents
+          );
+        }
+      }
+      if (!empty($eventsToday)) {
+        $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
+        $cmd->save();
+        $cmd->event(implode(', ', $eventsToday));
+        $cmd->save();
+        log::add(__CLASS__, 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
+      }
+      if (!empty($eventsTomorrow)) {
+        $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
+        $cmd->save();
+        $cmd->event(implode(', ', $eventsTomorrow));
+        $cmd->save();
+        log::add(__CLASS__, 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
       }
     }
   }
 
+  private static function checkEventForDate($event, DateTime $checkDate)
+  {
+    $events = [];
+    $startDate = new DateTime($event['startDate']);
+    $endDate = new DateTime($event['endDate']);
+
+    // Normaliser les dates pour comparer uniquement les dates (sans les heures)
+    $startDate->setTime(0, 0, 0);
+    $endDate->setTime(23, 59, 59);
+    $checkDate->setTime(0, 0, 0);
+
+    // Vérifier si la date n'est pas exclue
+    $excludeDates = explode(',', $event['repeat']['excludeDate']);
+    $isExcluded = false;
+    foreach ($excludeDates as $excludeDate) {
+      if (!empty($excludeDate)) {
+        $excludeDateTime = new DateTime($excludeDate);
+        $excludeDateTime->setTime(0, 0, 0);
+        if ($checkDate == $excludeDateTime) {
+          $isExcluded = true;
+          break;
+        }
+      }
+    }
+
+    if (!$isExcluded) {
+      // Vérifier si l'événement est en cours
+      if ($checkDate >= $startDate && $checkDate <= $endDate) {
+        $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+      }
+
+      // Vérifier si la date est présente dans include
+      $includeDates = explode(',', $event['repeat']['includeDate']);
+      foreach ($includeDates as $includeDate) {
+        if (!empty($includeDate)) {
+          $includeDateTime = new DateTime($includeDate);
+          $includeDateTime->setTime(0, 0, 0);
+          if ($checkDate == $includeDateTime) {
+            $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+          }
+        }
+      }
+
+      // Vérifier la récurrence si elle est activée
+      if ($event['repeat']['enable'] == 1) {
+        $freq = $event['repeat']['freq'];
+        $unite = $event['repeat']['unite'];
+        $excludeDay = $event['repeat']['excludeDay'];
+
+        // Vérifier si le jour n'est pas exclu
+        $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
+        if ($excludeDay[$currentDayNum] == "1") {
+          // Calculer la différence entre la date vérifiée et la date de début
+          $interval = $startDate->diff($checkDate);
+          $daysDiff = $interval->days;
+
+          // Vérifier si la date correspond à la fréquence
+          switch ($unite) {
+            case 'days':
+              if ($freq > 0 && ($daysDiff % $freq) == 0) {
+                $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+              }
+              break;
+            case 'month':
+              // Si même jour du mois et la différence en mois est multiple de freq
+              if ($startDate->format('d') == $checkDate->format('d')) {
+                $monthsDiff = ($interval->y * 12) + $interval->m;
+                if ($freq > 0 && ($monthsDiff % $freq) == 0) {
+                  $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                }
+              }
+              break;
+          }
+        }
+      }
+    }
+
+    return !empty($events) ? $events : null;
+  }
+
+
+  private static function createCmd($eqLogicId, $logicalId, $name)
+  {
+    $eqLogic = eqLogic::byId($eqLogicId);
+    $cmd = $eqLogic->getCmd(null, $logicalId);
+
+    if (!is_object($cmd)) {
+      $cmd = new calendarCmd();
+      $cmd->setLogicalId($logicalId);
+      $cmd->setEqLogic_id($eqLogicId);
+      $cmd->setName($name);
+      $cmd->setType('info');
+      $cmd->setSubType('string');
+      $cmd->setIsVisible(0);
+      $cmd->setIsHistorized(0);
+      $cmd->save();
+    }
+    return $cmd;
+  }
   /*
   * Fonction exécutée automatiquement toutes les 15 minutes par Jeedom
   public static function cron15() {}
@@ -480,9 +606,9 @@ class import2calendar extends eqLogic
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
         $dtEnd = substr($line, strlen('DTEND:'));
-        log::add("import2calendar_date", 'debug', "| Date END 00 : " . json_encode($dtEnd));
+       // log::add(__CLASS__, 'debug', "| Date END 00 : " . json_encode($dtEnd));
         $dtEqual = ($dtStart === $dtEnd) ? 1 : 0;
-        log::add("import2calendar_date", 'debug', "| Date Identique : " . json_encode($dtEqual));
+      //  log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
 
         // Vérifier si c'est un événement Airbnb et ajuster la date de fin
         if (stripos($prodId, 'Airbnb') !== false) {
@@ -492,11 +618,11 @@ class import2calendar extends eqLogic
           }
           $tempDate = new DateTime($dtEnd);
           $dtEnd = $tempDate->format('Y-m-d 23:59:59');
-          log::add("import2calendar_date", 'debug', "| Airbnb détecté - Date de fin ajustée à 23:59:59");
+          log::add(__CLASS__, 'debug', "| Airbnb détecté - Date de fin ajustée à 23:59:59");
         }
 
         $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
-        log::add("import2calendar_date", 'debug', "| Date END 01 : " . json_encode($event['end_date']));
+      //  log::add(__CLASS__, 'debug', "| Date END 01 : " . json_encode($event['end_date']));
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
         $summary = self::translateName(substr($line, strlen('SUMMARY:')));
