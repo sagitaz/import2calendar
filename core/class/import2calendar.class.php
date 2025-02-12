@@ -80,62 +80,69 @@ class import2calendar extends eqLogic
   * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
   */
 
-  public static function cron()
+  public static function cronDaily()
   {
     // On récupère tous les calendrier créé par le plugin
     $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
     foreach ($allCalendar as $calendar) {
-      $id = $calendar->getid();
-      $name = $calendar->getName();
-      $inDB = self::calendarGetEventsByEqId($id);
-      $eventsToday = [];
-      $eventsTomorrow = [];
-
-      // Créer les objets DateTime pour aujourd'hui et demain
-      $today = new DateTime();
-      $tomorrow = (new DateTime())->modify('+1 day');
-
-      // Normaliser les dates
-      $today->setTime(
-        0,
-        0,
-        0
-      );
-      $tomorrow->setTime(0, 0, 0);
-
-      foreach ($inDB as $event) {
-        // Vérifier pour aujourd'hui
-        $todayEvents = self::checkEventForDate($event, $today);
-        if ($todayEvents !== null) {
-          $eventsToday = array_merge($eventsToday, $todayEvents);
-        }
-
-        // Vérifier pour demain
-        $tomorrowEvents = self::checkEventForDate($event, $tomorrow);
-        if ($tomorrowEvents !== null) {
-          $eventsTomorrow = array_merge(
-            $eventsTomorrow,
-            $tomorrowEvents
-          );
-        }
-      }
-      if (!empty($eventsToday)) {
-        $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
-        $cmd->save();
-        $cmd->event(implode(', ', $eventsToday));
-        $cmd->save();
-        log::add(__CLASS__, 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
-      }
-      if (!empty($eventsTomorrow)) {
-        $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
-        $cmd->save();
-        $cmd->event(implode(', ', $eventsTomorrow));
-        $cmd->save();
-        log::add(__CLASS__, 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
-      }
+      self::majCmdsAgenda($calendar);
     }
   }
 
+  private static function majCmdsAgenda($calendar)
+  {
+    $id = $calendar->getid();
+    $name = $calendar->getName();
+    $inDB = self::calendarGetEventsByEqId($id);
+    $eventsToday = [];
+    $eventsTomorrow = [];
+
+    // Créer les objets DateTime pour aujourd'hui et demain
+    $today = new DateTime();
+    $tomorrow = (new DateTime())->modify('+1 day');
+
+    // Normaliser les dates
+    $today->setTime(0, 0, 0);
+    $tomorrow->setTime(0, 0, 0);
+
+    foreach ($inDB as $event) {
+      // Vérifier pour aujourd'hui
+      $todayEvents = self::checkEventForDate($event, $today);
+      if ($todayEvents !== null) {
+        $eventsToday = array_merge($eventsToday, $todayEvents);
+        $eventsToday = array_unique($eventsToday);
+      }
+
+      // Vérifier pour demain
+      $tomorrowEvents = self::checkEventForDate($event, $tomorrow);
+      if ($tomorrowEvents !== null) {
+        $eventsTomorrow = array_merge($eventsTomorrow, $tomorrowEvents);
+        $eventsTomorrow = array_unique($eventsTomorrow);
+      }
+    }
+    $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
+    $cmd->save();
+
+    if (!empty($eventsToday)) {
+      $cmd->event(implode(', ', $eventsToday));
+      $cmd->save();
+    } else {
+      $cmd->event('');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
+
+    $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
+    $cmd->save();
+    if (!empty($eventsTomorrow)) {
+      $cmd->event(implode(', ', $eventsTomorrow));
+      $cmd->save();
+    } else {
+      $cmd->event('');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
+  }
   private static function checkEventForDate($event, DateTime $checkDate)
   {
     $events = [];
@@ -312,7 +319,9 @@ class import2calendar extends eqLogic
     if ($this->getIsEnable() == 0) {
       return;
     }
-    self::parseIcal($this->getId());
+    $calendarEqId = self::parseIcal($this->getId());
+    $calendar = calendar::byId($calendarEqId);
+    self::majCmdsAgenda($calendar);
   }
 
   // Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
@@ -606,9 +615,9 @@ class import2calendar extends eqLogic
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
         $dtEnd = substr($line, strlen('DTEND:'));
-       // log::add(__CLASS__, 'debug', "| Date END 00 : " . json_encode($dtEnd));
+        // log::add(__CLASS__, 'debug', "| Date END 00 : " . json_encode($dtEnd));
         $dtEqual = ($dtStart === $dtEnd) ? 1 : 0;
-      //  log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
+        //  log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
 
         // Vérifier si c'est un événement Airbnb et ajuster la date de fin
         if (stripos($prodId, 'Airbnb') !== false) {
@@ -622,7 +631,7 @@ class import2calendar extends eqLogic
         }
 
         $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
-      //  log::add(__CLASS__, 'debug', "| Date END 01 : " . json_encode($event['end_date']));
+        //  log::add(__CLASS__, 'debug', "| Date END 01 : " . json_encode($event['end_date']));
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
         $summary = self::translateName(substr($line, strlen('SUMMARY:')));
@@ -938,7 +947,8 @@ class import2calendar extends eqLogic
       // Récupérer les événements existants pour l'ID de calendrier donné
 
       foreach ($options as $option) {
-        log::add(__CLASS__, 'debug', '---------- START OPTIONS :b:' . $option['cmd_param']['eventName'] . ':/b: ---------- ');
+
+        log::add(__CLASS__, 'debug', '---------- START OPTIONS :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ---------- ');
 
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
