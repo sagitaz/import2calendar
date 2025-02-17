@@ -105,3 +105,8 @@ Pour que cela soit remonté dans jeedom il vous faut créer :
 
 # Demande d'aide
 Afin de me simplifier la tâche lors du débug d'une erreur de conversion, je vous demanderai de créer un aganda de test avec seulement l'événement qui pose problème et de me donner un accès à cet ICAL.
+
+# Remerciemment
+Le plugin et le support sont gratuits, vous souhaitez néanmoins m'offrir un café ou des couches pour bébé, je vous remercie par avance.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C1C61AKVV7)
