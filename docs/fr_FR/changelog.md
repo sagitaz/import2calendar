@@ -3,6 +3,17 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 11/02/2025 Beta 1.2.5
+- Création de commandes "aujourd'hui' et "demain" dans le plugin Agenda pour les évènement de votre ical.
+- Correction des dates journée
+- Autres petites corrections
+
+# 03/02/2025 Beta & Stable 1.2.0
+- Correction si timezone est mal formaté
+
+# 30/01/2025 Beta 1.1.9
+- Correction sur evenement recurrent 1 semaine provenant d'un calendrier infomaniak
+
 # 24/01/2025 Stable 1.1.8
 - Correction de **others** sur les actions
 
