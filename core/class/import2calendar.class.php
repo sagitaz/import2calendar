@@ -127,7 +127,7 @@ class import2calendar extends eqLogic
       $cmd->event(implode(', ', $eventsToday));
       $cmd->save();
     } else {
-      $cmd->event('');
+      $cmd->event('Aucun');
       $cmd->save();
     }
     log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
@@ -138,7 +138,7 @@ class import2calendar extends eqLogic
       $cmd->event(implode(', ', $eventsTomorrow));
       $cmd->save();
     } else {
-      $cmd->event('');
+      $cmd->event('Aucun');
       $cmd->save();
     }
     log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
