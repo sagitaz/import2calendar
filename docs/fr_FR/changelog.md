@@ -3,6 +3,10 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 21/02/2025 Beta 1.2.6
+- Correction exclude date et include date
+- Correction cmd aujourd'hui si evenement toutes les 2 semaines
+
 # 11/02/2025 Beta 1.2.5
 - Création de commandes "aujourd'hui' et "demain" dans le plugin Agenda pour les évènement de votre ical.
 - Correction des dates journée
