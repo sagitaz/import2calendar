@@ -191,10 +191,18 @@ class import2calendar extends eqLogic
         $freq = $event['repeat']['freq'];
         $unite = $event['repeat']['unite'];
         $excludeDay = $event['repeat']['excludeDay'];
+        $nationalDayEvent = $event['repeat']['nationalDay'];
 
-        // Vérifier si le jour n'est pas exclu
+        // Déterminer si la semaine est paire ou impaire
+        $weekNumber = date('W');
+        $nationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
+
+        // Vérifier si le jour n'est pas exclu et si la semaine correspond (si définie)
         $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
-        if ($excludeDay[$currentDayNum] == "1") {
+        if (
+          $excludeDay[$currentDayNum] == "1" &&
+          ($event['repeat']['nationalDay'] == "" || $event['repeat']['nationalDay'] == $nationalDay)
+        ) {
           // Calculer la différence entre la date vérifiée et la date de début
           $interval = $startDate->diff($checkDate);
           $daysDiff = $interval->days;
@@ -969,11 +977,34 @@ class import2calendar extends eqLogic
           $option['id'] = $existingEventId;
         }
 
+        log::add(__CLASS__, 'debug', 'OPTIONS ---------- ' . json_encode($option));
+        // Comparer les dates inclus et exclus
+        $cleanOption = self::cleanDate($option);
+        log::add(__CLASS__, 'debug', 'OPTIONS ---------- ' . json_encode($cleanOption));
         // Sauvegarder l'événement s'il n'est pas un duplicata
-        self::calendarSave($option);
+        self::calendarSave($cleanOption);
         log::add(__CLASS__, 'debug', '---------- END OPTIONS ---------- ');
       }
     }
+  }
+  private static function cleanDate($option)
+  {
+    // Récupérer les listes de dates
+    $includeDates = explode(',', $option['repeat']['includeDate']);
+    $excludeDates = explode(',', $option['repeat']['excludeDate']);
+
+    // Trouver les dates en double
+    $commonDates = array_intersect($includeDates, $excludeDates);
+
+    // Supprimer ces dates des deux tableaux
+    $includeDates = array_diff($includeDates, $commonDates);
+    $excludeDates = array_diff($excludeDates, $commonDates);
+
+    // Réaffecter les valeurs nettoyées
+    $option['repeat']['includeDate'] = implode(',', $includeDates);
+    $option['repeat']['excludeDate'] = implode(',', $excludeDates);
+
+    return $option;
   }
 
   private static function handleExdate(&$option)
