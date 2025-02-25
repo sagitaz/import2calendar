@@ -956,7 +956,7 @@ class import2calendar extends eqLogic
 
       foreach ($options as $option) {
 
-        log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START OPTIONS :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ═════════════════════ ');
+        log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START OPTIONS:/fg: :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ═════════════════════ ');
 
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
