@@ -367,7 +367,7 @@ class import2calendar extends eqLogic
   /*     * **********************Getteur Setteur*************************** */
   public static function parseIcal($eqlogicId)
   {
-    log::add(__CLASS__, 'debug', '----------START PARSE ICAL----------');
+    log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START PARSE ICAL:/fg: ═════════════════════');
     $options = [];
     $eqlogic = eqLogic::byId($eqlogicId);
     // création du calendrier si inexistant
@@ -386,20 +386,20 @@ class import2calendar extends eqLogic
 
     // Vérifier si file_get_contents a réussi
     if ($icalData === false) {
-      log::add(__CLASS__, 'error', '| Impossible de parser le fichier ical => ' . $file);
+      log::add(__CLASS__, 'error', '║ Impossible de parser le fichier ical => ' . $file);
       return null;
     }
 
-    log::add(__CLASS__, 'debug', '| ICAL = ' . json_encode($icalData));
+    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
     $events = self::parse_icalendar_file($icalData);
 
-    //  log::add(__CLASS__, 'debug', '| EVENTS = ' . json_encode($events));
+    //  log::add(__CLASS__, 'debug', '║ EVENTS = ' . json_encode($events));
     $n = 1;
     foreach ($events as $event) {
 
       if (!is_null($startTime) && $startTime != "") {
-        log::add(__CLASS__, 'debug', '| modification horaire de début d\'èvénement');
+        log::add(__CLASS__, 'debug', '║ modification horaire de début d\'èvénement');
         if (isset($event['start_date'])) {
           $startDateTime = new DateTime($event['start_date']);
           $startDateTime->setTime((int)$startTime, 0, 0);
@@ -407,7 +407,7 @@ class import2calendar extends eqLogic
         }
       }
       if (!is_null($endTime) && $endTime != "") {
-        log::add(__CLASS__, 'debug', '| modification horaire de fin d\'èvénement');
+        log::add(__CLASS__, 'debug', '║ modification horaire de fin d\'èvénement');
         if (isset($event['end_date'])) {
           $endDateTime = new DateTime($event['end_date']);
           $endDateTime->setTime((int)$endTime, 0, 0);
@@ -416,7 +416,7 @@ class import2calendar extends eqLogic
       }
 
 
-      log::add(__CLASS__, 'debug', "| Event " . $n . ": " . json_encode($event));
+      log::add(__CLASS__, 'debug', "║ Event " . $n . ": " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
       $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
       $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
@@ -534,13 +534,13 @@ class import2calendar extends eqLogic
       $n++;
     }
 
-    //  log::add(__CLASS__, 'debug', "| Event options : " . json_encode($options));
+    //  log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
     $calendarEqlogic->refreshWidget();
 
-    log::add(__CLASS__, 'debug', '----------END PARSE ICAL----------');
+    log::add(__CLASS__, 'debug', '╚════════════════════════ END PARSE ICAL ═════════════════════ ');
     return $calendarEqId;
   }
   private static function parse_icalendar_file($icalFile)
@@ -560,7 +560,7 @@ class import2calendar extends eqLogic
     // Extraire le PRODID
     preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
     $prodId = isset($matches[1]) ? trim($matches[1]) : 'Unknown';
-    log::add(__CLASS__, 'debug', '| PRODID = ' . $prodId);
+    log::add(__CLASS__, 'debug', '║ PRODID = ' . $prodId);
 
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
@@ -618,14 +618,14 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-        // log::add(__CLASS__, 'debug', "| Date START : " . json_encode($dtStart));
+        // log::add(__CLASS__, 'debug', "║ Date START : " . json_encode($dtStart));
         $event['start_date'] = self::formatDate($dtStart);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
         $dtEnd = substr($line, strlen('DTEND:'));
-        // log::add(__CLASS__, 'debug', "| Date END 00 : " . json_encode($dtEnd));
+        // log::add(__CLASS__, 'debug', "║ Date END 00 : " . json_encode($dtEnd));
         $dtEqual = ($dtStart === $dtEnd) ? 1 : 0;
-        //  log::add(__CLASS__, 'debug', "| Date Identique : " . json_encode($dtEqual));
+        //  log::add(__CLASS__, 'debug', "║ Date Identique : " . json_encode($dtEqual));
 
         // Vérifier si c'est un événement Airbnb et ajuster la date de fin
         if (stripos($prodId, 'Airbnb') !== false) {
@@ -635,11 +635,11 @@ class import2calendar extends eqLogic
           }
           $tempDate = new DateTime($dtEnd);
           $dtEnd = $tempDate->format('Y-m-d 23:59:59');
-          log::add(__CLASS__, 'debug', "| Airbnb détecté - Date de fin ajustée à 23:59:59");
+          log::add(__CLASS__, 'debug', "║ Airbnb détecté - Date de fin ajustée à 23:59:59");
         }
 
         $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
-        //  log::add(__CLASS__, 'debug', "| Date END 01 : " . json_encode($event['end_date']));
+        //  log::add(__CLASS__, 'debug', "║ Date END 01 : " . json_encode($event['end_date']));
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
         $summary = self::translateName(substr($line, strlen('SUMMARY:')));
@@ -674,7 +674,7 @@ class import2calendar extends eqLogic
       }
     }
 
-    // log::add(__CLASS__, 'debug', "| events after parse : " . json_encode($events));
+    // log::add(__CLASS__, 'debug', "║ events after parse : " . json_encode($events));
     return $events;
   }
 
@@ -694,7 +694,7 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-      //  log::add(__CLASS__, 'debug', "| rrule : " . json_encode($rrule));
+      //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
@@ -733,7 +733,7 @@ class import2calendar extends eqLogic
         if (empty($rrule['BYDAY'])) {
           //   $dayOfWeek = date('D', strtotime($startDate));
           $daysArray = [strtoupper(substr($dayOfWeek, 0, 2))];
-          log::add(__CLASS__, 'debug', "| BYDAY est vide, on défini le jour a celui de startDate : " . json_encode($dayOfWeek));
+          log::add(__CLASS__, 'debug', "║ BYDAY est vide, on défini le jour a celui de startDate : " . json_encode($dayOfWeek));
           //   $rrule['BYDAY'] = $dayOfWeek;
         } else {
           $daysArray = explode(",", $rrule['BYDAY']);
@@ -787,7 +787,7 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
-    //   log::add(__CLASS__, 'debug', "| repeat : " . json_encode($repeat));
+    //   log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -865,7 +865,7 @@ class import2calendar extends eqLogic
     $dateTime->setTimezone(new DateTimeZone($jeedomTimezone));
     // Formater la date selon le format spécifié
     $date = $dateTime->format($format);
-    //   log::add(__CLASS__, 'debug', "| Date : " . json_encode($date));
+    //   log::add(__CLASS__, 'debug', "║ Date : " . json_encode($date));
     // Vérifier et corriger l'heure de fin
     if (($end == 1) && ($hasTimeinfo == 0) && ($dtEqual == 0)) {
       $dateTime = new DateTime($date);
@@ -914,7 +914,7 @@ class import2calendar extends eqLogic
         $endDate = null;
         break;
     }
-    log::add(__CLASS__, 'debug', "| Until count : " . json_encode($endDate));
+    log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
     return $endDate->format("Y-m-d H:i:s");
   }
 
@@ -942,7 +942,7 @@ class import2calendar extends eqLogic
 
         if (!$isPresentInOptions) {
           $eventId = $existingOption['id'];
-          log::add(__CLASS__, 'debug', "| Event : " . $existingOption['id'] . " est supprimé.");
+          log::add(__CLASS__, 'debug', "║ Event : " . $existingOption['id'] . " est supprimé.");
           self::calendarRemove($eventId);
         }
       }
@@ -956,7 +956,7 @@ class import2calendar extends eqLogic
 
       foreach ($options as $option) {
 
-        log::add(__CLASS__, 'debug', '---------- START OPTIONS :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ---------- ');
+        log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START OPTIONS:/fg: :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ═════════════════════ ');
 
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
@@ -969,21 +969,21 @@ class import2calendar extends eqLogic
         // Comparaison et détection des duplicatas
         $existingEventId = self::isDuplicateEvent($option, $calendarEqId);
         if ($existingEventId === true) {
-          log::add(__CLASS__, 'debug', '| Aucune modification sur les options de cet évènement.');
-          log::add(__CLASS__, 'debug', '---------- END OPTIONS ---------- ');
+          log::add(__CLASS__, 'debug', '║ Aucune modification sur les options de cet évènement.');
+          log::add(__CLASS__, 'debug', '╚═════════════════════ END OPTIONS ═════════════════════ ');
           continue; // Sauter cet événement s'il est un duplicata
         } elseif ($existingEventId !== false) {
           // Si une différence est détectée, ajouter l'ID existant à l'option
           $option['id'] = $existingEventId;
         }
 
-        log::add(__CLASS__, 'debug', 'OPTIONS ---------- ' . json_encode($option));
+        log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
         // Comparer les dates inclus et exclus
         $cleanOption = self::cleanDate($option);
-        log::add(__CLASS__, 'debug', 'OPTIONS ---------- ' . json_encode($cleanOption));
+        log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
         // Sauvegarder l'événement s'il n'est pas un duplicata
         self::calendarSave($cleanOption);
-        log::add(__CLASS__, 'debug', '---------- END OPTIONS ---------- ');
+        log::add(__CLASS__, 'debug', '╚════════════════════════ END OPTIONS ═════════════════════ ');
       }
     }
   }
@@ -1022,7 +1022,7 @@ class import2calendar extends eqLogic
       if ($exdate != "") {
         // Mise à jour de la date d'exclusion et suppression d'exdate après traitement
         $option['repeat']['excludeDate'] = $exdate;
-        //     log::add(__CLASS__, 'debug', '| :b:'. $option['cmd_param']['eventName'].':/b: handleExdate 01  : ' . $option['repeat']['excludeDate']);
+        //     log::add(__CLASS__, 'debug', '║ :b:'. $option['cmd_param']['eventName'].':/b: handleExdate 01  : ' . $option['repeat']['excludeDate']);
       }
     }
   }
@@ -1052,10 +1052,10 @@ class import2calendar extends eqLogic
             $existingOption['repeat']['excludeDate'] = implode(',', $existingExclusions);
 
             if ($oldExcludeDate != $existingOption['repeat']['excludeDate']) {
-              log::add(__CLASS__, 'debug', '| Mise à jour des dates exclues sur le calendrier d\'origine avec les dates suivantes : ' . $existingOption['repeat']['excludeDate']);
+              log::add(__CLASS__, 'debug', '║ Mise à jour des dates exclues sur le calendrier d\'origine avec les dates suivantes : ' . $existingOption['repeat']['excludeDate']);
               self::calendarSave($existingOption);
             } else {
-              log::add(__CLASS__, 'debug', '| Aucun changement sur les dates exclues. ');
+              log::add(__CLASS__, 'debug', '║ Aucun changement sur les dates exclues. ');
             }
           }
         }
@@ -1102,7 +1102,7 @@ class import2calendar extends eqLogic
       $existingOptionValue = $existingOption['cmd_param'][$param] ?? null;
 
       if ($optionValue != $existingOptionValue) {
-        log::add(__CLASS__, 'debug', '| Différence sur : ' . $param);
+        log::add(__CLASS__, 'debug', '║ Différence sur : ' . $param);
         return true; // Différence détectée
       }
     }
@@ -1115,7 +1115,7 @@ class import2calendar extends eqLogic
       $existingOptionValue = $existingOption['repeat'][$param] ?? null;
 
       if ($optionValue != $existingOptionValue) {
-        log::add(__CLASS__, 'debug', '| Différence sur : ' . $param);
+        log::add(__CLASS__, 'debug', '║ Différence sur : ' . $param);
         return true; // Différence détectée
       }
     }
@@ -1143,7 +1143,7 @@ class import2calendar extends eqLogic
           $eqExist = TRUE;
           $calendarEqId = $cal->getId();
           $calendar = calendar::byId($calendarEqId);
-          log::add(__CLASS__, 'debug', '| Le calendrier :b:' . $name . '-ical:/b: existe dans le plugin Agenda. Mise à jour des évènements.');
+          log::add(__CLASS__, 'debug', '║ Le calendrier :b:' . $name . '-ical:/b: existe dans le plugin Agenda. Mise à jour des évènements.');
         }
       }
       // s'il n'exista pas, on le créé
@@ -1157,14 +1157,14 @@ class import2calendar extends eqLogic
         $calendar->setName(__($name . '-ical', __FILE__));
         $calendar->save();
         $calendarEqId = $calendar->getId();
-        log::add(__CLASS__, 'info', '| Conversion du calendrier iCal :b:' . $name . ':/b: dans le plugin Agenda.');
+        log::add(__CLASS__, 'info', '║ Conversion du calendrier iCal :b:' . $name . ':/b: dans le plugin Agenda.');
       }
 
 
       return $calendarEqId;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
-      log::add(__CLASS__, 'error', "| Le plugin agenda n'est pas installé ou activé.");
+      log::add(__CLASS__, 'error', "║ Le plugin agenda n'est pas installé ou activé.");
     }
   }
 
@@ -1175,11 +1175,11 @@ class import2calendar extends eqLogic
       $event = null;
       if (!empty($option['id'])) {
         $event = calendar_event::byId($option['id']);
-        log::add(__CLASS__, 'debug', "| Evènement :b:" . $option['cmd_param']['eventName'] . ":/b: (" . $option['id'] . ") mis à jour.");
+        log::add(__CLASS__, 'debug', "║ Evènement :b:" . $option['cmd_param']['eventName'] . ":/b: (" . $option['id'] . ") mis à jour.");
       }
       if (!is_object($event)) {
         $event = new calendar_event();
-        log::add(__CLASS__, 'debug', "| Evènement :b:" . $option['cmd_param']['eventName'] . ":/b: créé.");
+        log::add(__CLASS__, 'debug', "║ Evènement :b:" . $option['cmd_param']['eventName'] . ":/b: créé.");
       }
       utils::a2o($event, jeedom::fromHumanReadable($option));
 
@@ -1187,25 +1187,25 @@ class import2calendar extends eqLogic
       return $option;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
-      log::add(__CLASS__, 'error', "| Le plugin agenda n'est pas installé ou activé.");
+      log::add(__CLASS__, 'error', "║ Le plugin agenda n'est pas installé ou activé.");
     }
   }
 
   public static function calendarRemove($id)
   {
     if (self::testPlugin()) {
-      log::add("calendar", 'debug', '| calendar_event::remove ' . $id);
+      log::add("calendar", 'debug', '║ calendar_event::remove ' . $id);
 
       $event = calendar_event::byId($id);
       if (is_object($event)) {
         $event->remove();
-        log::add(__CLASS__, 'debug', "| Event id : " . $id . ", suppression éffectué.");
+        log::add(__CLASS__, 'debug', "║ Event id : " . $id . ", suppression éffectué.");
       } else {
-        log::add(__CLASS__, 'debug', "| Aucun event ne correspond à l'id : " . $id . ", suppression impossible.");
+        log::add(__CLASS__, 'debug', "║ Aucun event ne correspond à l'id : " . $id . ", suppression impossible.");
       }
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
-      log::add(__CLASS__, 'error', "| Le plugin agenda n'est pas installé ou activé.");
+      log::add(__CLASS__, 'error', "║ Le plugin agenda n'est pas installé ou activé.");
     }
   }
 
@@ -1216,7 +1216,7 @@ class import2calendar extends eqLogic
       $getAllEvents = calendar_event::getEventsByEqLogic($calendarEqId);
 
       if (count($getAllEvents) <= 0) {
-        log::add(__CLASS__, 'debug', "| Aucun calendrier correspondant à : " . $calendarEqId);
+        log::add(__CLASS__, 'debug', "║ Aucun calendrier correspondant à : " . $calendarEqId);
       } else {
         $result = [];
         foreach ($getAllEvents as $event) {
@@ -1226,7 +1226,7 @@ class import2calendar extends eqLogic
       return $result;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
-      log::add(__CLASS__, 'error', "| Le plugin agenda n'est pas installé ou activé.");
+      log::add(__CLASS__, 'error', "║ Le plugin agenda n'est pas installé ou activé.");
     }
   }
 
@@ -1531,7 +1531,7 @@ class import2calendar extends eqLogic
   }
   public static function createEqI2C($options)
   {
-    log::add(__CLASS__, 'debug', "| Création d'un nouveau équipement.");
+    log::add(__CLASS__, 'debug', "║ Création d'un nouveau équipement.");
     $eqExist = FALSE;
 
     $name = $options['name'];
@@ -1542,7 +1542,7 @@ class import2calendar extends eqLogic
       if ($name === $cal->getname()) {
         $eqExist = TRUE;
         $calendarEqId = $cal->getId();
-        log::add(__CLASS__, 'debug', "| Equipement agenda mis à jour.");
+        log::add(__CLASS__, 'debug', "║ Equipement agenda mis à jour.");
       }
     }
 
@@ -1555,7 +1555,7 @@ class import2calendar extends eqLogic
       $import2calendar->setLogicalId(__('ical', __FILE__));
       $import2calendar->setEqType_name('import2calendar');
       $import2calendar->setIsVisible(1);
-      log::add(__CLASS__, 'debug', "| Equipement agenda créé");
+      log::add(__CLASS__, 'debug', "║ Equipement agenda créé");
     }
     $import2calendar->setIsEnable($options['enable']);
     $import2calendar->setConfiguration("ical", $options['icalUrl']);
