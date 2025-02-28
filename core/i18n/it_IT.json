@@ -5,6 +5,7 @@
     },
     "plugins\/import2calendar\/core\/class\/import2calendar.class.php": {
         "Le plugin agenda n'est pas installé ou activé.": "Il plugin del calendario non è installato o attivato.",
+        "Rafraichir": "Aggiorna",
         "ical": "ica",
         "import2calendar": "import2calendario"
     },
@@ -24,6 +25,7 @@
         "A l\\'heure": "A ore",
         "Afficher": "Mostra",
         "Aucune": "Aucune",
+        "Choisir une icône": "Seleziona un\\'icona",
         "Cocher la case pour que la commande s\\'exécute en parallèle des autres actions": "Spuntate la casella in modo che il comando venga eseguito in parallelo alle altre azioni",
         "Commande info liée": "Comando info correlato",
         "Décocher la case pour désactiver l\\'action": "Deselezionare la casella per disattivare l'azione",
@@ -32,6 +34,7 @@
         "Max": "Max",
         "Min": "Min",
         "Nom": "Nome",
+        "Nom de la commande": "Nome del comando",
         "Supprimer la commande": "Comando di cancellazione",
         "Sélectionner la commande": "Seleziona comando",
         "Sélectionner un mot-clé": "Seleziona una parola chiave",
@@ -102,6 +105,7 @@
         "Vacances scolaires FR zone A-B-C": "Vacanze scolastiche FR zona A-B-C",
         "Vacances scolaires FR zone B": "Vacanze scolastiche FR zona B",
         "Vacances scolaires FR zone C": "Vacanze scolastiche FR zona C",
+        "Visible": "Visibile",
         "aide Discord": "aiuto Discord"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
