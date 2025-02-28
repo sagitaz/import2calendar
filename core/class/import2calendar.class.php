@@ -343,11 +343,11 @@ class import2calendar extends eqLogic
       $cmd = new import2calendarCmd();
       $cmd->setLogicalId('refresh');
       $cmd->setName(__('Rafraichir', __FILE__));
+      $cmd->setType('action');
+      $cmd->setSubType('other');
+      $cmd->setEqLogic_id($this->getId());
+      $cmd->save();
     }
-    $cmd->setType('action');
-    $cmd->setSubType('other');
-    $cmd->setEqLogic_id($this->getId());
-    $cmd->save();
   }
 
   // Fonction exécutée automatiquement avant la suppression de l'équipement
@@ -1622,11 +1622,12 @@ class import2calendarCmd extends cmd
 
   /*
      * Non obligatoire permet de demander de ne pas supprimer les commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
-      public function dontRemoveCmd() {
-      return true;
-      }
-     */
 
+     */
+  public function dontRemoveCmd()
+  {
+    return true;
+  }
   public function execute($_options = array())
   {
     $i2c = $this->getEqLogic();
