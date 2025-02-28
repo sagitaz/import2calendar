@@ -336,7 +336,19 @@ class import2calendar extends eqLogic
   public function preSave() {}
 
   // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
-  public function postSave() {}
+  public function postSave()
+  {
+    $cmd = $this->getCmd(null, 'refresh');
+    if (!is_object($cmd)) {
+      $cmd = new import2calendarCmd();
+      $cmd->setLogicalId('refresh');
+      $cmd->setName(__('Rafraichir', __FILE__));
+    }
+    $cmd->setType('action');
+    $cmd->setSubType('other');
+    $cmd->setEqLogic_id($this->getId());
+    $cmd->save();
+  }
 
   // Fonction exécutée automatiquement avant la suppression de l'équipement
   public function preRemove() {}
@@ -367,7 +379,7 @@ class import2calendar extends eqLogic
   /*     * **********************Getteur Setteur*************************** */
   public static function parseIcal($eqlogicId)
   {
-    log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START PARSE ICAL:/fg: ═════════════════════');
+    log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
     $options = [];
     $eqlogic = eqLogic::byId($eqlogicId);
     // création du calendrier si inexistant
@@ -540,7 +552,7 @@ class import2calendar extends eqLogic
     $calendarEqlogic = eqLogic::byId($calendarEqId);
     $calendarEqlogic->refreshWidget();
 
-    log::add(__CLASS__, 'debug', '╚════════════════════════ END PARSE ICAL ═════════════════════ ');
+    log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
     return $calendarEqId;
   }
   private static function parse_icalendar_file($icalFile)
@@ -956,7 +968,7 @@ class import2calendar extends eqLogic
 
       foreach ($options as $option) {
 
-        log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START OPTIONS:/fg: :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ═════════════════════ ');
+        log::add(__CLASS__, 'debug', '╠════════════ :b:START OPTIONS : ' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ');
 
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
@@ -970,7 +982,7 @@ class import2calendar extends eqLogic
         $existingEventId = self::isDuplicateEvent($option, $calendarEqId);
         if ($existingEventId === true) {
           log::add(__CLASS__, 'debug', '║ Aucune modification sur les options de cet évènement.');
-          log::add(__CLASS__, 'debug', '╚═════════════════════ END OPTIONS ═════════════════════ ');
+          log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
           continue; // Sauter cet événement s'il est un duplicata
         } elseif ($existingEventId !== false) {
           // Si une différence est détectée, ajouter l'ID existant à l'option
@@ -983,7 +995,7 @@ class import2calendar extends eqLogic
         log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
         // Sauvegarder l'événement s'il n'est pas un duplicata
         self::calendarSave($cleanOption);
-        log::add(__CLASS__, 'debug', '╚════════════════════════ END OPTIONS ═════════════════════ ');
+        log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
       }
     }
   }
@@ -1616,7 +1628,13 @@ class import2calendarCmd extends cmd
       }
      */
 
-  public function execute($_options = array()) {}
+  public function execute($_options = array())
+  {
+    $i2c = $this->getEqLogic();
+    if ($this->getLogicalId() == 'refresh') {
+      $i2c->save();
+    }
+  }
 
   /*     * **********************Getteur Setteur*************************** */
 }
