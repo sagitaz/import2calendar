@@ -49,6 +49,12 @@ class import2calendar extends eqLogic
   */
 
   /*     * ***********************Methode static*************************** */
+  /**
+   * Fonction exécutée automatiquement pour mettre à jour les calendriers
+   * Parcourt tous les équipements actifs du plugin et vérifie si une mise à jour est nécessaire selon le cron configuré
+   *
+   * @return void
+   */
   public static function update()
   {
     foreach (eqLogic::byType(__CLASS__, true) as $eqLogic) {
@@ -57,7 +63,12 @@ class import2calendar extends eqLogic
         try {
           $c = new Cron\CronExpression(checkAndFixCron($autorefresh), new Cron\FieldFactory);
           if ($c->isDue()) {
-            self::parseIcal($eqLogic->getId());
+            // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+            if ($eqLogic->getIsEnable() == 1) {
+              $calendarEqId = self::parseIcal($eqLogic->getId());
+              $calendar = calendar::byId($calendarEqId);
+              self::majCmdsAgenda($calendar);
+            }
           }
         } catch (Exception $exc) {
           log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : Invalid cron expression : ' . $autorefresh);
@@ -80,32 +91,76 @@ class import2calendar extends eqLogic
   * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
   */
 
+  /**
+   * Fonction exécutée automatiquement tous les jours par Jeedom
+   * Met à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+   *
+   * @return void
+   */
   public static function cronDaily()
   {
-    // On récupère tous les calendrier créé par le plugin
+    // On récupère tous les calendriers créés par le plugin
     $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
     foreach ($allCalendar as $calendar) {
       self::majCmdsAgenda($calendar);
     }
   }
 
+  /**
+   * Met à jour les commandes d'agenda pour un calendrier donné
+   * Crée et met à jour les commandes pour afficher les événements d'aujourd'hui et de demain
+   *
+   * @param object $calendar Objet calendrier à mettre à jour
+   * @return void
+   */
   private static function majCmdsAgenda($calendar)
   {
+    // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
+
+    // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
+    $eventsYesterday = [];
     $eventsToday = [];
     $eventsTomorrow = [];
+    $eventsJ2 = [];
+    $eventsJ3 = [];
+    $eventsJ4 = [];
+    $eventsJ5 = [];
+    $eventsJ6 = [];
+    $eventsJ7 = [];
 
     // Créer les objets DateTime pour aujourd'hui et demain
+    $yesterday = (new DateTime())->modify('-1 day');
     $today = new DateTime();
     $tomorrow = (new DateTime())->modify('+1 day');
+    $j2 = (new DateTime())->modify('+2 day');
+    $j3 = (new DateTime())->modify('+3 day');
+    $j4 = (new DateTime())->modify('+4 day');
+    $j5 = (new DateTime())->modify('+5 day');
+    $j6 = (new DateTime())->modify('+6 day');
+    $j7 = (new DateTime())->modify('+7 day');
 
     // Normaliser les dates
+    $yesterday->setTime(0, 0, 0);
     $today->setTime(0, 0, 0);
     $tomorrow->setTime(0, 0, 0);
+    $j2->setTime(0, 0, 0);
+    $j3->setTime(0, 0, 0);
+    $j4->setTime(0, 0, 0);
+    $j5->setTime(0, 0, 0);
+    $j6->setTime(0, 0, 0);
+    $j7->setTime(0, 0, 0);
 
     foreach ($inDB as $event) {
+      // Vérifier pour hier
+      $yesterdayEvents = self::checkEventForDate($event, $yesterday);
+      if ($yesterdayEvents !== null) {
+        $eventsYesterday = array_merge($eventsYesterday, $yesterdayEvents);
+        $eventsYesterday = array_unique($eventsYesterday);
+      }
+
       // Vérifier pour aujourd'hui
       $todayEvents = self::checkEventForDate($event, $today);
       if ($todayEvents !== null) {
@@ -119,7 +174,54 @@ class import2calendar extends eqLogic
         $eventsTomorrow = array_merge($eventsTomorrow, $tomorrowEvents);
         $eventsTomorrow = array_unique($eventsTomorrow);
       }
+
+      // Vérifier pour les jours suivants
+      $j2Events = self::checkEventForDate($event, $j2);
+      $j3Events = self::checkEventForDate($event, $j3);
+      $j4Events = self::checkEventForDate($event, $j4);
+      $j5Events = self::checkEventForDate($event, $j5);
+      $j6Events = self::checkEventForDate($event, $j6);
+      $j7Events = self::checkEventForDate($event, $j7);
+
+      if ($j2Events !== null) {
+        $eventsJ2 = array_merge($eventsJ2, $j2Events);
+        $eventsJ2 = array_unique($eventsJ2);
+      }
+      if ($j3Events !== null) {
+        $eventsJ3 = array_merge($eventsJ3, $j3Events);
+        $eventsJ3 = array_unique($eventsJ3);
+      }
+      if ($j4Events !== null) {
+        $eventsJ4 = array_merge($eventsJ4, $j4Events);
+        $eventsJ4 = array_unique($eventsJ4);
+      }
+      if ($j5Events !== null) {
+        $eventsJ5 = array_merge($eventsJ5, $j5Events);
+        $eventsJ5 = array_unique($eventsJ5);
+      }
+      if ($j6Events !== null) {
+        $eventsJ6 = array_merge($eventsJ6, $j6Events);
+        $eventsJ6 = array_unique($eventsJ6);
+      }
+      if ($j7Events !== null) {
+        $eventsJ7 = array_merge($eventsJ7, $j7Events);
+        $eventsJ7 = array_unique($eventsJ7);
+      }
     }
+
+    // Créer les commandes pour les événements d'hier
+    $cmd = self::createCmd($id, 'yesterday_events', 'Hier');
+    $cmd->save();
+    if (!empty($eventsYesterday)) {
+      $cmd->event(implode(', ', $eventsYesterday));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events hier : ' . implode(', ', $eventsYesterday));
+
+    // Créer les commandes pour les événements d'aujourd'hui
     $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
     $cmd->save();
 
@@ -132,6 +234,7 @@ class import2calendar extends eqLogic
     }
     log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
 
+    // Créer les commandes pour les événements de demain
     $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
     $cmd->save();
     if (!empty($eventsTomorrow)) {
@@ -142,6 +245,73 @@ class import2calendar extends eqLogic
       $cmd->save();
     }
     log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
+
+    // Créer les commandes pour les événements des jours suivants
+    $cmd = self::createCmd($id, 'j2_events', 'aprés demain');
+    $cmd->save();
+    if (!empty($eventsJ2)) {
+      $cmd->event(implode(', ', $eventsJ2));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aprés demain : ' . implode(', ', $eventsJ2));
+
+    $cmd = self::createCmd($id, 'j3_events', 'J+3');
+    $cmd->save();
+    if (!empty($eventsJ3)) {
+      $cmd->event(implode(', ', $eventsJ3));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+3 : ' . implode(', ', $eventsJ3));
+
+    $cmd = self::createCmd($id, 'j4_events', 'J+4');
+    $cmd->save();
+    if (!empty($eventsJ4)) {
+      $cmd->event(implode(', ', $eventsJ4));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+4 : ' . implode(', ', $eventsJ4));
+
+    $cmd = self::createCmd($id, 'j5_events', 'J+5');
+    $cmd->save();
+    if (!empty($eventsJ5)) {
+      $cmd->event(implode(', ', $eventsJ5));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+5 : ' . implode(', ', $eventsJ5));
+
+    $cmd = self::createCmd($id, 'j6_events', 'J+6');
+    $cmd->save();
+    if (!empty($eventsJ6)) {
+      $cmd->event(implode(', ', $eventsJ6));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+6 : ' . implode(', ', $eventsJ6));
+
+    $cmd = self::createCmd($id, 'j7_events', 'J+7');
+    $cmd->save();
+    if (!empty($eventsJ7)) {
+      $cmd->event(implode(', ', $eventsJ7));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+7 : ' . implode(', ', $eventsJ7));
   }
   private static function checkEventForDate($event, DateTime $checkDate)
   {
@@ -155,15 +325,25 @@ class import2calendar extends eqLogic
     $checkDate->setTime(0, 0, 0);
 
     // Vérifier si la date n'est pas exclue
-    $excludeDates = explode(',', $event['repeat']['excludeDate']);
+    $excludePeriods = explode(',', $event['repeat']['excludeDate']);
     $isExcluded = false;
-    foreach ($excludeDates as $excludeDate) {
-      if (!empty($excludeDate)) {
-        $excludeDateTime = new DateTime($excludeDate);
-        $excludeDateTime->setTime(0, 0, 0);
-        if ($checkDate == $excludeDateTime) {
-          $isExcluded = true;
-          break;
+    foreach ($excludePeriods as $period) {
+      if (!empty($period)) {
+        $parts = explode(':', $period);
+        if (count($parts) === 2) {
+          try {
+            $startExcludeDate = new DateTime($parts[0]);
+            $endExcludeDate = new DateTime($parts[1]);
+            $startExcludeDate->setTime(0, 0, 0);
+            $endExcludeDate->setTime(23, 59, 59);
+
+            if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
+              $isExcluded = true;
+              break;
+            }
+          } catch (Exception $e) {
+            log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $period);
+          }
         }
       }
     }
@@ -430,7 +610,7 @@ class import2calendar extends eqLogic
       }
 
 
-      log::add(__CLASS__, 'debug', "║ Event " . $n . ": " . json_encode($event));
+      log::add(__CLASS__, 'debug', "╠═ Event " . $n . ": " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
       $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
       $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
@@ -548,7 +728,7 @@ class import2calendar extends eqLogic
       $n++;
     }
 
-    //  log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
+    log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
@@ -708,18 +888,84 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-      //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
+      log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
       $frequence = $rrule['INTERVAL'] ?? 1;
       $nationalDay = "all";
       $includeDate = "";
+      $excludeDate = "";
       $enable = 1;
       $byDay = 0;
       $unit = 'days';
       $mode = "simple";
       $position = "first";
+
+      // Si c'est une récurrence mensuelle avec BYDAY spécifiant une position
+      if (
+        $icalUnit === 'MONTHLY' && isset($rrule['BYDAY']) &&
+        preg_match('/^(-?\d+)([A-Z]{2})$/', $rrule['BYDAY'])
+      ) {
+        $currentDate = new DateTime($startDate);
+        $endFiveYears = clone $currentDate;
+        $endFiveYears->modify('+5 years');
+        $excludePeriods = [];
+
+        // Mapper les jours suivants pour chaque jour
+        $nextDayMap = [
+          'MO' => 'tuesday',
+          'TU' => 'wednesday',
+          'WE' => 'thursday',
+          'TH' => 'friday',
+          'FR' => 'saturday',
+          'SA' => 'sunday',
+          'SU' => 'monday'
+        ];
+
+        // Mapper les jours précédents pour chaque jour
+        $previousDayMap = [
+          'MO' => 'sunday',
+          'TU' => 'monday',
+          'WE' => 'tuesday',
+          'TH' => 'wednesday',
+          'FR' => 'thursday',
+          'SA' => 'friday',
+          'SU' => 'saturday'
+        ];
+
+        do {
+          // Extraire la position et le jour de BYDAY
+          preg_match('/^(-?\d+)([A-Z]{2})$/', $rrule['BYDAY'], $matches);
+          $weekday = $matches[2];
+
+          // Début de la période d'exclusion au jour suivant
+          $exclusionStart = clone $currentDate;
+          $exclusionStart->modify('next ' . $nextDayMap[$weekday]);
+
+          // Calculer la date de la prochaine occurrence
+          $nextOccurrence = clone $currentDate;
+          $nextOccurrence->modify('+' . $frequence . ' months');
+
+          // Si la prochaine occurrence dépasse les 5 ans, on arrête
+          if ($nextOccurrence > $endFiveYears) {
+            break;
+          }
+
+          // Fin de la période d'exclusion au jour précédent
+          $exclusionEnd = clone $nextOccurrence;
+          $exclusionEnd->modify('previous ' . $previousDayMap[$weekday]);
+
+          // Ajouter la période d'exclusion
+          $excludePeriods[] = $exclusionStart->format('Y-m-d') . ':' . $exclusionEnd->format('Y-m-d');
+
+          // Passer à la prochaine occurrence
+          $currentDate = clone $nextOccurrence;
+        } while ($currentDate < $endFiveYears);
+
+        // Joindre les périodes d'exclusion
+        $excludeDate = implode(',', $excludePeriods);
+      }
       if ($icalUnit === 'DAILY') $unit = 'days';
       elseif ($icalUnit === 'MONTHLY') $unit = 'month';
       elseif ($icalUnit === 'YEARLY') $unit = 'years';
@@ -759,7 +1005,7 @@ class import2calendar extends eqLogic
           $excludeDay[$key + 1] = (in_array(strtoupper(substr($day, 0, 2)), $daysArray)) ? "1" : "0";
         }
 
-        if (preg_match('/^(-?\d+)([A-Za-z]{2})$/', $rrule['BYDAY'], $matches)) {
+        if (isset($rrule['BYDAY']) && preg_match('/^(-?\d+)([A-Za-z]{2})$/', $rrule['BYDAY'], $matches)) {
           $mode = "advance";
           if ($matches[1] === "-1") {
             $position = "last";
@@ -788,7 +1034,7 @@ class import2calendar extends eqLogic
         'includeDate' => $includeDate,
         'includeDateFromCalendar' => '',
         'includeDateFromEvent' => '',
-        'excludeDate' => '',
+        'excludeDate' => $excludeDate,
         'excludeDateFromCalendar' => '',
         'excludeDateFromEvent' => '',
         'enable' => $enable,
@@ -801,7 +1047,7 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
-    //   log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
+    log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -991,7 +1237,7 @@ class import2calendar extends eqLogic
           $option['id'] = $existingEventId;
         }
 
-        log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
+        // log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
         // Comparer les dates inclus et exclus
         $cleanOption = self::cleanDate($option);
         log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
@@ -1533,7 +1779,40 @@ class import2calendar extends eqLogic
       'West Asia Standard Time' => 'Asia/Tashkent',
       'West Bank Standard Time' => 'Asia/Hebron',
       'West Pacific Standard Time' => 'Pacific/Port_Moresby',
-      'Yakutsk Standard Time' => 'Asia/Yakutsk'
+      'Yakutsk Standard Time' => 'Asia/Yakutsk',
+      'America/Argentina/Buenos_Aires' => 'America/Buenos_Aires',
+      'Central European Standard Time' => 'Europe/Paris',
+      'Central European Time' => 'Europe/Paris',
+      'CET' => 'Europe/Paris',
+      'Eastern European Standard Time' => 'Europe/Bucharest',
+      'Eastern European Time' => 'Europe/Bucharest',
+      'EET' => 'Europe/Bucharest',
+      'Greenwich Mean Time' => 'UTC',
+      'GMT' => 'UTC',
+      'Moscow Standard Time' => 'Europe/Moscow',
+      'MSK' => 'Europe/Moscow',
+      'Central European Summer Time' => 'Europe/Paris',
+      'CEST' => 'Europe/Paris',
+      'Eastern European Summer Time' => 'Europe/Bucharest',
+      'EEST' => 'Europe/Bucharest',
+      'British Summer Time' => 'Europe/London',
+      'BST' => 'Europe/London',
+      'Western European Time' => 'Europe/London',
+      'WET' => 'Europe/London',
+      'Western European Summer Time' => 'Europe/London',
+      'WEST' => 'Europe/London',
+      'Western Standard Time' => 'Europe/London',
+      'Hong Kong Time' => 'Asia/Hong_Kong',
+      'HKT' => 'Asia/Hong_Kong',
+      'Singapore Time' => 'Asia/Singapore',
+      'SGT' => 'Asia/Singapore',
+      'AEST' => 'Australia/Sydney',
+      'AEDT' => 'Australia/Sydney',
+      'ACST' => 'Australia/Adelaide',
+      'ACDT' => 'Australia/Adelaide',
+      'AWST' => 'Australia/Perth',
+      'NZST' => 'Pacific/Auckland',
+      'NZDT' => 'Pacific/Auckland'
     );
     foreach ($timezones as $key => $value) {
       $timezone = str_replace($key, $value, $timezone);
