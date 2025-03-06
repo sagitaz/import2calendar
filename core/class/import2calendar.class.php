@@ -154,6 +154,7 @@ class import2calendar extends eqLogic
     $j7->setTime(0, 0, 0);
 
     foreach ($inDB as $event) {
+      log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Event : ' . json_encode($event));
       // Vérifier pour hier
       $yesterdayEvents = self::checkEventForDate($event, $yesterday);
       if ($yesterdayEvents !== null) {
@@ -324,25 +325,39 @@ class import2calendar extends eqLogic
     $endDate->setTime(23, 59, 59);
     $checkDate->setTime(0, 0, 0);
 
-    // Vérifier si la date n'est pas exclue
-    $excludePeriods = explode(',', $event['repeat']['excludeDate']);
+    // Vérifier si la date est exclue
+    $excludeDates = explode(',', $event['repeat']['excludeDate']);
     $isExcluded = false;
-    foreach ($excludePeriods as $period) {
-      if (!empty($period)) {
-        $parts = explode(':', $period);
-        if (count($parts) === 2) {
-          try {
-            $startExcludeDate = new DateTime($parts[0]);
-            $endExcludeDate = new DateTime($parts[1]);
-            $startExcludeDate->setTime(0, 0, 0);
-            $endExcludeDate->setTime(23, 59, 59);
+    foreach ($excludeDates as $excludeDate) {
+      if (!empty($excludeDate)) {
+        // Vérifier si c'est une période (avec :) ou une date simple
+        if (strpos($excludeDate, ':') !== false) {
+          $parts = explode(':', $excludeDate);
+          if (count($parts) === 2) {
+            try {
+              $startExcludeDate = new DateTime($parts[0]);
+              $endExcludeDate = new DateTime($parts[1]);
+              $startExcludeDate->setTime(0, 0, 0);
+              $endExcludeDate->setTime(23, 59, 59);
 
-            if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
+              if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
+                $isExcluded = true;
+                break;
+              }
+            } catch (Exception $e) {
+              log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $excludeDate);
+            }
+          }
+        } else {
+          try {
+            $excludeDateTime = new DateTime($excludeDate);
+            $excludeDateTime->setTime(0, 0, 0);
+            if ($checkDate == $excludeDateTime) {
               $isExcluded = true;
               break;
             }
           } catch (Exception $e) {
-            log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $period);
+            log::add(__CLASS__, 'debug', '║ Erreur de date d\'exclusion : ' . $excludeDate);
           }
         }
       }
@@ -381,7 +396,7 @@ class import2calendar extends eqLogic
         $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
         if (
           $excludeDay[$currentDayNum] == "1" &&
-          ($event['repeat']['nationalDay'] == "" || $event['repeat']['nationalDay'] == $nationalDay)
+          ($event['repeat']['nationalDay'] == "" || $event['repeat']['nationalDay'] == $nationalDay || $event['repeat']['nationalDay'] == "all")
         ) {
           // Calculer la différence entre la date vérifiée et la date de début
           $interval = $startDate->diff($checkDate);
@@ -1771,6 +1786,150 @@ class import2calendar extends eqLogic
       'UTC-09' => 'Etc/GMT+9',
       'UTC-11' => 'Etc/GMT+11',
       'UTC+12' => 'Etc/GMT-12',
+      'etc/utc-2' => 'Etc/GMT+2',
+      'etc/utc-1' => 'Etc/GMT+1',
+      'etc/utc+1' => 'Etc/GMT-1',
+      'etc/utc+2' => 'Etc/GMT-2',
+      'etc/utc+3' => 'Etc/GMT-3',
+      'etc/utc+4' => 'Etc/GMT-4',
+      'etc/utc+5' => 'Etc/GMT-5',
+      'etc/utc+6' => 'Etc/GMT-6',
+      'etc/utc+7' => 'Etc/GMT-7',
+      'etc/utc+8' => 'Etc/GMT-8',
+      'etc/utc+9' => 'Etc/GMT-9',
+      'etc/utc+10' => 'Etc/GMT-10',
+      'etc/utc+11' => 'Etc/GMT-11',
+      'etc/utc+12' => 'Etc/GMT-12',
+      'etc/utc-3' => 'Etc/GMT+3',
+      'etc/utc-4' => 'Etc/GMT+4',
+      'etc/utc-5' => 'Etc/GMT+5',
+      'etc/utc-6' => 'Etc/GMT+6',
+      'etc/utc-7' => 'Etc/GMT+7',
+      'etc/utc-8' => 'Etc/GMT+8',
+      'etc/utc-9' => 'Etc/GMT+9',
+      'etc/utc-10' => 'Etc/GMT+10',
+      'etc/utc-11' => 'Etc/GMT+11',
+      'etc/utc-12' => 'Etc/GMT+12',
+      'utc+1' => 'Etc/GMT-1',
+      'utc+2' => 'Etc/GMT-2',
+      'utc+3' => 'Etc/GMT-3',
+      'utc+4' => 'Etc/GMT-4',
+      'utc+5' => 'Etc/GMT-5',
+      'utc+6' => 'Etc/GMT-6',
+      'utc+7' => 'Etc/GMT-7',
+      'utc+8' => 'Etc/GMT-8',
+      'utc+9' => 'Etc/GMT-9',
+      'utc+10' => 'Etc/GMT-10',
+      'utc+11' => 'Etc/GMT-11',
+      'utc+12' => 'Etc/GMT-12',
+      'utc-1' => 'Etc/GMT+1',
+      'utc-2' => 'Etc/GMT+2',
+      'utc-3' => 'Etc/GMT+3',
+      'utc-4' => 'Etc/GMT+4',
+      'utc-5' => 'Etc/GMT+5',
+      'utc-6' => 'Etc/GMT+6',
+      'utc-7' => 'Etc/GMT+7',
+      'utc-8' => 'Etc/GMT+8',
+      'utc-9' => 'Etc/GMT+9',
+      'utc-10' => 'Etc/GMT+10',
+      'utc-11' => 'Etc/GMT+11',
+      'utc-12' => 'Etc/GMT+12',
+      'gmt+1' => 'Etc/GMT-1',
+      'gmt+2' => 'Etc/GMT-2',
+      'gmt+3' => 'Etc/GMT-3',
+      'gmt+4' => 'Etc/GMT-4',
+      'gmt+5' => 'Etc/GMT-5',
+      'gmt+6' => 'Etc/GMT-6',
+      'gmt+7' => 'Etc/GMT-7',
+      'gmt+8' => 'Etc/GMT-8',
+      'gmt+9' => 'Etc/GMT-9',
+      'gmt+10' => 'Etc/GMT-10',
+      'gmt+11' => 'Etc/GMT-11',
+      'gmt+12' => 'Etc/GMT-12',
+      'gmt-1' => 'Etc/GMT+1',
+      'gmt-2' => 'Etc/GMT+2',
+      'gmt-3' => 'Etc/GMT+3',
+      'gmt-4' => 'Etc/GMT+4',
+      'gmt-5' => 'Etc/GMT+5',
+      'gmt-6' => 'Etc/GMT+6',
+      'gmt-7' => 'Etc/GMT+7',
+      'gmt-8' => 'Etc/GMT+8',
+      'gmt-9' => 'Etc/GMT+9',
+      'gmt-10' => 'Etc/GMT+10',
+      'gmt-11' => 'Etc/GMT+11',
+      'gmt-12' => 'Etc/GMT+12',
+      'UTC +1' => 'Etc/GMT-1',
+      'UTC +2' => 'Etc/GMT-2',
+      'UTC +3' => 'Etc/GMT-3',
+      'UTC +4' => 'Etc/GMT-4',
+      'UTC +5' => 'Etc/GMT-5',
+      'UTC +6' => 'Etc/GMT-6',
+      'UTC +7' => 'Etc/GMT-7',
+      'UTC +8' => 'Etc/GMT-8',
+      'UTC +9' => 'Etc/GMT-9',
+      'UTC +10' => 'Etc/GMT-10',
+      'UTC +11' => 'Etc/GMT-11',
+      'UTC +12' => 'Etc/GMT-12',
+      'UTC -1' => 'Etc/GMT+1',
+      'UTC -2' => 'Etc/GMT+2',
+      'UTC -3' => 'Etc/GMT+3',
+      'UTC -4' => 'Etc/GMT+4',
+      'UTC -5' => 'Etc/GMT+5',
+      'UTC -6' => 'Etc/GMT+6',
+      'UTC -7' => 'Etc/GMT+7',
+      'UTC -8' => 'Etc/GMT+8',
+      'UTC -9' => 'Etc/GMT+9',
+      'UTC -10' => 'Etc/GMT+10',
+      'UTC -11' => 'Etc/GMT+11',
+      'UTC -12' => 'Etc/GMT+12',
+      'GMT +1' => 'Etc/GMT-1',
+      'GMT +2' => 'Etc/GMT-2',
+      'GMT +3' => 'Etc/GMT-3',
+      'GMT +4' => 'Etc/GMT-4',
+      'GMT +5' => 'Etc/GMT-5',
+      'GMT +6' => 'Etc/GMT-6',
+      'GMT +7' => 'Etc/GMT-7',
+      'GMT +8' => 'Etc/GMT-8',
+      'GMT +9' => 'Etc/GMT-9',
+      'GMT +10' => 'Etc/GMT-10',
+      'GMT +11' => 'Etc/GMT-11',
+      'GMT +12' => 'Etc/GMT-12',
+      'GMT -1' => 'Etc/GMT+1',
+      'GMT -2' => 'Etc/GMT+2',
+      'GMT -3' => 'Etc/GMT+3',
+      'GMT -4' => 'Etc/GMT+4',
+      'GMT -5' => 'Etc/GMT+5',
+      'GMT -6' => 'Etc/GMT+6',
+      'GMT -7' => 'Etc/GMT+7',
+      'GMT -8' => 'Etc/GMT+8',
+      'GMT -9' => 'Etc/GMT+9',
+      'GMT -10' => 'Etc/GMT+10',
+      'GMT -11' => 'Etc/GMT+11',
+      'GMT -12' => 'Etc/GMT+12',
+      '+0100' => 'Etc/GMT-1',
+      '+0200' => 'Etc/GMT-2',
+      '+0300' => 'Etc/GMT-3',
+      '+0400' => 'Etc/GMT-4',
+      '+0500' => 'Etc/GMT-5',
+      '+0600' => 'Etc/GMT-6',
+      '+0700' => 'Etc/GMT-7',
+      '+0800' => 'Etc/GMT-8',
+      '+0900' => 'Etc/GMT-9',
+      '+1000' => 'Etc/GMT-10',
+      '+1100' => 'Etc/GMT-11',
+      '+1200' => 'Etc/GMT-12',
+      '-0100' => 'Etc/GMT+1',
+      '-0200' => 'Etc/GMT+2',
+      '-0300' => 'Etc/GMT+3',
+      '-0400' => 'Etc/GMT+4',
+      '-0500' => 'Etc/GMT+5',
+      '-0600' => 'Etc/GMT+6',
+      '-0700' => 'Etc/GMT+7',
+      '-0800' => 'Etc/GMT+8',
+      '-0900' => 'Etc/GMT+9',
+      '-1000' => 'Etc/GMT+10',
+      '-1100' => 'Etc/GMT+11',
+      '-1200' => 'Etc/GMT+12',
       'Ulaanbaatar Standard Time' => 'Asia/Ulaanbaatar',
       'Venezuela Standard Time' => 'America/Caracas',
       'Vladivostok Standard Time' => 'Asia/Vladivostok',
