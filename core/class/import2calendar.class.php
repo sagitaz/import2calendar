@@ -597,9 +597,7 @@ class import2calendar extends eqLogic
       return null;
     }
 
-    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
-    // debug fichier user
-    // $icalData = "";
+    //log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
     $events = self::parse_icalendar_file($icalData);
 
@@ -757,6 +755,9 @@ class import2calendar extends eqLogic
     $events = [];
     $icalFile = str_replace("\r\n ", "", $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
+    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($lines));
+    // Debuf fichier user
+    // lines = file('user.ics');
     $event = [];
     $description = '';
     $exdates = "";
@@ -770,6 +771,8 @@ class import2calendar extends eqLogic
     preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
     $prodId = isset($matches[1]) ? trim($matches[1]) : 'Unknown';
     log::add(__CLASS__, 'debug', '║ PRODID = ' . $prodId);
+
+    $n = 0;
 
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
@@ -827,7 +830,9 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-        // log::add(__CLASS__, 'debug', "║ Date START : " . json_encode($dtStart));
+        log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
+
+        $n++;
         $event['start_date'] = self::formatDate($dtStart);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
