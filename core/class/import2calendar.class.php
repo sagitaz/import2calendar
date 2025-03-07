@@ -597,9 +597,7 @@ class import2calendar extends eqLogic
       return null;
     }
 
-    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
-    // debug fichier user
-    // $icalData = "";
+    //log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
     $events = self::parse_icalendar_file($icalData);
 
@@ -757,6 +755,9 @@ class import2calendar extends eqLogic
     $events = [];
     $icalFile = str_replace("\r\n ", "", $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
+    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($lines));
+    // Debuf fichier user
+    // lines = file('user.ics');
     $event = [];
     $description = '';
     $exdates = "";
@@ -770,6 +771,8 @@ class import2calendar extends eqLogic
     preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
     $prodId = isset($matches[1]) ? trim($matches[1]) : 'Unknown';
     log::add(__CLASS__, 'debug', '║ PRODID = ' . $prodId);
+
+    $n = 0;
 
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
@@ -827,7 +830,9 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-        // log::add(__CLASS__, 'debug', "║ Date START : " . json_encode($dtStart));
+        log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
+
+        $n++;
         $event['start_date'] = self::formatDate($dtStart);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
@@ -1119,8 +1124,12 @@ class import2calendar extends eqLogic
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
     // remplace 
-    $dateString = str_replace('"', '', $dateString);
-    $dateString = self::convertTimezone($dateString);
+    $firstDateString = str_replace('"', '', $dateString);
+    $dateString = self::convertTimezone($firstDateString);
+    if ($firstDateString != $dateString) {
+      log::add(__CLASS__, 'debug', "║ Date depart : " . json_encode($firstDateString));
+      log::add(__CLASS__, 'debug', "║ Date convertie : " . json_encode($dateString));
+    }
     $hasTimeinfo = self::hasTimeInfo($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
     if (strpos($dateString, "TZID=") !== false) {
@@ -1780,156 +1789,33 @@ class import2calendar extends eqLogic
       'Tokyo Standard Time' => 'Asia/Tokyo',
       'Turkey Standard Time' => 'Europe/Istanbul',
       'Turks And Caicos Standard Time' => 'America/Grand_Turk',
-      'UTC' => 'Etc/GMT',
-      'UTC-02' => 'Etc/GMT+2',
-      'UTC-08' => 'Etc/GMT+8',
-      'UTC-09' => 'Etc/GMT+9',
-      'UTC-11' => 'Etc/GMT+11',
-      'UTC+12' => 'Etc/GMT-12',
-      'etc/utc-2' => 'Etc/GMT+2',
-      'etc/utc-1' => 'Etc/GMT+1',
-      'etc/utc+1' => 'Etc/GMT-1',
-      'etc/utc+2' => 'Etc/GMT-2',
-      'etc/utc+3' => 'Etc/GMT-3',
-      'etc/utc+4' => 'Etc/GMT-4',
-      'etc/utc+5' => 'Etc/GMT-5',
-      'etc/utc+6' => 'Etc/GMT-6',
-      'etc/utc+7' => 'Etc/GMT-7',
-      'etc/utc+8' => 'Etc/GMT-8',
-      'etc/utc+9' => 'Etc/GMT-9',
-      'etc/utc+10' => 'Etc/GMT-10',
-      'etc/utc+11' => 'Etc/GMT-11',
-      'etc/utc+12' => 'Etc/GMT-12',
-      'etc/utc-3' => 'Etc/GMT+3',
-      'etc/utc-4' => 'Etc/GMT+4',
-      'etc/utc-5' => 'Etc/GMT+5',
-      'etc/utc-6' => 'Etc/GMT+6',
-      'etc/utc-7' => 'Etc/GMT+7',
-      'etc/utc-8' => 'Etc/GMT+8',
-      'etc/utc-9' => 'Etc/GMT+9',
-      'etc/utc-10' => 'Etc/GMT+10',
-      'etc/utc-11' => 'Etc/GMT+11',
-      'etc/utc-12' => 'Etc/GMT+12',
-      'utc+1' => 'Etc/GMT-1',
-      'utc+2' => 'Etc/GMT-2',
-      'utc+3' => 'Etc/GMT-3',
-      'utc+4' => 'Etc/GMT-4',
-      'utc+5' => 'Etc/GMT-5',
-      'utc+6' => 'Etc/GMT-6',
-      'utc+7' => 'Etc/GMT-7',
-      'utc+8' => 'Etc/GMT-8',
-      'utc+9' => 'Etc/GMT-9',
-      'utc+10' => 'Etc/GMT-10',
-      'utc+11' => 'Etc/GMT-11',
-      'utc+12' => 'Etc/GMT-12',
-      'utc-1' => 'Etc/GMT+1',
-      'utc-2' => 'Etc/GMT+2',
-      'utc-3' => 'Etc/GMT+3',
-      'utc-4' => 'Etc/GMT+4',
-      'utc-5' => 'Etc/GMT+5',
-      'utc-6' => 'Etc/GMT+6',
-      'utc-7' => 'Etc/GMT+7',
-      'utc-8' => 'Etc/GMT+8',
-      'utc-9' => 'Etc/GMT+9',
-      'utc-10' => 'Etc/GMT+10',
-      'utc-11' => 'Etc/GMT+11',
-      'utc-12' => 'Etc/GMT+12',
-      'gmt+1' => 'Etc/GMT-1',
-      'gmt+2' => 'Etc/GMT-2',
-      'gmt+3' => 'Etc/GMT-3',
-      'gmt+4' => 'Etc/GMT-4',
-      'gmt+5' => 'Etc/GMT-5',
-      'gmt+6' => 'Etc/GMT-6',
-      'gmt+7' => 'Etc/GMT-7',
-      'gmt+8' => 'Etc/GMT-8',
-      'gmt+9' => 'Etc/GMT-9',
-      'gmt+10' => 'Etc/GMT-10',
-      'gmt+11' => 'Etc/GMT-11',
-      'gmt+12' => 'Etc/GMT-12',
-      'gmt-1' => 'Etc/GMT+1',
-      'gmt-2' => 'Etc/GMT+2',
-      'gmt-3' => 'Etc/GMT+3',
-      'gmt-4' => 'Etc/GMT+4',
-      'gmt-5' => 'Etc/GMT+5',
-      'gmt-6' => 'Etc/GMT+6',
-      'gmt-7' => 'Etc/GMT+7',
-      'gmt-8' => 'Etc/GMT+8',
-      'gmt-9' => 'Etc/GMT+9',
-      'gmt-10' => 'Etc/GMT+10',
-      'gmt-11' => 'Etc/GMT+11',
-      'gmt-12' => 'Etc/GMT+12',
-      'UTC +1' => 'Etc/GMT-1',
-      'UTC +2' => 'Etc/GMT-2',
-      'UTC +3' => 'Etc/GMT-3',
-      'UTC +4' => 'Etc/GMT-4',
-      'UTC +5' => 'Etc/GMT-5',
-      'UTC +6' => 'Etc/GMT-6',
-      'UTC +7' => 'Etc/GMT-7',
-      'UTC +8' => 'Etc/GMT-8',
-      'UTC +9' => 'Etc/GMT-9',
-      'UTC +10' => 'Etc/GMT-10',
-      'UTC +11' => 'Etc/GMT-11',
-      'UTC +12' => 'Etc/GMT-12',
-      'UTC -1' => 'Etc/GMT+1',
-      'UTC -2' => 'Etc/GMT+2',
-      'UTC -3' => 'Etc/GMT+3',
-      'UTC -4' => 'Etc/GMT+4',
-      'UTC -5' => 'Etc/GMT+5',
-      'UTC -6' => 'Etc/GMT+6',
-      'UTC -7' => 'Etc/GMT+7',
-      'UTC -8' => 'Etc/GMT+8',
-      'UTC -9' => 'Etc/GMT+9',
-      'UTC -10' => 'Etc/GMT+10',
-      'UTC -11' => 'Etc/GMT+11',
-      'UTC -12' => 'Etc/GMT+12',
-      'GMT +1' => 'Etc/GMT-1',
-      'GMT +2' => 'Etc/GMT-2',
-      'GMT +3' => 'Etc/GMT-3',
-      'GMT +4' => 'Etc/GMT-4',
-      'GMT +5' => 'Etc/GMT-5',
-      'GMT +6' => 'Etc/GMT-6',
-      'GMT +7' => 'Etc/GMT-7',
-      'GMT +8' => 'Etc/GMT-8',
-      'GMT +9' => 'Etc/GMT-9',
-      'GMT +10' => 'Etc/GMT-10',
-      'GMT +11' => 'Etc/GMT-11',
-      'GMT +12' => 'Etc/GMT-12',
-      'GMT -1' => 'Etc/GMT+1',
-      'GMT -2' => 'Etc/GMT+2',
-      'GMT -3' => 'Etc/GMT+3',
-      'GMT -4' => 'Etc/GMT+4',
-      'GMT -5' => 'Etc/GMT+5',
-      'GMT -6' => 'Etc/GMT+6',
-      'GMT -7' => 'Etc/GMT+7',
-      'GMT -8' => 'Etc/GMT+8',
-      'GMT -9' => 'Etc/GMT+9',
-      'GMT -10' => 'Etc/GMT+10',
-      'GMT -11' => 'Etc/GMT+11',
-      'GMT -12' => 'Etc/GMT+12',
-      '+0100' => 'Etc/GMT-1',
-      '+0200' => 'Etc/GMT-2',
-      '+0300' => 'Etc/GMT-3',
-      '+0400' => 'Etc/GMT-4',
-      '+0500' => 'Etc/GMT-5',
-      '+0600' => 'Etc/GMT-6',
-      '+0700' => 'Etc/GMT-7',
-      '+0800' => 'Etc/GMT-8',
-      '+0900' => 'Etc/GMT-9',
-      '+1000' => 'Etc/GMT-10',
-      '+1100' => 'Etc/GMT-11',
-      '+1200' => 'Etc/GMT-12',
-      '-0100' => 'Etc/GMT+1',
-      '-0200' => 'Etc/GMT+2',
-      '-0300' => 'Etc/GMT+3',
-      '-0400' => 'Etc/GMT+4',
-      '-0500' => 'Etc/GMT+5',
-      '-0600' => 'Etc/GMT+6',
-      '-0700' => 'Etc/GMT+7',
-      '-0800' => 'Etc/GMT+8',
-      '-0900' => 'Etc/GMT+9',
-      '-1000' => 'Etc/GMT+10',
-      '-1100' => 'Etc/GMT+11',
-      '-1200' => 'Etc/GMT+12',
+      'UTC-12' => 'Etc/GMT-12', // Ligne de changement de date
+      'UTC-11' => 'Pacific/Midway', // Samoa, Niue
+      'UTC-10' => 'Pacific/Honolulu', // Hawaï
+      'UTC-09' => 'America/Anchorage', // Alaska
+      'UTC-08' => 'America/Los_Angeles', // Pacifique (Californie, Vancouver)
+      'UTC-07' => 'America/Denver', // Montagnes Rocheuses (Colorado)
+      'UTC-06' => 'America/Chicago', // Centre (Texas, Mexique central)
+      'UTC-05' => 'America/New_York', // Est (New York, Québec)
+      'UTC-04' => 'America/Santiago', // Chili, Venezuela
+      'UTC-03' => 'America/Argentina/Buenos_Aires', // Argentine, Brésil Est
+      'UTC-02' => 'Atlantic/South_Georgia', // Atlantique Sud
+      'UTC-01' => 'Atlantic/Azores', // Açores
+      'UTC+01' => 'Europe/Paris', // France, Allemagne, Espagne
+      'UTC+02' => 'Europe/Athens', // Grèce, Roumanie, Égypte
+      'UTC+03' => 'Europe/Moscow', // Moscou, Arabie Saoudite
+      'UTC+04' => 'Asia/Dubai', // Dubaï, Azerbaïdjan
+      'UTC+05' => 'Asia/Karachi', // Pakistan, Ouzbékistan
+      'UTC+06' => 'Asia/Dhaka', // Bangladesh, Bhoutan
+      'UTC+07' => 'Asia/Bangkok', // Thaïlande, Vietnam
+      'UTC+08' => 'Asia/Singapore', // Singapour, Chine, Hong Kong
+      'UTC+09' => 'Asia/Tokyo', // Japon, Corée du Sud
+      'UTC+10' => 'Australia/Sydney', // Australie (Sydney)
+      'UTC+11' => 'Pacific/Noumea', // Nouvelle-Calédonie
+      'UTC+12' => 'Pacific/Auckland', // Nouvelle-Zélande, Fidji
+      'UTC+13' => 'Pacific/Tongatapu', // Tonga
+      'UTC+14' => 'Pacific/Kiritimati', // Îles de la Ligne (Kiribati)
+      'UTC'    => 'UTC', // Temps Universel Coordonné
       'Ulaanbaatar Standard Time' => 'Asia/Ulaanbaatar',
       'Venezuela Standard Time' => 'America/Caracas',
       'Vladivostok Standard Time' => 'Asia/Vladivostok',
@@ -1938,46 +1824,14 @@ class import2calendar extends eqLogic
       'West Asia Standard Time' => 'Asia/Tashkent',
       'West Bank Standard Time' => 'Asia/Hebron',
       'West Pacific Standard Time' => 'Pacific/Port_Moresby',
-      'Yakutsk Standard Time' => 'Asia/Yakutsk',
-      'America/Argentina/Buenos_Aires' => 'America/Buenos_Aires',
-      'Central European Standard Time' => 'Europe/Paris',
-      'Central European Time' => 'Europe/Paris',
-      'CET' => 'Europe/Paris',
-      'Eastern European Standard Time' => 'Europe/Bucharest',
-      'Eastern European Time' => 'Europe/Bucharest',
-      'EET' => 'Europe/Bucharest',
-      'Greenwich Mean Time' => 'UTC',
-      'GMT' => 'UTC',
-      'Moscow Standard Time' => 'Europe/Moscow',
-      'MSK' => 'Europe/Moscow',
-      'Central European Summer Time' => 'Europe/Paris',
-      'CEST' => 'Europe/Paris',
-      'Eastern European Summer Time' => 'Europe/Bucharest',
-      'EEST' => 'Europe/Bucharest',
-      'British Summer Time' => 'Europe/London',
-      'BST' => 'Europe/London',
-      'Western European Time' => 'Europe/London',
-      'WET' => 'Europe/London',
-      'Western European Summer Time' => 'Europe/London',
-      'WEST' => 'Europe/London',
-      'Western Standard Time' => 'Europe/London',
-      'Hong Kong Time' => 'Asia/Hong_Kong',
-      'HKT' => 'Asia/Hong_Kong',
-      'Singapore Time' => 'Asia/Singapore',
-      'SGT' => 'Asia/Singapore',
-      'AEST' => 'Australia/Sydney',
-      'AEDT' => 'Australia/Sydney',
-      'ACST' => 'Australia/Adelaide',
-      'ACDT' => 'Australia/Adelaide',
-      'AWST' => 'Australia/Perth',
-      'NZST' => 'Pacific/Auckland',
-      'NZDT' => 'Pacific/Auckland'
+      'Yakutsk Standard Time' => 'Asia/Yakutsk'
     );
     foreach ($timezones as $key => $value) {
       $timezone = str_replace($key, $value, $timezone);
     }
     return $timezone;
   }
+
   public static function createEqI2C($options)
   {
     log::add(__CLASS__, 'debug', "║ Création d'un nouveau équipement.");
