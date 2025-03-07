@@ -385,18 +385,19 @@ class import2calendar extends eqLogic
       if ($event['repeat']['enable'] == 1) {
         $freq = $event['repeat']['freq'];
         $unite = $event['repeat']['unite'];
-        $excludeDay = $event['repeat']['excludeDay'];
+        $includeDay = $event['repeat']['excludeDay'];
+        // soit onlyEven, onlyOdd ou all
         $nationalDayEvent = $event['repeat']['nationalDay'];
 
         // Déterminer si la semaine est paire ou impaire
-        $weekNumber = date('W');
+        $weekNumber = $checkDate->format('W');
         $nationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
 
         // Vérifier si le jour n'est pas exclu et si la semaine correspond (si définie)
         $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
         if (
-          $excludeDay[$currentDayNum] == "1" &&
-          ($event['repeat']['nationalDay'] == "" || $event['repeat']['nationalDay'] == $nationalDay || $event['repeat']['nationalDay'] == "all")
+          $includeDay[$currentDayNum] == "1" &&
+          ($nationalDayEvent == "" || $nationalDayEvent == "all" || $nationalDayEvent == $nationalDay)
         ) {
           // Calculer la différence entre la date vérifiée et la date de début
           $interval = $startDate->diff($checkDate);
