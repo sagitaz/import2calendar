@@ -274,7 +274,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<div class="colorAttr form-group" id="actionTab">
 					<br>
 					<div class="alert alert-success bt_addColor" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une couleur personnalisé}}.
+						{{Ajouter une couleur personnalisée}}.
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
