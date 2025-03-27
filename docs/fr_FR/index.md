@@ -84,6 +84,19 @@ Les évènements présents dans l'occurrence restent visibles sur le calendrier 
 
 Exemple : 1 évènement tous les 5 jours du 01-03-2024 au 24-11-2024. Tous les évènements sont visibles sur le calendrier jusqu'au 27-11-2024 (3 jours après la fin de l'occurrence).
 
+## Plugin Agenda
+Dans votre agenda, les commandes infos sur les événements à venir seront ajoutées.
+Vous aurez donc 9 nouvelles commandes :
+- hier
+- aujourd'hui
+- demain
+- après demain
+- j+3
+- j+4
+- j+5
+- j+6
+- j+7
+
 ## ical <-> jeedom
 Pour certaines occurrences, il ne sera pas possible de convertir au format Jeedom, il faut donc adapter vos calendriers.
 C'est le cas par exemple sur ceci :

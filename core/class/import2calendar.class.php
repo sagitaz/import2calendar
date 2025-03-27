@@ -49,6 +49,12 @@ class import2calendar extends eqLogic
   */
 
   /*     * ***********************Methode static*************************** */
+  /**
+   * Fonction exécutée automatiquement pour mettre à jour les calendriers
+   * Parcourt tous les équipements actifs du plugin et vérifie si une mise à jour est nécessaire selon le cron configuré
+   *
+   * @return void
+   */
   public static function update()
   {
     foreach (eqLogic::byType(__CLASS__, true) as $eqLogic) {
@@ -57,7 +63,12 @@ class import2calendar extends eqLogic
         try {
           $c = new Cron\CronExpression(checkAndFixCron($autorefresh), new Cron\FieldFactory);
           if ($c->isDue()) {
-            self::parseIcal($eqLogic->getId());
+            // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+            if ($eqLogic->getIsEnable() == 1) {
+              $calendarEqId = self::parseIcal($eqLogic->getId());
+              $calendar = calendar::byId($calendarEqId);
+              self::majCmdsAgenda($calendar);
+            }
           }
         } catch (Exception $exc) {
           log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : Invalid cron expression : ' . $autorefresh);
@@ -80,32 +91,77 @@ class import2calendar extends eqLogic
   * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
   */
 
+  /**
+   * Fonction exécutée automatiquement tous les jours par Jeedom
+   * Met à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+   *
+   * @return void
+   */
   public static function cronDaily()
   {
-    // On récupère tous les calendrier créé par le plugin
+    // On récupère tous les calendriers créés par le plugin
     $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
     foreach ($allCalendar as $calendar) {
       self::majCmdsAgenda($calendar);
     }
   }
 
+  /**
+   * Met à jour les commandes d'agenda pour un calendrier donné
+   * Crée et met à jour les commandes pour afficher les événements d'aujourd'hui et de demain
+   *
+   * @param object $calendar Objet calendrier à mettre à jour
+   * @return void
+   */
   private static function majCmdsAgenda($calendar)
   {
+    // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
+
+    // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
+    $eventsYesterday = [];
     $eventsToday = [];
     $eventsTomorrow = [];
+    $eventsJ2 = [];
+    $eventsJ3 = [];
+    $eventsJ4 = [];
+    $eventsJ5 = [];
+    $eventsJ6 = [];
+    $eventsJ7 = [];
 
     // Créer les objets DateTime pour aujourd'hui et demain
+    $yesterday = (new DateTime())->modify('-1 day');
     $today = new DateTime();
     $tomorrow = (new DateTime())->modify('+1 day');
+    $j2 = (new DateTime())->modify('+2 day');
+    $j3 = (new DateTime())->modify('+3 day');
+    $j4 = (new DateTime())->modify('+4 day');
+    $j5 = (new DateTime())->modify('+5 day');
+    $j6 = (new DateTime())->modify('+6 day');
+    $j7 = (new DateTime())->modify('+7 day');
 
     // Normaliser les dates
+    $yesterday->setTime(0, 0, 0);
     $today->setTime(0, 0, 0);
     $tomorrow->setTime(0, 0, 0);
+    $j2->setTime(0, 0, 0);
+    $j3->setTime(0, 0, 0);
+    $j4->setTime(0, 0, 0);
+    $j5->setTime(0, 0, 0);
+    $j6->setTime(0, 0, 0);
+    $j7->setTime(0, 0, 0);
 
     foreach ($inDB as $event) {
+      log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Event : ' . json_encode($event));
+      // Vérifier pour hier
+      $yesterdayEvents = self::checkEventForDate($event, $yesterday);
+      if ($yesterdayEvents !== null) {
+        $eventsYesterday = array_merge($eventsYesterday, $yesterdayEvents);
+        $eventsYesterday = array_unique($eventsYesterday);
+      }
+
       // Vérifier pour aujourd'hui
       $todayEvents = self::checkEventForDate($event, $today);
       if ($todayEvents !== null) {
@@ -119,7 +175,54 @@ class import2calendar extends eqLogic
         $eventsTomorrow = array_merge($eventsTomorrow, $tomorrowEvents);
         $eventsTomorrow = array_unique($eventsTomorrow);
       }
+
+      // Vérifier pour les jours suivants
+      $j2Events = self::checkEventForDate($event, $j2);
+      $j3Events = self::checkEventForDate($event, $j3);
+      $j4Events = self::checkEventForDate($event, $j4);
+      $j5Events = self::checkEventForDate($event, $j5);
+      $j6Events = self::checkEventForDate($event, $j6);
+      $j7Events = self::checkEventForDate($event, $j7);
+
+      if ($j2Events !== null) {
+        $eventsJ2 = array_merge($eventsJ2, $j2Events);
+        $eventsJ2 = array_unique($eventsJ2);
+      }
+      if ($j3Events !== null) {
+        $eventsJ3 = array_merge($eventsJ3, $j3Events);
+        $eventsJ3 = array_unique($eventsJ3);
+      }
+      if ($j4Events !== null) {
+        $eventsJ4 = array_merge($eventsJ4, $j4Events);
+        $eventsJ4 = array_unique($eventsJ4);
+      }
+      if ($j5Events !== null) {
+        $eventsJ5 = array_merge($eventsJ5, $j5Events);
+        $eventsJ5 = array_unique($eventsJ5);
+      }
+      if ($j6Events !== null) {
+        $eventsJ6 = array_merge($eventsJ6, $j6Events);
+        $eventsJ6 = array_unique($eventsJ6);
+      }
+      if ($j7Events !== null) {
+        $eventsJ7 = array_merge($eventsJ7, $j7Events);
+        $eventsJ7 = array_unique($eventsJ7);
+      }
     }
+
+    // Créer les commandes pour les événements d'hier
+    $cmd = self::createCmd($id, 'yesterday_events', 'Hier');
+    $cmd->save();
+    if (!empty($eventsYesterday)) {
+      $cmd->event(implode(', ', $eventsYesterday));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events hier : ' . implode(', ', $eventsYesterday));
+
+    // Créer les commandes pour les événements d'aujourd'hui
     $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
     $cmd->save();
 
@@ -132,6 +235,7 @@ class import2calendar extends eqLogic
     }
     log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
 
+    // Créer les commandes pour les événements de demain
     $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
     $cmd->save();
     if (!empty($eventsTomorrow)) {
@@ -142,6 +246,73 @@ class import2calendar extends eqLogic
       $cmd->save();
     }
     log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
+
+    // Créer les commandes pour les événements des jours suivants
+    $cmd = self::createCmd($id, 'j2_events', 'aprés demain');
+    $cmd->save();
+    if (!empty($eventsJ2)) {
+      $cmd->event(implode(', ', $eventsJ2));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aprés demain : ' . implode(', ', $eventsJ2));
+
+    $cmd = self::createCmd($id, 'j3_events', 'J+3');
+    $cmd->save();
+    if (!empty($eventsJ3)) {
+      $cmd->event(implode(', ', $eventsJ3));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+3 : ' . implode(', ', $eventsJ3));
+
+    $cmd = self::createCmd($id, 'j4_events', 'J+4');
+    $cmd->save();
+    if (!empty($eventsJ4)) {
+      $cmd->event(implode(', ', $eventsJ4));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+4 : ' . implode(', ', $eventsJ4));
+
+    $cmd = self::createCmd($id, 'j5_events', 'J+5');
+    $cmd->save();
+    if (!empty($eventsJ5)) {
+      $cmd->event(implode(', ', $eventsJ5));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+5 : ' . implode(', ', $eventsJ5));
+
+    $cmd = self::createCmd($id, 'j6_events', 'J+6');
+    $cmd->save();
+    if (!empty($eventsJ6)) {
+      $cmd->event(implode(', ', $eventsJ6));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+6 : ' . implode(', ', $eventsJ6));
+
+    $cmd = self::createCmd($id, 'j7_events', 'J+7');
+    $cmd->save();
+    if (!empty($eventsJ7)) {
+      $cmd->event(implode(', ', $eventsJ7));
+      $cmd->save();
+    } else {
+      $cmd->event('Aucun');
+      $cmd->save();
+    }
+    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+7 : ' . implode(', ', $eventsJ7));
   }
   private static function checkEventForDate($event, DateTime $checkDate)
   {
@@ -154,16 +325,40 @@ class import2calendar extends eqLogic
     $endDate->setTime(23, 59, 59);
     $checkDate->setTime(0, 0, 0);
 
-    // Vérifier si la date n'est pas exclue
+    // Vérifier si la date est exclue
     $excludeDates = explode(',', $event['repeat']['excludeDate']);
     $isExcluded = false;
     foreach ($excludeDates as $excludeDate) {
       if (!empty($excludeDate)) {
-        $excludeDateTime = new DateTime($excludeDate);
-        $excludeDateTime->setTime(0, 0, 0);
-        if ($checkDate == $excludeDateTime) {
-          $isExcluded = true;
-          break;
+        // Vérifier si c'est une période (avec :) ou une date simple
+        if (strpos($excludeDate, ':') !== false) {
+          $parts = explode(':', $excludeDate);
+          if (count($parts) === 2) {
+            try {
+              $startExcludeDate = new DateTime($parts[0]);
+              $endExcludeDate = new DateTime($parts[1]);
+              $startExcludeDate->setTime(0, 0, 0);
+              $endExcludeDate->setTime(23, 59, 59);
+
+              if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
+                $isExcluded = true;
+                break;
+              }
+            } catch (Exception $e) {
+              log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $excludeDate);
+            }
+          }
+        } else {
+          try {
+            $excludeDateTime = new DateTime($excludeDate);
+            $excludeDateTime->setTime(0, 0, 0);
+            if ($checkDate == $excludeDateTime) {
+              $isExcluded = true;
+              break;
+            }
+          } catch (Exception $e) {
+            log::add(__CLASS__, 'debug', '║ Erreur de date d\'exclusion : ' . $excludeDate);
+          }
         }
       }
     }
@@ -190,18 +385,19 @@ class import2calendar extends eqLogic
       if ($event['repeat']['enable'] == 1) {
         $freq = $event['repeat']['freq'];
         $unite = $event['repeat']['unite'];
-        $excludeDay = $event['repeat']['excludeDay'];
+        $includeDay = $event['repeat']['excludeDay'];
+        // soit onlyEven, onlyOdd ou all
         $nationalDayEvent = $event['repeat']['nationalDay'];
 
         // Déterminer si la semaine est paire ou impaire
-        $weekNumber = date('W');
+        $weekNumber = $checkDate->format('W');
         $nationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
 
         // Vérifier si le jour n'est pas exclu et si la semaine correspond (si définie)
         $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
         if (
-          $excludeDay[$currentDayNum] == "1" &&
-          ($event['repeat']['nationalDay'] == "" || $event['repeat']['nationalDay'] == $nationalDay)
+          $includeDay[$currentDayNum] == "1" &&
+          ($nationalDayEvent == "" || $nationalDayEvent == "all" || $nationalDayEvent == $nationalDay)
         ) {
           // Calculer la différence entre la date vérifiée et la date de début
           $interval = $startDate->diff($checkDate);
@@ -336,7 +532,19 @@ class import2calendar extends eqLogic
   public function preSave() {}
 
   // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
-  public function postSave() {}
+  public function postSave()
+  {
+    $cmd = $this->getCmd(null, 'refresh');
+    if (!is_object($cmd)) {
+      $cmd = new import2calendarCmd();
+      $cmd->setLogicalId('refresh');
+      $cmd->setName(__('Rafraichir', __FILE__));
+      $cmd->setType('action');
+      $cmd->setSubType('other');
+      $cmd->setEqLogic_id($this->getId());
+      $cmd->save();
+    }
+  }
 
   // Fonction exécutée automatiquement avant la suppression de l'équipement
   public function preRemove() {}
@@ -367,7 +575,7 @@ class import2calendar extends eqLogic
   /*     * **********************Getteur Setteur*************************** */
   public static function parseIcal($eqlogicId)
   {
-    log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START PARSE ICAL:/fg: ═════════════════════');
+    log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
     $options = [];
     $eqlogic = eqLogic::byId($eqlogicId);
     // création du calendrier si inexistant
@@ -390,11 +598,11 @@ class import2calendar extends eqLogic
       return null;
     }
 
-    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
+    //log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
     $events = self::parse_icalendar_file($icalData);
 
-    //  log::add(__CLASS__, 'debug', '║ EVENTS = ' . json_encode($events));
+    log::add(__CLASS__, 'debug', '║ EVENTS = ' . json_encode($events));
     $n = 1;
     foreach ($events as $event) {
 
@@ -416,7 +624,7 @@ class import2calendar extends eqLogic
       }
 
 
-      log::add(__CLASS__, 'debug', "║ Event " . $n . ": " . json_encode($event));
+      log::add(__CLASS__, 'debug', "╠═ Event " . $n . ": " . json_encode($event));
       $color = self::getColors($eqlogicId, $event['summary']);
       $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
       $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
@@ -534,13 +742,13 @@ class import2calendar extends eqLogic
       $n++;
     }
 
-    //  log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
+    log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
     $calendarEqlogic->refreshWidget();
 
-    log::add(__CLASS__, 'debug', '╚════════════════════════ END PARSE ICAL ═════════════════════ ');
+    log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
     return $calendarEqId;
   }
   private static function parse_icalendar_file($icalFile)
@@ -548,6 +756,9 @@ class import2calendar extends eqLogic
     $events = [];
     $icalFile = str_replace("\r\n ", "", $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
+    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($lines));
+    // Debuf fichier user
+    // lines = file('user.ics');
     $event = [];
     $description = '';
     $exdates = "";
@@ -561,6 +772,8 @@ class import2calendar extends eqLogic
     preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
     $prodId = isset($matches[1]) ? trim($matches[1]) : 'Unknown';
     log::add(__CLASS__, 'debug', '║ PRODID = ' . $prodId);
+
+    $n = 0;
 
     foreach ($lines as $line) {
       // Ignorer les lignes si on est dans une section VALARM
@@ -618,7 +831,9 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-        // log::add(__CLASS__, 'debug', "║ Date START : " . json_encode($dtStart));
+      //  log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
+
+        $n++;
         $event['start_date'] = self::formatDate($dtStart);
         // ajouter gestion des timezones
       } elseif (strpos($line, 'DTEND') === 0) {
@@ -694,18 +909,84 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-      //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
+    //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
       $frequence = $rrule['INTERVAL'] ?? 1;
       $nationalDay = "all";
       $includeDate = "";
+      $excludeDate = "";
       $enable = 1;
       $byDay = 0;
       $unit = 'days';
       $mode = "simple";
       $position = "first";
+
+      // Si c'est une récurrence mensuelle avec BYDAY spécifiant une position
+      if (
+        $icalUnit === 'MONTHLY' && isset($rrule['BYDAY']) &&
+        preg_match('/^(-?\d+)([A-Z]{2})$/', $rrule['BYDAY'])
+      ) {
+        $currentDate = new DateTime($startDate);
+        $endFiveYears = clone $currentDate;
+        $endFiveYears->modify('+5 years');
+        $excludePeriods = [];
+
+        // Mapper les jours suivants pour chaque jour
+        $nextDayMap = [
+          'MO' => 'tuesday',
+          'TU' => 'wednesday',
+          'WE' => 'thursday',
+          'TH' => 'friday',
+          'FR' => 'saturday',
+          'SA' => 'sunday',
+          'SU' => 'monday'
+        ];
+
+        // Mapper les jours précédents pour chaque jour
+        $previousDayMap = [
+          'MO' => 'sunday',
+          'TU' => 'monday',
+          'WE' => 'tuesday',
+          'TH' => 'wednesday',
+          'FR' => 'thursday',
+          'SA' => 'friday',
+          'SU' => 'saturday'
+        ];
+
+        do {
+          // Extraire la position et le jour de BYDAY
+          preg_match('/^(-?\d+)([A-Z]{2})$/', $rrule['BYDAY'], $matches);
+          $weekday = $matches[2];
+
+          // Début de la période d'exclusion au jour suivant
+          $exclusionStart = clone $currentDate;
+          $exclusionStart->modify('next ' . $nextDayMap[$weekday]);
+
+          // Calculer la date de la prochaine occurrence
+          $nextOccurrence = clone $currentDate;
+          $nextOccurrence->modify('+' . $frequence . ' months');
+
+          // Si la prochaine occurrence dépasse les 5 ans, on arrête
+          if ($nextOccurrence > $endFiveYears) {
+            break;
+          }
+
+          // Fin de la période d'exclusion au jour précédent
+          $exclusionEnd = clone $nextOccurrence;
+          $exclusionEnd->modify('previous ' . $previousDayMap[$weekday]);
+
+          // Ajouter la période d'exclusion
+          $excludePeriods[] = $exclusionStart->format('Y-m-d') . ':' . $exclusionEnd->format('Y-m-d');
+
+          // Passer à la prochaine occurrence
+          $currentDate = clone $nextOccurrence;
+        } while ($currentDate < $endFiveYears);
+
+        // Joindre les périodes d'exclusion
+        $excludeDate = implode(',', $excludePeriods);
+      }
       if ($icalUnit === 'DAILY') $unit = 'days';
       elseif ($icalUnit === 'MONTHLY') $unit = 'month';
       elseif ($icalUnit === 'YEARLY') $unit = 'years';
@@ -745,7 +1026,7 @@ class import2calendar extends eqLogic
           $excludeDay[$key + 1] = (in_array(strtoupper(substr($day, 0, 2)), $daysArray)) ? "1" : "0";
         }
 
-        if (preg_match('/^(-?\d+)([A-Za-z]{2})$/', $rrule['BYDAY'], $matches)) {
+        if (isset($rrule['BYDAY']) && preg_match('/^(-?\d+)([A-Za-z]{2})$/', $rrule['BYDAY'], $matches)) {
           $mode = "advance";
           if ($matches[1] === "-1") {
             $position = "last";
@@ -774,7 +1055,7 @@ class import2calendar extends eqLogic
         'includeDate' => $includeDate,
         'includeDateFromCalendar' => '',
         'includeDateFromEvent' => '',
-        'excludeDate' => '',
+        'excludeDate' => $excludeDate,
         'excludeDateFromCalendar' => '',
         'excludeDateFromEvent' => '',
         'enable' => $enable,
@@ -787,7 +1068,7 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
-    //   log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
+    log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -844,8 +1125,12 @@ class import2calendar extends eqLogic
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
     // remplace 
-    $dateString = str_replace('"', '', $dateString);
-    $dateString = self::convertTimezone($dateString);
+    $firstDateString = str_replace('"', '', $dateString);
+    $dateString = self::convertTimezone($firstDateString);
+    if ($firstDateString != $dateString) {
+      log::add(__CLASS__, 'debug', "║ Date depart : " . json_encode($firstDateString));
+      log::add(__CLASS__, 'debug', "║ Date convertie : " . json_encode($dateString));
+    }
     $hasTimeinfo = self::hasTimeInfo($dateString);
     // Extraire le fuseau horaire de la date s'il est présent
     if (strpos($dateString, "TZID=") !== false) {
@@ -956,7 +1241,7 @@ class import2calendar extends eqLogic
 
       foreach ($options as $option) {
 
-        log::add(__CLASS__, 'debug', '╔═════════════════════ :fg-success:START OPTIONS:/fg: :b:' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ═════════════════════ ');
+        log::add(__CLASS__, 'debug', '╠════════════ :b:START OPTIONS : ' . html_entity_decode($option['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8') . ':/b: ');
 
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
@@ -970,20 +1255,20 @@ class import2calendar extends eqLogic
         $existingEventId = self::isDuplicateEvent($option, $calendarEqId);
         if ($existingEventId === true) {
           log::add(__CLASS__, 'debug', '║ Aucune modification sur les options de cet évènement.');
-          log::add(__CLASS__, 'debug', '╚═════════════════════ END OPTIONS ═════════════════════ ');
+          log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
           continue; // Sauter cet événement s'il est un duplicata
         } elseif ($existingEventId !== false) {
           // Si une différence est détectée, ajouter l'ID existant à l'option
           $option['id'] = $existingEventId;
         }
 
-        log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
+        // log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
         // Comparer les dates inclus et exclus
         $cleanOption = self::cleanDate($option);
         log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
         // Sauvegarder l'événement s'il n'est pas un duplicata
         self::calendarSave($cleanOption);
-        log::add(__CLASS__, 'debug', '╚════════════════════════ END OPTIONS ═════════════════════ ');
+        log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
       }
     }
   }
@@ -1409,126 +1694,145 @@ class import2calendar extends eqLogic
   private static function convertTimezone($timezone)
   {
     $timezones = array(
-      'Dateline Standard Time' => 'Etc/GMT+12',
-      'UTC-11' => 'Etc/GMT+11',
-      'Aleutian Standard Time' => 'America/Adak',
-      'Hawaiian Standard Time' => 'Pacific/Honolulu',
-      'Marquesas Standard Time' => 'Pacific/Marquesas',
-      'Alaskan Standard Time' => 'America/Anchorage',
-      'UTC-09' => 'Etc/GMT+9',
-      'Pacific Standard Time (Mexico)' => 'America/Tijuana',
-      'UTC-08' => 'Etc/GMT+8',
-      'Pacific Standard Time' => 'America/Los_Angeles',
-      'US Mountain Standard Time' => 'America/Phoenix',
-      'Mountain Standard Time (Mexico)' => 'America/Chihuahua',
-      'Mountain Standard Time' => 'America/Denver',
-      'Central America Standard Time' => 'America/Guatemala',
-      'Central Standard Time' => 'America/Chicago',
-      'Easter Island Standard Time' => 'Pacific/Easter',
-      'Central Standard Time (Mexico)' => 'America/Mexico_City',
-      'Canada Central Standard Time' => 'America/Regina',
-      'SA Pacific Standard Time' => 'America/Bogota',
-      'Eastern Standard Time (Mexico)' => 'America/Cancun',
-      'Eastern Standard Time' => 'America/New_York',
-      'Haiti Standard Time' => 'America/Port-au-Prince',
-      'Cuba Standard Time' => 'America/Havana',
-      'US Eastern Standard Time' => 'America/Indianapolis',
-      'Turks And Caicos Standard Time' => 'America/Grand_Turk',
-      'Paraguay Standard Time' => 'America/Asuncion',
-      'Atlantic Standard Time' => 'America/Halifax',
-      'Venezuela Standard Time' => 'America/Caracas',
-      'Central Brazilian Standard Time' => 'America/Cuiaba',
-      'SA Western Standard Time' => 'America/La_Paz',
-      'Pacific SA Standard Time' => 'America/Santiago',
-      'Newfoundland Standard Time' => 'America/St_Johns',
-      'Tocantins Standard Time' => 'America/Araguaina',
-      'E. South America Standard Time' => 'America/Sao_Paulo',
-      'SA Eastern Standard Time' => 'America/Cayenne',
-      'Argentina Standard Time' => 'America/Buenos_Aires',
-      'Greenland Standard Time' => 'America/Godthab',
-      'Montevideo Standard Time' => 'America/Montevideo',
-      'Magallanes Standard Time' => 'America/Punta_Arenas',
-      'Saint Pierre Standard Time' => 'America/Miquelon',
-      'Bahia Standard Time' => 'America/Bahia',
-      'UTC-02' => 'Etc/GMT+2',
-      'Azores Standard Time' => 'Atlantic/Azores',
-      'Cape Verde Standard Time' => 'Atlantic/Cape_Verde',
-      'UTC' => 'Etc/GMT',
-      'GMT Standard Time' => 'Europe/London',
-      'Greenwich Standard Time' => 'Atlantic/Reykjavik',
-      'W. Europe Standard Time' => 'Europe/Berlin',
-      'Central Europe Standard Time' => 'Europe/Budapest',
-      'Romance Standard Time' => 'Europe/Paris',
-      'Morocco Standard Time' => 'Africa/Casablanca',
-      'W. Central Africa Standard Time' => 'Africa/Lagos',
-      'Jordan Standard Time' => 'Asia/Amman',
-      'GTB Standard Time' => 'Europe/Bucharest',
-      'Middle East Standard Time' => 'Asia/Beirut',
-      'Egypt Standard Time' => 'Africa/Cairo',
-      'E. Europe Standard Time' => 'Europe/Chisinau',
-      'Syria Standard Time' => 'Asia/Damascus',
-      'West Bank Standard Time' => 'Asia/Hebron',
-      'South Africa Standard Time' => 'Africa/Johannesburg',
-      'FLE Standard Time' => 'Europe/Kiev',
-      'Israel Standard Time' => 'Asia/Jerusalem',
-      'Kaliningrad Standard Time' => 'Europe/Kaliningrad',
-      'Sudan Standard Time' => 'Africa/Khartoum',
-      'Libya Standard Time' => 'Africa/Tripoli',
-      'Namibia Standard Time' => 'Africa/Windhoek',
-      'Arabic Standard Time' => 'Asia/Baghdad',
-      'Turkey Standard Time' => 'Europe/Istanbul',
-      'Arab Standard Time' => 'Asia/Riyadh',
-      'Belarus Standard Time' => 'Europe/Minsk',
-      'Russian Standard Time' => 'Europe/Moscow',
-      'E. Africa Standard Time' => 'Africa/Nairobi',
-      'Iran Standard Time' => 'Asia/Tehran',
-      'Arabian Standard Time' => 'Asia/Dubai',
-      'Azerbaijan Standard Time' => 'Asia/Baku',
-      'Mauritius Standard Time' => 'Indian/Mauritius',
-      'Georgian Standard Time' => 'Asia/Tbilisi',
-      'Caucasus Standard Time' => 'Asia/Yerevan',
       'Afghanistan Standard Time' => 'Asia/Kabul',
-      'West Asia Standard Time' => 'Asia/Tashkent',
-      'Pakistan Standard Time' => 'Asia/Karachi',
-      'India Standard Time' => 'Asia/Calcutta',
-      'Sri Lanka Standard Time' => 'Asia/Colombo',
-      'Nepal Standard Time' => 'Asia/Katmandu',
-      'Central Asia Standard Time' => 'Asia/Almaty',
+      'Alaskan Standard Time' => 'America/Anchorage',
+      'Aleutian Standard Time' => 'America/Adak',
+      'Arab Standard Time' => 'Asia/Riyadh',
+      'Arabic Standard Time' => 'Asia/Baghdad',
+      'Arabian Standard Time' => 'Asia/Dubai',
+      'Argentina Standard Time' => 'America/Buenos_Aires',
+      'Atlantic Standard Time' => 'America/Halifax',
+      'Australia/Darwin' => 'AUS Central Standard Time',
+      'Australia/Brisbane' => 'E. Australia Standard Time',
+      'Australia/Hobart' => 'Tasmania Standard Time',
+      'Australia/Perth' => 'W. Australia Standard Time',
+      'Australia/Sydney' => 'AUS Eastern Standard Time',
+      'Azerbaijan Standard Time' => 'Asia/Baku',
+      'Azores Standard Time' => 'Atlantic/Azores',
+      'Bahia Standard Time' => 'America/Bahia',
       'Bangladesh Standard Time' => 'Asia/Dhaka',
-      'Ekaterinburg Standard Time' => 'Asia/Yekaterinburg',
-      'Myanmar Standard Time' => 'Asia/Rangoon',
-      'SE Asia Standard Time' => 'Asia/Bangkok',
-      'N. Central Asia Standard Time' => 'Asia/Novosibirsk',
-      'China Standard Time' => 'Asia/Shanghai',
-      'North Asia Standard Time' => 'Asia/Krasnoyarsk',
-      'Singapore Standard Time' => 'Asia/Singapore',
-      'W. Australia Standard Time' => 'Australia/Perth',
-      'Taipei Standard Time' => 'Asia/Taipei',
-      'Ulaanbaatar Standard Time' => 'Asia/Ulaanbaatar',
-      'North Asia East Standard Time' => 'Asia/Irkutsk',
-      'Tokyo Standard Time' => 'Asia/Tokyo',
-      'Korea Standard Time' => 'Asia/Seoul',
+      'Belarus Standard Time' => 'Europe/Minsk',
+      'Canada Central Standard Time' => 'America/Regina',
+      'Cape Verde Standard Time' => 'Atlantic/Cape_Verde',
+      'Caucasus Standard Time' => 'Asia/Yerevan',
       'Cen. Australia Standard Time' => 'Australia/Adelaide',
-      'AUS Central Standard Time' => 'Australia/Darwin',
-      'E. Australia Standard Time' => 'Australia/Brisbane',
-      'AUS Eastern Standard Time' => 'Australia/Sydney',
-      'West Pacific Standard Time' => 'Pacific/Port_Moresby',
-      'Tasmania Standard Time' => 'Australia/Hobart',
-      'Yakutsk Standard Time' => 'Asia/Yakutsk',
+      'Central America Standard Time' => 'America/Guatemala',
+      'Central Asia Standard Time' => 'Asia/Almaty',
+      'Central Brazilian Standard Time' => 'America/Cuiaba',
+      'Central Europe Standard Time' => 'Europe/Budapest',
       'Central Pacific Standard Time' => 'Pacific/Guadalcanal',
-      'Vladivostok Standard Time' => 'Asia/Vladivostok',
-      'New Zealand Standard Time' => 'Pacific/Auckland',
-      'UTC+12' => 'Etc/GMT-12',
+      'Central Standard Time' => 'America/Chicago',
+      'Central Standard Time (Mexico)' => 'America/Mexico_City',
+      'China Standard Time' => 'Asia/Shanghai',
+      'Cuba Standard Time' => 'America/Havana',
+      'Customized Time Zone' => 'Europe/Paris',
+      'Dateline Standard Time' => 'Etc/GMT+12',
+      'E. Africa Standard Time' => 'Africa/Nairobi',
+      'E. Australia Standard Time' => 'Australia/Brisbane',
+      'E. Europe Standard Time' => 'Europe/Chisinau',
+      'E. South America Standard Time' => 'America/Sao_Paulo',
+      'Eastern Standard Time' => 'America/New_York',
+      'Eastern Standard Time (Mexico)' => 'America/Cancun',
+      'Easter Island Standard Time' => 'Pacific/Easter',
+      'Ekaterinburg Standard Time' => 'Asia/Yekaterinburg',
+      'Egypt Standard Time' => 'Africa/Cairo',
       'Fiji Standard Time' => 'Pacific/Fiji',
+      'FLE Standard Time' => 'Europe/Kiev',
+      'Georgian Standard Time' => 'Asia/Tbilisi',
+      'GMT Standard Time' => 'Europe/London',
+      'Greenland Standard Time' => 'America/Godthab',
+      'Greenwich Standard Time' => 'Atlantic/Reykjavik',
+      'GTB Standard Time' => 'Europe/Bucharest',
+      'Haiti Standard Time' => 'America/Port-au-Prince',
+      'Hawaiian Standard Time' => 'Pacific/Honolulu',
+      'India Standard Time' => 'Asia/Calcutta',
+      'Iran Standard Time' => 'Asia/Tehran',
+      'Israel Standard Time' => 'Asia/Jerusalem',
+      'Jordan Standard Time' => 'Asia/Amman',
       'Kamchatka Standard Time' => 'Asia/Kamchatka',
-      'Tonga Standard Time' => 'Pacific/Tongatapu',
+      'Kaliningrad Standard Time' => 'Europe/Kaliningrad',
+      'Korea Standard Time' => 'Asia/Seoul',
+      'Libya Standard Time' => 'Africa/Tripoli',
+      'Magallanes Standard Time' => 'America/Punta_Arenas',
+      'Marquesas Standard Time' => 'Pacific/Marquesas',
+      'Mauritius Standard Time' => 'Indian/Mauritius',
+      'Middle East Standard Time' => 'Asia/Beirut',
+      'Montevideo Standard Time' => 'America/Montevideo',
+      'Morocco Standard Time' => 'Africa/Casablanca',
+      'Myanmar Standard Time' => 'Asia/Rangoon',
+      'N. Central Asia Standard Time' => 'Asia/Novosibirsk',
+      'Namibia Standard Time' => 'Africa/Windhoek',
+      'Nepal Standard Time' => 'Asia/Katmandu',
+      'New Zealand Standard Time' => 'Pacific/Auckland',
+      'Newfoundland Standard Time' => 'America/St_Johns',
+      'North Asia East Standard Time' => 'Asia/Irkutsk',
+      'North Asia Standard Time' => 'Asia/Krasnoyarsk',
+      'Pacific SA Standard Time' => 'America/Santiago',
+      'Pacific Standard Time' => 'America/Los_Angeles',
+      'Pacific Standard Time (Mexico)' => 'America/Tijuana',
+      'Pakistan Standard Time' => 'Asia/Karachi',
+      'Paraguay Standard Time' => 'America/Asuncion',
+      'Romance Standard Time' => 'Europe/Paris',
+      'Russian Standard Time' => 'Europe/Moscow',
+      'SA Eastern Standard Time' => 'America/Cayenne',
+      'SA Pacific Standard Time' => 'America/Bogota',
+      'SA Western Standard Time' => 'America/La_Paz',
+      'Saint Pierre Standard Time' => 'America/Miquelon',
       'Samoa Standard Time' => 'Pacific/Apia',
+      'SE Asia Standard Time' => 'Asia/Bangkok',
+      'South Africa Standard Time' => 'Africa/Johannesburg',
+      'Sri Lanka Standard Time' => 'Asia/Colombo',
+      'Sudan Standard Time' => 'Africa/Khartoum',
+      'Syria Standard Time' => 'Asia/Damascus',
+      'Taipei Standard Time' => 'Asia/Taipei',
+      'Tasmania Standard Time' => 'Australia/Hobart',
+      'Tocantins Standard Time' => 'America/Araguaina',
+      'Tokyo Standard Time' => 'Asia/Tokyo',
+      'Turkey Standard Time' => 'Europe/Istanbul',
+      'Turks And Caicos Standard Time' => 'America/Grand_Turk',
+      'UTC-12' => 'Etc/GMT-12', // Ligne de changement de date
+      'UTC-11' => 'Pacific/Midway', // Samoa, Niue
+      'UTC-10' => 'Pacific/Honolulu', // Hawaï
+      'UTC-09' => 'America/Anchorage', // Alaska
+      'UTC-08' => 'America/Los_Angeles', // Pacifique (Californie, Vancouver)
+      'UTC-07' => 'America/Denver', // Montagnes Rocheuses (Colorado)
+      'UTC-06' => 'America/Chicago', // Centre (Texas, Mexique central)
+      'UTC-05' => 'America/New_York', // Est (New York, Québec)
+      'UTC-04' => 'America/Santiago', // Chili, Venezuela
+      'UTC-03' => 'America/Argentina/Buenos_Aires', // Argentine, Brésil Est
+      'UTC-02' => 'Atlantic/South_Georgia', // Atlantique Sud
+      'UTC-01' => 'Atlantic/Azores', // Açores
+      'UTC+01' => 'Europe/Paris', // France, Allemagne, Espagne
+      'UTC+02' => 'Europe/Athens', // Grèce, Roumanie, Égypte
+      'UTC+03' => 'Europe/Moscow', // Moscou, Arabie Saoudite
+      'UTC+04' => 'Asia/Dubai', // Dubaï, Azerbaïdjan
+      'UTC+05' => 'Asia/Karachi', // Pakistan, Ouzbékistan
+      'UTC+06' => 'Asia/Dhaka', // Bangladesh, Bhoutan
+      'UTC+07' => 'Asia/Bangkok', // Thaïlande, Vietnam
+      'UTC+08' => 'Asia/Singapore', // Singapour, Chine, Hong Kong
+      'UTC+09' => 'Asia/Tokyo', // Japon, Corée du Sud
+      'UTC+10' => 'Australia/Sydney', // Australie (Sydney)
+      'UTC+11' => 'Pacific/Noumea', // Nouvelle-Calédonie
+      'UTC+12' => 'Pacific/Auckland', // Nouvelle-Zélande, Fidji
+      'UTC+13' => 'Pacific/Tongatapu', // Tonga
+      'UTC+14' => 'Pacific/Kiritimati', // Îles de la Ligne (Kiribati)
+      'UTC'    => 'UTC', // Temps Universel Coordonné
+      'Ulaanbaatar Standard Time' => 'Asia/Ulaanbaatar',
+      'Venezuela Standard Time' => 'America/Caracas',
+      'Vladivostok Standard Time' => 'Asia/Vladivostok',
+      'W. Central Africa Standard Time' => 'Africa/Lagos',
+      'W. Europe Standard Time' => 'Europe/Berlin',
+      'West Asia Standard Time' => 'Asia/Tashkent',
+      'West Bank Standard Time' => 'Asia/Hebron',
+      'West Pacific Standard Time' => 'Pacific/Port_Moresby',
+      'Yakutsk Standard Time' => 'Asia/Yakutsk'
     );
     foreach ($timezones as $key => $value) {
       $timezone = str_replace($key, $value, $timezone);
     }
     return $timezone;
   }
+
   public static function createEqI2C($options)
   {
     log::add(__CLASS__, 'debug', "║ Création d'un nouveau équipement.");
@@ -1611,12 +1915,19 @@ class import2calendarCmd extends cmd
 
   /*
      * Non obligatoire permet de demander de ne pas supprimer les commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
-      public function dontRemoveCmd() {
-      return true;
-      }
-     */
 
-  public function execute($_options = array()) {}
+     */
+  public function dontRemoveCmd()
+  {
+    return true;
+  }
+  public function execute($_options = array())
+  {
+    $i2c = $this->getEqLogic();
+    if ($this->getLogicalId() == 'refresh') {
+      $i2c->save();
+    }
+  }
 
   /*     * **********************Getteur Setteur*************************** */
 }
