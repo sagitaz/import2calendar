@@ -831,7 +831,7 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-        log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
+      //  log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
 
         $n++;
         $event['start_date'] = self::formatDate($dtStart);
@@ -909,7 +909,7 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-      log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
+    //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
