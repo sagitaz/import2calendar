@@ -598,7 +598,6 @@ class import2calendar extends eqLogic
       return null;
     }
 
-    //log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
     $events = self::parse_icalendar_file($icalData);
 
@@ -742,7 +741,7 @@ class import2calendar extends eqLogic
       $n++;
     }
 
-    log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
+    log::add(__CLASS__, 'debug', "║ OPTIONS : " . json_encode($options));
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
@@ -756,9 +755,7 @@ class import2calendar extends eqLogic
     $events = [];
     $icalFile = str_replace("\r\n ", "", $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
-    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($lines));
-    // Debuf fichier user
-    // lines = file('user.ics');
+
     $event = [];
     $description = '';
     $exdates = "";
@@ -1068,7 +1065,6 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
-    log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -1199,7 +1195,7 @@ class import2calendar extends eqLogic
         $endDate = null;
         break;
     }
-    log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
+   // log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
     return $endDate->format("Y-m-d H:i:s");
   }
 
