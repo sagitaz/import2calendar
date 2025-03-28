@@ -38,10 +38,12 @@ if (!isConnect()) {
       </div>
     </div>
     <div class="form-group">
-      <label class="col-md-4 control-label">{{Nombre de jours passé affiché}}
+      <label class="col-md-4 control-label">{{Nombre de jours passé de retention}}
         <sup><i class="fas fa-question-circle tooltips" title="min : 3, max : 31"></i></sup>
       </label>
-      <input type="number" class="configKey form-control" data-l1key="numberOldDays" />
+      <div class="col-lg-2">
+        <input type="number" class="configKey form-control" data-l1key="numberOfDays" />
+      </div>
     </div>
   </fieldset>
 </form>
