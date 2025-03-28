@@ -708,9 +708,9 @@ class import2calendar extends eqLogic
           "repeat" => $repeat
         ];
       } else {
-        $threeDaysAgo = self::threeDaysAgo($until);
+        $withinRetention = self::isWithinRetentionPeriod($until);
 
-        if ($threeDaysAgo) {
+        if ($withinRetention) {
           $options[] = [
             "id" => "",
             "eqLogic_id" => $calendarEqId,
@@ -799,16 +799,16 @@ class import2calendar extends eqLogic
           $addEvent = true;
         }
         if (isset($event['start_date'])) {
-          // Vérifier si la date de début est au maximum 3 jours avant aujourd'hui
-          $threeDaysAgoStart = self::threeDaysAgo($event['start_date']);
+          // Vérifier si la date de début est dans la période de rétention configurée
+          $startWithinRetention = self::isWithinRetentionPeriod($event['start_date']);
 
           // Vérifier si une date de fin est définie pour l'événement
           if (isset($event['end_date'])) {
-            // Vérifier si la date de fin est au maximum 3 jours avant aujourd'hui
-            $threeDaysAgoEnd = self::threeDaysAgo($event['end_date']);
+            // Vérifier si la date de fin est dans la période de rétention configurée
+            $endWithinRetention = self::isWithinRetentionPeriod($event['end_date']);
           }
 
-          if ($threeDaysAgoStart || $threeDaysAgoEnd || $addEvent) {
+          if ($startWithinRetention || $endWithinRetention || $addEvent) {
             // Vérifier si l'évènement à un nom sinon lui en donner un par default
             if (!isset($event['summary']) || trim($event['summary']) === '') {
               $event['summary'] = "Aucun nom";
@@ -890,14 +890,33 @@ class import2calendar extends eqLogic
     return $events;
   }
 
-  private static function threeDaysAgo($date)
+  /**
+   * Vérifie si une date donnée est dans la période de rétention configurée par l'utilisateur
+   * La période peut être configurée entre 3 et 31 jours. Si non configurée, la valeur par défaut est 3 jours.
+   *
+   * @param string $date La date à vérifier au format Y-m-d H:i:s
+   * @return boolean true si la date est dans la période de rétention, false sinon
+   */
+  private static function isWithinRetentionPeriod($date)
   {
-    $numberOfDays = 3;
+    // Récupération de la période configurée (entre 3 et 31 jours)
+    $numberOfDays = config::byKey('numberOfDays', 'import2calendar');
+    if ($numberOfDays == '') {
+      $numberOfDays = 3; // Valeur par défaut
+      config::save('numberOfDays', 3, 'import2calendar');
+    } else if ($numberOfDays < 3) {
+      $numberOfDays = 3; // Minimum 3 jours
+      config::save('numberOfDays', 3, 'import2calendar');
+    } else if ($numberOfDays > 31) {
+      $numberOfDays = 31; // Maximum 31 jours
+      config::save('numberOfDays', 31, 'import2calendar');
+    }
+    
     $currentTime = time();
     $timestamp = strtotime($date);
-    $threeDaysInSeconds = $numberOfDays * 24 * 60 * 60;
+    $retentionPeriodInSeconds = $numberOfDays * 24 * 60 * 60;
 
-    if (($currentTime - $timestamp) < $threeDaysInSeconds) {
+    if (($currentTime - $timestamp) < $retentionPeriodInSeconds) {
       return true;
     }
     return false;
