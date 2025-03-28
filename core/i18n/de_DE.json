@@ -109,6 +109,7 @@
         "aide Discord": "discord-Hilfe"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Nombre de jours passé de retention": "Anzahl der vergangenen Tage der Zurückhaltung",
         "Version Plugin": "Plugin-Version",
         "Version du Plugin (A indiquer sur Community)": "Version des Plugins (Auf Community anzugeben)"
     }
