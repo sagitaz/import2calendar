@@ -317,143 +317,187 @@ class import2calendar extends eqLogic
   /**
    * Vérifie si un événement est actif pour une date donnée
    */
-  private static function checkEventForDate($event, DateTime $checkDate)
+  private static function checkEventForDate($event, DateTime $checkDate): ?array
   {
     log::add('import2calendar_cron', 'debug', '║ Vérification de l\'événement "' . $event['cmd_param']['eventName'] . '" pour la date ' . $checkDate->format('Y-m-d'));
 
-    $events = [];
     $startDate = new DateTime($event['startDate']);
     $endDate = new DateTime($event['endDate']);
+    $checkDateStart = (clone $checkDate)->setTime(0, 0, 0);
+    $checkDateEnd = (clone $checkDate)->setTime(23, 59, 59);
 
-    // On ne modifie pas les dates originales pour garder les heures
-    $checkDateStart = clone $checkDate;
-    $checkDateEnd = clone $checkDate;
-
-    // On met la date à vérifier de 00:00:00 à 23:59:59
-    $checkDateStart->setTime(0, 0, 0);
-    $checkDateEnd->setTime(23, 59, 59);
-
-    log::add('import2calendar_cron', 'debug', '║ Date à vérifier du ' . $checkDateStart->format('Y-m-d H:i:s') . ' au ' . $checkDateEnd->format('Y-m-d H:i:s'));
-    log::add('import2calendar_cron', 'debug', '║ Date de début : ' . $startDate->format('Y-m-d H:i:s'));
-    log::add('import2calendar_cron', 'debug', '║ Date de fin : ' . $endDate->format('Y-m-d H:i:s'));
-
-    // Vérifier si la date est exclue
     $excludeDates = explode(',', $event['repeat']['excludeDate']);
-    $isExcluded = false;
-    foreach ($excludeDates as $excludeDate) {
-      if (!empty($excludeDate)) {
-        // Vérifier si c'est une période (avec :) ou une date simple
-        if (strpos($excludeDate, ':') !== false) {
-          $parts = explode(':', $excludeDate);
-          if (count($parts) === 2) {
-            try {
-              $startExcludeDate = new DateTime($parts[0]);
-              $endExcludeDate = new DateTime($parts[1]);
-              $startExcludeDate->setTime(0, 0, 0);
-              $endExcludeDate->setTime(23, 59, 59);
-
-              if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
-                $isExcluded = true;
-                break;
-              }
-            } catch (Exception $e) {
-              log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $excludeDate);
-            }
-          }
-        } else {
-          try {
-            $excludeDateTime = new DateTime($excludeDate);
-            $excludeDateTime->setTime(0, 0, 0);
-            if ($checkDate == $excludeDateTime) {
-              $isExcluded = true;
-              break;
-            }
-          } catch (Exception $e) {
-            log::add(__CLASS__, 'debug', '║ Erreur de date d\'exclusion : ' . $excludeDate);
-          }
-        }
-      }
+    if (self::isDateExcluded($checkDate, $excludeDates)) {
+      return null; // Date exclue
     }
 
-    if (!$isExcluded) {
-      // Vérifier si l'événement est en cours en utilisant les bonnes dates
-      // Un événement est valide si :
-      // - Il commence avant la fin de la journée vérifiée (23:59:59)
-      // - ET il finit après le début de la journée vérifiée (00:00:00)
-      if ($startDate <= $checkDateEnd && $endDate >= $checkDateStart) {
-        $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        log::add('import2calendar_cron', 'debug', '║ Événement "' . $event['cmd_param']['eventName'] . '" ajouté car il est actif du ' . $startDate->format('Y-m-d H:i:s') . ' au ' . $endDate->format('Y-m-d H:i:s'));
-      }
+    $events = [];
+    if ($startDate <= $checkDateEnd && $endDate >= $checkDateStart) {
+      $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+      log::add('import2calendar_cron', 'debug', '║ Événement "' . $event['cmd_param']['eventName'] . '" ajouté car il est actif du ' . $startDate->format('Y-m-d H:i:s') . ' au ' . $endDate->format('Y-m-d H:i:s'));
+    }
 
-      // Vérifier si la date est présente dans include
-      $includeDates = explode(',', $event['repeat']['includeDate']);
-      foreach ($includeDates as $includeDate) {
-        if (!empty($includeDate)) {
-          $includeDateTime = new DateTime($includeDate);
-          $includeDateTime->setTime(0, 0, 0);
-          if ($checkDate == $includeDateTime) {
+    $includeDates = explode(',', $event['repeat']['includeDate']);
+    if (self::isDateIncluded($checkDate, $includeDates)) {
+      $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+      log::add('import2calendar_cron', 'debug', '║ Date incluse');
+    }
+
+    if (self::isRecurringEventValid($checkDate, $event, $startDate, $endDate)) {
+      $interval = $startDate->diff($checkDate);
+      $daysDiff = $interval->days;
+      $freq = $event['repeat']['freq'];
+      $unite = $event['repeat']['unite'];
+
+      switch ($unite) {
+        case 'days':
+          if ($freq > 0 && ($daysDiff % $freq) == 0) {
             $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            log::add('import2calendar_cron', 'debug', '║ Date ' . $includeDateTime->format('Y-m-d') . ' incluse');
+            log::add('import2calendar_cron', 'debug', '║ :b:Événement ajouté:/b: - Fréquence journalière correspondante');
           }
-        }
-      }
-
-      // Vérifier la récurrence si elle est activée
-      if ($event['repeat']['enable'] == 1) {
-        $freq = $event['repeat']['freq'];
-        $unite = $event['repeat']['unite'];
-        $includeDay = $event['repeat']['excludeDay'];
-        // soit onlyEven, onlyOdd ou all
-        $nationalDayEvent = $event['repeat']['nationalDay'];
-
-        // Déterminer si la semaine est paire ou impaire
-        $weekNumber = (int)$checkDate->format('W');
-        $currentNationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
-
-        // Vérifier si le jour n'est pas exclu et si la semaine correspond
-        $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
-
-        log::add('import2calendar_cron', 'debug', "║ Jour " . $currentDayNum . ", Semaine " . $weekNumber . " (" . $currentNationalDay . "), Config: " . $nationalDayEvent);
-
-        log::add('import2calendar_cron', 'debug', '║ Vérification de la récurrence - Jour ' . $currentDayNum . ', Semaine ' . $weekNumber . ' (' . $currentNationalDay . ')');
-        log::add('import2calendar_cron', 'debug', '║ Configuration - excludeDay[' . $currentDayNum . ']=' . $includeDay[$currentDayNum] . ', nationalDay=' . $nationalDayEvent);
-
-        // Vérifier d'abord si le jour est inclus
-        if ($includeDay[$currentDayNum] == "1") {
-          // Puis vérifier le type de semaine
-          if ($nationalDayEvent == "all" || $nationalDayEvent == $currentNationalDay) {
-            log::add('import2calendar_cron', 'debug', '║ Jour et type de semaine correspondent');
-
-            // Calculer la différence entre la date vérifiée et la date de début
-            $interval = $startDate->diff($checkDate);
-            $daysDiff = $interval->days;
-
-            // Vérifier si la date correspond à la fréquence
-            switch ($unite) {
-              case 'days':
-                if ($freq > 0 && ($daysDiff % $freq) == 0) {
-                  $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                  log::add('import2calendar_cron', 'debug', '║ Événement ajouté - Fréquence journalière correspondante');
-                }
-                break;
-              case 'month':
-                // Si même jour du mois et la différence en mois est multiple de freq
-                if ($startDate->format('d') == $checkDate->format('d')) {
-                  $monthsDiff = ($interval->y * 12) + $interval->m;
-                  if ($freq > 0 && ($monthsDiff % $freq) == 0) {
-                    $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                  }
-                }
-                break;
+          break;
+        case 'month':
+          if ($startDate->format('d') == $checkDate->format('d')) {
+            $monthsDiff = ($interval->y * 12) + $interval->m;
+            if ($freq > 0 && ($monthsDiff % $freq) == 0) {
+              $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
             }
           }
-        }
+          break;
       }
     }
-
     return !empty($events) ? $events : null;
   }
+  private static function isDateExcluded(DateTime $checkDate, array $excludeDates): bool
+  {
+    foreach ($excludeDates as $excludeDate) {
+      if (empty($excludeDate)) {
+        continue;
+      }
 
+      if (strpos($excludeDate, ':') !== false) {
+        $parts = explode(':', $excludeDate);
+        if (count($parts) === 2) {
+          try {
+            $startExcludeDate = (new DateTime($parts[0]))->setTime(0, 0, 0);
+            $endExcludeDate = (new DateTime($parts[1]))->setTime(23, 59, 59);
+
+            if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
+              return true;
+            }
+          } catch (Exception $e) {
+            log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $excludeDate);
+          }
+        }
+      } else {
+        try {
+          $excludeDateTime = (new DateTime($excludeDate))->setTime(0, 0, 0);
+          if ($checkDate == $excludeDateTime) {
+            return true;
+          }
+        } catch (Exception $e) {
+          log::add(__CLASS__, 'debug', '║ Erreur de date d\'exclusion : ' . $excludeDate);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static function isDateIncluded(DateTime $checkDate, array $includeDates): bool
+  {
+    foreach ($includeDates as $includeDate) {
+      if (!empty($includeDate)) {
+        try {
+          $includeDateTime = (new DateTime($includeDate))->setTime(0, 0, 0);
+          if ($checkDate == $includeDateTime) {
+            return true;
+          }
+        } catch (Exception $e) {
+          log::add(__CLASS__, 'debug', '║ Erreur de date d\'inclusion : ' . $includeDate);
+        }
+      }
+    }
+
+    return false;
+  }
+  private static function isRecurringEventValid(DateTime $checkDate, array $event, DateTime $startDate, DateTime $endDate): bool
+  {
+    if ($event['repeat']['enable'] != 1) {
+      log::add('import2calendar_cron', 'debug', '║ Pas de récurrence, toujours valide');
+      return true; // Pas de récurrence, toujours valide
+    }
+
+    $currentDayNum = $checkDate->format('N');
+    $includeDay = $event['repeat']['excludeDay'];
+    $nationalDayEvent = $event['repeat']['nationalDay'];
+    $weekNumber = (int)$checkDate->format('W');
+    $currentNationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
+    $eventDuration = $startDate->diff($endDate)->days;
+
+    log::add('import2calendar_cron', 'debug', "║ Jour " . $currentDayNum . ", Semaine " . $weekNumber . " (" . $currentNationalDay . "), Config: " . $nationalDayEvent);
+
+    if ($eventDuration > 1) {
+      log::add('import2calendar_cron', 'debug', '║ Événement multi-jours');
+
+      $currentPeriodStart = clone $startDate;
+      $currentPeriodEnd = clone $endDate;
+
+      while ($currentPeriodStart <= $checkDate) {
+        // Vérifier la date de fin de récurrence si elle existe
+        if (isset($event['until']) && !empty($event['until'])) {
+          $untilDate = new DateTime($event['until']);
+          if ($checkDate > $untilDate) {
+            log::add('import2calendar_cron', 'debug', '║ Date après la date de fin de récurrence');
+           return false;
+          }
+        }
+
+        if ($checkDate >= $currentPeriodStart && $checkDate <= $currentPeriodEnd) {
+          log::add('import2calendar_cron', 'debug', '║ Date dans la période récurrente');
+          return true; // Date dans la période récurrente
+        }
+
+        $currentPeriodStart->modify('+14 days');
+        $currentPeriodEnd->modify('+14 days');
+      }
+
+      return false; // Date hors des périodes récurrentes
+    }
+
+    if ($nationalDayEvent === "all") {
+      log::add('import2calendar_cron', 'debug', '║ Événement journalier');
+
+      $currentPeriodStart = clone $startDate;
+      $currentPeriodEnd = clone $endDate;
+
+      while ($currentPeriodStart <= $checkDate) {
+        // Vérifier la date de fin de récurrence si elle existe
+        if (isset($event['until']) && !empty($event['until'])) {
+          $untilDate = new DateTime($event['until']);
+          if ($checkDate > $untilDate) {
+            log::add('import2calendar_cron', 'debug', '║ Date après la date de fin de récurrence');
+            return false;
+          }
+        }
+
+        if ($checkDate >= $currentPeriodStart && $checkDate <= $currentPeriodEnd) {
+          log::add('import2calendar_cron', 'debug', '║ Date dans la période récurrente');
+          return true; // Date dans la période récurrente
+        }
+
+        $currentPeriodStart->modify('+1 days');
+        $currentPeriodEnd->modify('+1 days');
+      }
+
+      return false; // Date hors des périodes récurrentes
+    }
+    if (($nationalDayEvent === "onlyEven" || $nationalDayEvent === "onlyOdd") && $nationalDayEvent !== $currentNationalDay) {
+      log::add('import2calendar_cron', 'debug', '║ Type de semaine (pair ou impair) non respecté');
+      return false; // Règle de semaine non respectée
+    }
+    return $includeDay[$currentDayNum] == "1"; // Vérification standard pour événements d'une journée
+  }
   private static function createCmd($eqLogicId, $logicalId, $name)
   {
     $eqLogic = eqLogic::byId($eqLogicId);
