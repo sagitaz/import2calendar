@@ -3,6 +3,9 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 05/04/2025 Beta 1.3.3
+- Correction bug ical2calendar sur les évènements j-1 à j+7
+
 # 06/03/2025 Beta 1.2.8
 - Correction bug ical2calendar
 - Ajout des commandes j-1 ainsi que j+2 à j+7
