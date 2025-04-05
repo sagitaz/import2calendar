@@ -118,7 +118,6 @@ class import2calendar extends eqLogic
     // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
-
     // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
     $eventsYesterday = [];
@@ -132,29 +131,35 @@ class import2calendar extends eqLogic
     $eventsJ7 = [];
 
     // Créer les objets DateTime pour aujourd'hui et demain
-    $yesterday = (new DateTime())->modify('-1 day');
-    $today = new DateTime();
-    $tomorrow = (new DateTime())->modify('+1 day');
-    $j2 = (new DateTime())->modify('+2 day');
-    $j3 = (new DateTime())->modify('+3 day');
-    $j4 = (new DateTime())->modify('+4 day');
-    $j5 = (new DateTime())->modify('+5 day');
-    $j6 = (new DateTime())->modify('+6 day');
-    $j7 = (new DateTime())->modify('+7 day');
+    $now = new DateTime();
+    $yesterday = clone $now;
+    $today = clone $now;
+    $tomorrow = clone $now;
+    $j2 = clone $now;
+    $j3 = clone $now;
+    $j4 = clone $now;
+    $j5 = clone $now;
+    $j6 = clone $now;
+    $j7 = clone $now;
 
-    // Normaliser les dates
-    $yesterday->setTime(0, 0, 0);
-    $today->setTime(0, 0, 0);
-    $tomorrow->setTime(0, 0, 0);
-    $j2->setTime(0, 0, 0);
-    $j3->setTime(0, 0, 0);
-    $j4->setTime(0, 0, 0);
-    $j5->setTime(0, 0, 0);
-    $j6->setTime(0, 0, 0);
-    $j7->setTime(0, 0, 0);
+    // Normaliser les dates en conservant le même objet DateTime
+    $yesterday->modify('-1 day')->setTime(0, 0);
+    $today->setTime(0, 0);
+    $tomorrow->modify('+1 day')->setTime(0, 0);
+    $j2->modify('+2 days')->setTime(0, 0);
+    $j3->modify('+3 days')->setTime(0, 0);
+    $j4->modify('+4 days')->setTime(0, 0);
+    $j5->modify('+5 days')->setTime(0, 0);
+    $j6->modify('+6 days')->setTime(0, 0);
+    $j7->modify('+7 days')->setTime(0, 0);
 
     foreach ($inDB as $event) {
-      log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Event : ' . json_encode($event));
+      log::add('import2calendar_checkEvent' . $id, 'info', '╔═══════ Vérification des événements en cours ═══════');
+      log::add('import2calendar_checkEvent' . $id, 'info', '║ Nom: ' . $event['cmd_param']['eventName']);
+      log::add('import2calendar_checkEvent' . $id, 'info', '║ Répétition activée: ' . $event['repeat']['enable']);
+      log::add('import2calendar_checkEvent' . $id, 'info', '║ Jour: ' . $event['repeat']['day']);
+      log::add('import2calendar_checkEvent' . $id, 'info', '║ Date de début: ' . $event['startDate']);
+      log::add('import2calendar_checkEvent' . $id, 'info', '║ Dates exclues: ' . json_encode($event['cmd_param']['exdate']));
       // Vérifier pour hier
       $yesterdayEvents = self::checkEventForDate($event, $yesterday);
       if ($yesterdayEvents !== null) {
@@ -220,7 +225,9 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events hier : ' . implode(', ', $eventsYesterday));
+
+    log::add('import2calendar_checkEvent' . $id, 'info', '╔═══════ Début du bilan ═══════');
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events hier : ' . implode(', ', $eventsYesterday));
 
     // Créer les commandes pour les événements d'aujourd'hui
     $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
@@ -233,7 +240,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
 
     // Créer les commandes pour les événements de demain
     $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
@@ -245,7 +252,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
 
     // Créer les commandes pour les événements des jours suivants
     $cmd = self::createCmd($id, 'j2_events', 'aprés demain');
@@ -257,7 +264,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events aprés demain : ' . implode(', ', $eventsJ2));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events aprés demain : ' . implode(', ', $eventsJ2));
 
     $cmd = self::createCmd($id, 'j3_events', 'J+3');
     $cmd->save();
@@ -268,7 +275,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+3 : ' . implode(', ', $eventsJ3));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+3 : ' . implode(', ', $eventsJ3));
 
     $cmd = self::createCmd($id, 'j4_events', 'J+4');
     $cmd->save();
@@ -279,7 +286,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+4 : ' . implode(', ', $eventsJ4));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+4 : ' . implode(', ', $eventsJ4));
 
     $cmd = self::createCmd($id, 'j5_events', 'J+5');
     $cmd->save();
@@ -290,7 +297,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+5 : ' . implode(', ', $eventsJ5));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+5 : ' . implode(', ', $eventsJ5));
 
     $cmd = self::createCmd($id, 'j6_events', 'J+6');
     $cmd->save();
@@ -301,7 +308,7 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+6 : ' . implode(', ', $eventsJ6));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+6 : ' . implode(', ', $eventsJ6));
 
     $cmd = self::createCmd($id, 'j7_events', 'J+7');
     $cmd->save();
@@ -312,121 +319,264 @@ class import2calendar extends eqLogic
       $cmd->event('Aucun');
       $cmd->save();
     }
-    log::add('import2calendar_cron', 'debug', 'Calendrier : :b:' . $name . ':/b:, Events J+7 : ' . implode(', ', $eventsJ7));
+    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+7 : ' . implode(', ', $eventsJ7));
+    log::add('import2calendar_checkEvent' . $id, 'info', '╚════════ Fin du bilan ═══════');
   }
-  private static function checkEventForDate($event, DateTime $checkDate)
+
+  /**
+   * Vérifie si un événement est actif pour une date donnée
+   *
+   * @param array $event L'événement à vérifier
+   * @param DateTime $checkDate La date à vérifier
+   * @return array|null Liste des événements trouvés ou null si aucun
+   */
+  private static function checkEventForDate($event, $checkDate)
   {
-    $events = [];
-    $startDate = new DateTime($event['startDate']);
-    $endDate = new DateTime($event['endDate']);
+    // Créer le début et la fin de la journée à vérifier
+    $checkDateStart = clone $checkDate;
+    $checkDateEnd = clone $checkDate;
+    $checkDateStart->setTime(0, 0, 0);
+    $checkDateEnd->setTime(23, 59, 59);
 
-    // Normaliser les dates pour comparer uniquement les dates (sans les heures)
-    $startDate->setTime(0, 0, 0);
-    $endDate->setTime(23, 59, 59);
-    $checkDate->setTime(0, 0, 0);
+    $eventName = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $startDateTime = new DateTime($event["startDate"]);
+    $endDateTime = new DateTime($event["endDate"]);
+    $id = $event['eqLogic_id'];
 
-    // Vérifier si la date est exclue
-    $excludeDates = explode(',', $event['repeat']['excludeDate']);
-    $isExcluded = false;
-    foreach ($excludeDates as $excludeDate) {
-      if (!empty($excludeDate)) {
-        // Vérifier si c'est une période (avec :) ou une date simple
-        if (strpos($excludeDate, ':') !== false) {
-          $parts = explode(':', $excludeDate);
-          if (count($parts) === 2) {
-            try {
-              $startExcludeDate = new DateTime($parts[0]);
-              $endExcludeDate = new DateTime($parts[1]);
-              $startExcludeDate->setTime(0, 0, 0);
-              $endExcludeDate->setTime(23, 59, 59);
+    log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Vérification événement ═════');
+    log::add('import2calendar_checkEvent' . $id, 'debug', '║ Nom: ' . $eventName);
+    log::add('import2calendar_checkEvent' . $id, 'debug', '║ Date vérifiée: du ' . $checkDateStart->format('Y-m-d H:i:s') . ' au ' . $checkDateEnd->format('Y-m-d H:i:s'));
+    log::add('import2calendar_checkEvent' . $id, 'debug', '║ Plage: du ' . $startDateTime->format('Y-m-d H:i:s') . ' au ' . $endDateTime->format('Y-m-d H:i:s'));
 
-              if ($checkDate >= $startExcludeDate && $checkDate <= $endExcludeDate) {
-                $isExcluded = true;
-                break;
-              }
-            } catch (Exception $e) {
-              log::add(__CLASS__, 'debug', '║ Erreur de date dans la période : ' . $excludeDate);
-            }
-          }
-        } else {
-          try {
-            $excludeDateTime = new DateTime($excludeDate);
-            $excludeDateTime->setTime(0, 0, 0);
-            if ($checkDate == $excludeDateTime) {
-              $isExcluded = true;
-              break;
-            }
-          } catch (Exception $e) {
-            log::add(__CLASS__, 'debug', '║ Erreur de date d\'exclusion : ' . $excludeDate);
-          }
-        }
-      }
+    // 1️⃣ Vérifier les dates incluses/exclues en priorité
+    // Pour les dates incluses/exclues, on utilise juste la date (sans l'heure)
+    $checkDateStr = $checkDate->format('Y-m-d');
+    $includedDates = !empty($event["repeat"]["includeDate"]) ? array_map('trim', explode(",", $event["repeat"]["includeDate"])) : [];
+    $excludedDates = !empty($event["repeat"]["excludeDate"]) ? array_map('trim', explode(",", $event["repeat"]["excludeDate"])) : [];
+
+    // Les dates incluses/exclues sont comparées sans tenir compte de l'heure
+    if (in_array($checkDateStr, $includedDates)) {
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date explicitement incluse');
+      return [$eventName];
     }
 
-    if (!$isExcluded) {
-      // Vérifier si l'événement est en cours
-      if ($checkDate >= $startDate && $checkDate <= $endDate) {
-        $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-      }
+    if (in_array($checkDateStr, $excludedDates)) {
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date explicitement exclue');
+      log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+      return null;
+    }
 
-      // Vérifier si la date est présente dans include
-      $includeDates = explode(',', $event['repeat']['includeDate']);
-      foreach ($includeDates as $includeDate) {
-        if (!empty($includeDate)) {
-          $includeDateTime = new DateTime($includeDate);
-          $includeDateTime->setTime(0, 0, 0);
-          if ($checkDate == $includeDateTime) {
-            $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-          }
+    // 2️⃣ Vérification des événements non récurrents
+    if (!$event["repeat"]["enable"]) {
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ Type: Événement non récurrent');
+      // L'événement chevauche la période si:
+      // - L'événement commence avant la fin de la journée vérifiée ET
+      // - L'événement finit après le début de la journée vérifiée
+      if ($startDateTime <= $checkDateEnd && $endDateTime >= $checkDateStart) {
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date validée');
+        return [$eventName];
+      }
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date hors plage');
+      log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+      return null;
+    } else {
+
+      // 3️⃣ Vérification des événements récurrents
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ Type: Événement récurrent');
+
+      // Vérifier si l'événement s'étend sur plusieurs jours
+      $checkDateTime = new DateTime($checkDateStr);
+      $dayOfWeek = (int)$checkDateTime->format('N'); // 1 (Lundi) à 7 (Dimanche)
+      $weekNumber = (int)$checkDateTime->format('W');
+      $duration = $endDateTime->diff($startDateTime)->days;
+      $isMultiDays = $duration > 0;
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ Durée: ' . $duration . ' jours');
+      // Vérifier jusqu'à quelle date la récurrence est valide
+      if (isset($event["until"]) && !empty($event["until"])) {
+        $untilDate = new DateTime($event["until"]);
+        if ($checkDateTime > $untilDate) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date après la fin de récurrence');
+          log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+          return null;
         }
       }
 
-      // Vérifier la récurrence si elle est activée
-      if ($event['repeat']['enable'] == 1) {
-        $freq = $event['repeat']['freq'];
-        $unite = $event['repeat']['unite'];
-        $includeDay = $event['repeat']['excludeDay'];
-        // soit onlyEven, onlyOdd ou all
-        $nationalDayEvent = $event['repeat']['nationalDay'];
+      // Vérifier si la date est dans la plage initiale
+      // L'événement chevauche la période si:
+      // - L'événement commence avant la fin de la journée vérifiée ET
+      // - L'événement finit après le début de la journée vérifiée
+      if ($startDateTime <= $checkDateEnd && $endDateTime >= $checkDateStart) {
+        // Pour la plage initiale, on vérifie le jour autorisé uniquement pour le jour de début
+        $startDayOfWeek = (int)$startDateTime->format('N');
+        // Dans la configuration, 1 signifie que le jour est AUTORISÉ
+        if (!isset($event["repeat"]["excludeDay"][$startDayOfWeek]) || $event["repeat"]["excludeDay"][$startDayOfWeek] != "1") {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Jour de début non autorisé dans la configuration');
+          log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+          return null;
+        }
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date validée (dans la plage initiale)');
+        log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+        return [$eventName];
+      }
 
-        // Déterminer si la semaine est paire ou impaire
-        $weekNumber = $checkDate->format('W');
-        $nationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
+      // Pour les événements récurrents, on ne vérifie le jour autorisé que pour les événements d'un seul jour
+      if (!$isMultiDays) {
+        $checkDayOfWeek = (int)$checkDateTime->format('N');
+        if (!isset($event["repeat"]["excludeDay"][$checkDayOfWeek]) || $event["repeat"]["excludeDay"][$checkDayOfWeek] != "1") {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Jour non autorisé dans la configuration');
+          log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+          return null;
+        }
+      }
 
-        // Vérifier si le jour n'est pas exclu et si la semaine correspond (si définie)
-        $currentDayNum = $checkDate->format('N'); // 1 (lundi) à 7 (dimanche)
+      // Vérifier si la date correspond à une occurrence selon la fréquence configurée (freq et unite)
+      // Exemple: tous les 7 jours, tous les 2 mois, tous les 3 ans
+      $startDateTimestamp = $startDateTime->getTimestamp();
+      $checkDateTimestamp = $checkDateTime->getTimestamp();
+      $difference = 0;
+
+      switch ($event["repeat"]["unite"]) {
+        case "days":
+          $difference = floor(($checkDateTimestamp - $startDateTimestamp) / (24 * 3600));
+          break;
+        case "month":
+          $difference = (($checkDateTime->format('Y') - $startDateTime->format('Y')) * 12) +
+            ($checkDateTime->format('n') - $startDateTime->format('n'));
+          break;
+        case "years":
+          // Pour les événements annuels, on vérifie que le jour et le mois correspondent aussi
+          if ($checkDateTime->format('md') !== $startDateTime->format('md')) {
+            log::add('import2calendar_checkEvent' . $id, 'debug', '║ Pour un événement annuel, la date ne correspond pas au jour anniversaire');
+            log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+            return null;
+          }
+          $difference = $checkDateTime->format('Y') - $startDateTime->format('Y');
+          break;
+      }
+
+      if ($difference % $event["repeat"]["freq"] !== 0) {
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Ne correspond pas à la fréquence de répétition');
+        log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+        return null;
+      }
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Correspond à la fréquence de répétition');
+
+      // Le jour de début est autorisé, on continue avec les autres vérifications
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Jour autorisé dans la configuration');
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ evenement sur plusieurs jours : ' . ($isMultiDays ? 'oui' : 'non'));
+      // Pour les événements récurrents
+      if ($isMultiDays) {
+        if ($event["repeat"]["nationalDay"] === "onlyEven" || $event["repeat"]["nationalDay"] === "onlyOdd") {
+          // Pour les événements avec semaines paires/impaires uniquement
+          // Trouver le mercredi de la semaine courante
+          $currentWeekWednesday = clone $checkDateTime;
+          while ((int)$currentWeekWednesday->format('N') !== 3) { // 3 = mercredi
+            $currentWeekWednesday->modify('-1 day');
+          }
+
+          // Vérifier si ce mercredi est une occurrence valide depuis le début
+          $startWeekWednesday = clone $startDateTime;
+          while ((int)$startWeekWednesday->format('N') !== 3) {
+            $startWeekWednesday->modify('-1 day');
+          }
+
+          // Calculer le nombre de jours entre les deux mercredis
+          $diffDays = (int)$currentWeekWednesday->diff($startWeekWednesday)->days;
+          // Si ce n'est pas une occurrence valide (pas un multiple de 14 jours)
+          if ($diffDays % 14 !== 0) {
+            log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Cette semaine ne correspond pas à une occurrence valide');
+            log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+            return null;
+          }
+        }
+
+        // Pour tous les événements multi-jours, calculer l'occurrence
+        $occurrenceStart = clone $checkDateTime;
+        while ((int)$occurrenceStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
+          $occurrenceStart->modify('-1 day');
+        }
+
+        $occurrenceEnd = clone $occurrenceStart;
+        $occurrenceEnd->modify('+' . $duration . ' days');
+
+        // Vérifier si la date est dans la plage
+        if ($checkDateTime >= $occurrenceStart && $checkDateTime <= $occurrenceEnd) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date dans l\'occurrence multi-jours');
+          log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+          return [$eventName];
+        }
+      } else {
+        // Pour les événements non multi-jours
+        if ($event["repeat"]["nationalDay"] === "onlyEven" || $event["repeat"]["nationalDay"] === "onlyOdd") {
+          // Pour les événements qui alternent toutes les 2 semaines
+          $currentWeekWednesday = clone $checkDateTime;
+          while ((int)$currentWeekWednesday->format('N') !== 3) {
+            $currentWeekWednesday->modify('-1 day');
+          }
+
+          $startWeekWednesday = clone $startDateTime;
+          while ((int)$startWeekWednesday->format('N') !== 3) {
+            $startWeekWednesday->modify('-1 day');
+          }
+
+          $diffDays = (int)$currentWeekWednesday->diff($startWeekWednesday)->days;
+
+          if ($diffDays % 14 !== 0) {
+            log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Cette date ne correspond pas à une occurrence valide');
+            log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+            return null;
+          }
+        }
+        log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+        return [$eventName];
+      }
+
+      // Se positionner au début de la semaine de checkDateTime
+      $tempDate = clone $checkDateTime;
+      $tempDate->modify('last monday');
+
+      // Vérifier la parité des semaines seulement pour le début de l'événement
+      $currentWeekNumber = (int)$tempDate->format('W');
+      $currentIsEven = $currentWeekNumber % 2 === 0;
+
+      // Avancer au prochain jour autorisé
+      while ($tempDate <= $checkDateTime) {
+        $dayOfWeek = (int)$tempDate->format('N');
         if (
-          $includeDay[$currentDayNum] == "1" &&
-          ($nationalDayEvent == "" || $nationalDayEvent == "all" || $nationalDayEvent == $nationalDay)
+          isset($event["repeat"]["excludeDay"][$dayOfWeek]) &&
+          $event["repeat"]["excludeDay"][$dayOfWeek] == "1"
         ) {
-          // Calculer la différence entre la date vérifiée et la date de début
-          $interval = $startDate->diff($checkDate);
-          $daysDiff = $interval->days;
 
-          // Vérifier si la date correspond à la fréquence
-          switch ($unite) {
-            case 'days':
-              if ($freq > 0 && ($daysDiff % $freq) == 0) {
-                $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-              }
-              break;
-            case 'month':
-              // Si même jour du mois et la différence en mois est multiple de freq
-              if ($startDate->format('d') == $checkDate->format('d')) {
-                $monthsDiff = ($interval->y * 12) + $interval->m;
-                if ($freq > 0 && ($monthsDiff % $freq) == 0) {
-                  $events[] = html_entity_decode($event['cmd_param']['eventName'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                }
-              }
-              break;
+          // Vérifier la parité de la semaine pour le jour de début uniquement
+          $tempWeekNumber = (int)$tempDate->format('W');
+          $tempIsEven = $tempWeekNumber % 2 === 0;
+
+          if (($event["repeat"]["nationalDay"] === "onlyEven" && !$tempIsEven) ||
+            ($event["repeat"]["nationalDay"] === "onlyOdd" && $tempIsEven)
+          ) {
+            $tempDate->modify('+1 day');
+            continue;
+          }
+
+          // Calculer la fin de cette occurrence
+          $currentEnd = clone $tempDate;
+          $currentEnd->modify('+' . $duration . ' days');
+
+          // Vérifier si la date demandée est dans cette occurrence
+          if ($checkDateTime >= $tempDate && $checkDateTime <= $currentEnd) {
+            log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date dans l\'occurrence multi-jours');
+            log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+            return [$eventName];
           }
         }
+        $tempDate->modify('+1 day');
       }
+
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date hors des occurrences multi-jours');
+      log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+      return null;
     }
-
-    return !empty($events) ? $events : null;
   }
-
 
   private static function createCmd($eqLogicId, $logicalId, $name)
   {
@@ -598,7 +748,6 @@ class import2calendar extends eqLogic
       return null;
     }
 
-    //log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($icalData));
     // parser le fichier ical 
     $events = self::parse_icalendar_file($icalData);
 
@@ -709,9 +858,9 @@ class import2calendar extends eqLogic
           "repeat" => $repeat
         ];
       } else {
-        $threeDaysAgo = self::threeDaysAgo($until);
+        $withinRetention = self::isWithinRetentionPeriod($until);
 
-        if ($threeDaysAgo) {
+        if ($withinRetention) {
           $options[] = [
             "id" => "",
             "eqLogic_id" => $calendarEqId,
@@ -742,7 +891,7 @@ class import2calendar extends eqLogic
       $n++;
     }
 
-    log::add(__CLASS__, 'debug', "║ Event options : " . json_encode($options));
+    log::add(__CLASS__, 'debug', "║ OPTIONS : " . json_encode($options));
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
@@ -756,9 +905,7 @@ class import2calendar extends eqLogic
     $events = [];
     $icalFile = str_replace("\r\n ", "", $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
-    log::add(__CLASS__, 'debug', '║ ICAL = ' . json_encode($lines));
-    // Debuf fichier user
-    // lines = file('user.ics');
+
     $event = [];
     $description = '';
     $exdates = "";
@@ -802,16 +949,16 @@ class import2calendar extends eqLogic
           $addEvent = true;
         }
         if (isset($event['start_date'])) {
-          // Vérifier si la date de début est au maximum 3 jours avant aujourd'hui
-          $threeDaysAgoStart = self::threeDaysAgo($event['start_date']);
+          // Vérifier si la date de début est dans la période de rétention configurée
+          $startWithinRetention = self::isWithinRetentionPeriod($event['start_date']);
 
           // Vérifier si une date de fin est définie pour l'événement
           if (isset($event['end_date'])) {
-            // Vérifier si la date de fin est au maximum 3 jours avant aujourd'hui
-            $threeDaysAgoEnd = self::threeDaysAgo($event['end_date']);
+            // Vérifier si la date de fin est dans la période de rétention configurée
+            $endWithinRetention = self::isWithinRetentionPeriod($event['end_date']);
           }
 
-          if ($threeDaysAgoStart || $threeDaysAgoEnd || $addEvent) {
+          if ($startWithinRetention || $endWithinRetention || $addEvent) {
             // Vérifier si l'évènement à un nom sinon lui en donner un par default
             if (!isset($event['summary']) || trim($event['summary']) === '') {
               $event['summary'] = "Aucun nom";
@@ -831,7 +978,7 @@ class import2calendar extends eqLogic
         }
       } elseif (strpos($line, 'DTSTART') === 0) {
         $dtStart = substr($line, strlen('DTSTART:'));
-      //  log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
+        //  log::add(__CLASS__, 'debug', "║ Evènement " . $n . ", débute à : " . json_encode($dtStart));
 
         $n++;
         $event['start_date'] = self::formatDate($dtStart);
@@ -893,14 +1040,33 @@ class import2calendar extends eqLogic
     return $events;
   }
 
-  private static function threeDaysAgo($date)
+  /**
+   * Vérifie si une date donnée est dans la période de rétention configurée par l'utilisateur
+   * La période peut être configurée entre 3 et 31 jours. Si non configurée, la valeur par défaut est 3 jours.
+   *
+   * @param string $date La date à vérifier au format Y-m-d H:i:s
+   * @return boolean true si la date est dans la période de rétention, false sinon
+   */
+  private static function isWithinRetentionPeriod($date)
   {
-    $numberOfDays = 3;
+    // Récupération de la période configurée (entre 3 et 31 jours)
+    $numberOfDays = config::byKey('numberOfDays', 'import2calendar');
+    if ($numberOfDays == '') {
+      $numberOfDays = 3; // Valeur par défaut
+      config::save('numberOfDays', 3, 'import2calendar');
+    } else if ($numberOfDays < 3) {
+      $numberOfDays = 3; // Minimum 3 jours
+      config::save('numberOfDays', 3, 'import2calendar');
+    } else if ($numberOfDays > 31) {
+      $numberOfDays = 31; // Maximum 31 jours
+      config::save('numberOfDays', 31, 'import2calendar');
+    }
+
     $currentTime = time();
     $timestamp = strtotime($date);
-    $threeDaysInSeconds = $numberOfDays * 24 * 60 * 60;
+    $retentionPeriodInSeconds = $numberOfDays * 24 * 60 * 60;
 
-    if (($currentTime - $timestamp) < $threeDaysInSeconds) {
+    if (($currentTime - $timestamp) < $retentionPeriodInSeconds) {
       return true;
     }
     return false;
@@ -909,7 +1075,7 @@ class import2calendar extends eqLogic
   private static function parseEventRrule($rrule, $startDate)
   {
     if (isset($rrule)) {
-    //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
+      //  log::add(__CLASS__, 'debug', "║ rrule : " . json_encode($rrule));
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
@@ -1068,7 +1234,6 @@ class import2calendar extends eqLogic
         'nationalDay' => $nationalDay,
       ];
     }
-    log::add(__CLASS__, 'debug', "║ repeat : " . json_encode($repeat));
     return $repeat;
   }
 
@@ -1199,7 +1364,7 @@ class import2calendar extends eqLogic
         $endDate = null;
         break;
     }
-    log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
+    // log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
     return $endDate->format("Y-m-d H:i:s");
   }
 
