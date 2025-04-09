@@ -434,87 +434,89 @@ class import2calendar extends eqLogic
           return null;
         }
       }
-    
 
-    // Pour les événements multi-jours, calculer l'occurrence
-    if ($isMultiDays) {
-      // Trouver le début de l'occurrence
-      $occurrenceStart = clone $checkDateTime;
-      while ((int)$occurrenceStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
-        $occurrenceStart->modify('-1 day');
-      }
 
-      // Calculer la fin de l'occurrence
-      $occurrenceEnd = clone $occurrenceStart;
-      $occurrenceEnd->modify('+' . $duration . ' days');
+      // Pour les événements multi-jours, calculer l'occurrence
+      if ($isMultiDays) {
+        // Trouver le début de l'occurrence
+        $occurrenceStart = clone $checkDateTime;
+        while ((int)$occurrenceStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
+          $occurrenceStart->modify('-1 day');
+        }
 
-      // Vérifier si la date est dans la plage de l'occurrence
-      if ($checkDateTime < $occurrenceStart || $checkDateTime > $occurrenceEnd) {
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date ' . $checkDateTime->format('Y-m-d') . ' hors de la période du ' .
+        // Calculer la fin de l'occurrence
+        $occurrenceEnd = clone $occurrenceStart;
+        $occurrenceEnd->modify('+' . $duration . ' days');
+
+        // Vérifier si la date est dans la plage de l'occurrence
+        if ($checkDateTime < $occurrenceStart || $checkDateTime > $occurrenceEnd) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date ' . $checkDateTime->format('Y-m-d') . ' hors de la période du ' .
+            $occurrenceStart->format('Y-m-d') . ' au ' . $occurrenceEnd->format('Y-m-d'));
+          return null;
+        }
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date dans la période du ' .
           $occurrenceStart->format('Y-m-d') . ' au ' . $occurrenceEnd->format('Y-m-d'));
-        return null;
-      }
-      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date dans la période du ' .
-        $occurrenceStart->format('Y-m-d') . ' au ' . $occurrenceEnd->format('Y-m-d'));
 
-      // Vérifier la fréquence par rapport au début de l'occurrence
-      $difference = 0;
-      $difference = self::calculateDateDifference($occurrenceStart, $startDateTime, $event["repeat"]["unite"]);
-      if ($difference === -1) {
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ La date ne correspond pas au format attendu pour cette unité');
-        return null;
-      }
+        // Vérifier la fréquence par rapport au début de l'occurrence
+        $difference = 0;
+        $difference = self::calculateDateDifference($startDateTime, $occurrenceStart, $event["repeat"]["unite"]);
+        if ($difference === -1) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ La date ne correspond pas au format attendu pour cette unité');
+          return null;
+        }
 
-      if ($difference % $event["repeat"]["freq"] !== 0) {
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Écart de ' . $difference . ' ' .
-          $event["repeat"]["unite"] . ' ne correspond pas à la fréquence de ' .
-          $event["repeat"]["freq"] . ' ' . $event["repeat"]["unite"]);
-        return null;
-      }
-      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Fréquence de répétition validée (' .
-        $difference . ' ' . $event["repeat"]["unite"] . ')');
+        if ($difference % $event["repeat"]["freq"] !== 0) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Écart de ' . $difference . ' ' .
+            $event["repeat"]["unite"] . ' ne correspond pas à la fréquence de ' .
+            $event["repeat"]["freq"] . ' ' . $event["repeat"]["unite"]);
+          return null;
+        }
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Fréquence de répétition validée (' .
+          $difference . ' ' . $event["repeat"]["unite"] . ')');
 
 
         // Vérifier les semaines paires/impaires
         if ($event["repeat"]["nationalDay"] === "onlyEven" || $event["repeat"]["nationalDay"] === "onlyOdd") {
-        $occurrenceWeekNum = (int)$occurrenceStart->format('W');
-        $isEvenWeek = $occurrenceWeekNum % 2 === 0;
+          $occurrenceWeekNum = (int)$occurrenceStart->format('W');
+          $isEvenWeek = $occurrenceWeekNum % 2 === 0;
 
-        $typeRecurrence = ($event["repeat"]["nationalDay"] === "onlyEven") ? "paire" : "impaire";
-        if (($event["repeat"]["nationalDay"] === "onlyEven" && !$isEvenWeek) ||
-          ($event["repeat"]["nationalDay"] === "onlyOdd" && $isEvenWeek)
-        ) {
-          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ La semaine ' . $occurrenceWeekNum . ' est ' .
-            ($isEvenWeek ? 'paire' : 'impaire') . ' alors que l\'évènement est prévu les semaines ' . $typeRecurrence . 's');
+          $typeRecurrence = ($event["repeat"]["nationalDay"] === "onlyEven") ? "paire" : "impaire";
+          if (($event["repeat"]["nationalDay"] === "onlyEven" && !$isEvenWeek) ||
+            ($event["repeat"]["nationalDay"] === "onlyOdd" && $isEvenWeek)
+          ) {
+            log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ La semaine ' . $occurrenceWeekNum . ' est ' .
+              ($isEvenWeek ? 'paire' : 'impaire') . ' alors que l\'évènement est prévu les semaines ' . $typeRecurrence . 's');
+            return null;
+          }
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ La semaine ' . $occurrenceWeekNum . ' est bien ' .
+            ($isEvenWeek ? 'paire' : 'impaire') . ' comme attendu');
+        }
+
+        // Vérifier si la date est dans la plage de l'occurrence
+        if ($checkDateTime >= $occurrenceStart && $checkDateTime <= $occurrenceEnd) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Occurrence validée');
+          return [$eventName];
+        }
+
+        return null;
+      } else {
+        // Pour les événements d'un seul jour
+        $difference = 0;
+        $difference = self::calculateDateDifference($startDateTime, $checkDateTime, $event["repeat"]["unite"]);
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ Différence (' . $difference . ')');
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ Fréquence (' . $event["repeat"]["freq"] . ')');
+
+        if ($difference < 0) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ La date ne correspond pas au format attendu pour cette unité');
           return null;
         }
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ La semaine ' . $occurrenceWeekNum . ' est bien ' .
-          ($isEvenWeek ? 'paire' : 'impaire') . ' comme attendu');
-      }
 
-      // Vérifier si la date est dans la plage de l'occurrence
-      if ($checkDateTime >= $occurrenceStart && $checkDateTime <= $occurrenceEnd) {
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Occurrence validée');
-        return [$eventName];
-      }
-
-      return null;
-    } else {
-      // Pour les événements d'un seul jour
-      $difference = 0;
-      $difference = self::calculateDateDifference($checkDateTime, $startDateTime, $event["repeat"]["unite"]);
-      
-      if ($difference === -1) {
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ La date ne correspond pas au format attendu pour cette unité');
-        return null;
-      }
-
-      if ($difference % $event["repeat"]["freq"] !== 0) {
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Écart de ' . $difference . ' ' .
-          $event["repeat"]["unite"] . ' ne correspond pas à la fréquence de ' .
-          $event["repeat"]["freq"] . ' ' . $event["repeat"]["unite"]);
-        return null;
-      }
+        if ($difference % $event["repeat"]["freq"] !== 0) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Écart de ' . $difference . ' ' .
+            $event["repeat"]["unite"] . ' ne correspond pas à la fréquence de ' .
+            $event["repeat"]["freq"] . ' ' . $event["repeat"]["unite"]);
+          return null;
+        }
         // vérifier que le jour n'est pas exclu
         $dayOfWeek = $checkDateTime->format('N'); // 1 (lundi) à 7 (dimanche)
 
@@ -522,26 +524,27 @@ class import2calendar extends eqLogic
           log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Jour NON autorisé (' . $dayOfWeek . ')');
           return null;
         }
-      // Vérifier les semaines paires/impaires
-      if ($event["repeat"]["nationalDay"] === "onlyEven" || $event["repeat"]["nationalDay"] === "onlyOdd") {
-        $weekNum = (int)$checkDateTime->format('W');
-        $isEvenWeek = $weekNum % 2 === 0;
-        $typeRecurrence = ($event["repeat"]["nationalDay"] === "onlyEven") ? "paire" : "impaire";
+        // Vérifier les semaines paires/impaires
+        if ($event["repeat"]["nationalDay"] === "onlyEven" || $event["repeat"]["nationalDay"] === "onlyOdd") {
+          $weekNum = (int)$checkDateTime->format('W');
+          $isEvenWeek = $weekNum % 2 === 0;
+          $typeRecurrence = ($event["repeat"]["nationalDay"] === "onlyEven") ? "paire" : "impaire";
 
-        if (($event["repeat"]["nationalDay"] === "onlyEven" && !$isEvenWeek) ||
-          ($event["repeat"]["nationalDay"] === "onlyOdd" && $isEvenWeek)
-        ) {
-          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ La semaine ' . $weekNum . ' est ' .
-            ($isEvenWeek ? 'paire' : 'impaire') . ' alors que l\'évènement est prévu les semaines ' . $typeRecurrence . 's');
-          return null;
+          if (($event["repeat"]["nationalDay"] === "onlyEven" && !$isEvenWeek) ||
+            ($event["repeat"]["nationalDay"] === "onlyOdd" && $isEvenWeek)
+          ) {
+            log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ La semaine ' . $weekNum . ' est ' .
+              ($isEvenWeek ? 'paire' : 'impaire') . ' alors que l\'évènement est prévu les semaines ' . $typeRecurrence . 's');
+            return null;
+          }
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ La semaine ' . $weekNum . ' est bien ' .
+            ($isEvenWeek ? 'paire' : 'impaire') . ' comme attendu');
         }
-        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ La semaine ' . $weekNum . ' est bien ' .
-          ($isEvenWeek ? 'paire' : 'impaire') . ' comme attendu');
-      }
 
-      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Occurrence validée (fréquence et semaine)');
-      return [$eventName];
-    }}
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Occurrence validée (fréquence et semaine)');
+        return [$eventName];
+      }
+    }
   }
 
   /**
@@ -560,6 +563,9 @@ class import2calendar extends eqLogic
         $date2Only = clone $date2;
         $date1Only->setTime(0, 0, 0);
         $date2Only->setTime(0, 0, 0);
+   //     log::add('import2calendar_calculateDateDifference', 'debug', '║ Date 1: ' . $date1Only->format('Y-m-d H:i:s'));
+   //     log::add('import2calendar_calculateDateDifference', 'debug', '║ Date 2: ' . $date2Only->format('Y-m-d H:i:s'));
+    //    log::add('import2calendar_calculateDateDifference', 'debug', '║ Différence: ' . $date1Only->diff($date2Only)->format('%r%a'));
         return (int)$date1Only->diff($date2Only)->format('%r%a'); // %r pour le signe
 
       case 'month':
