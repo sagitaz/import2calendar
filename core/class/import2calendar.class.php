@@ -742,6 +742,51 @@ class import2calendar extends eqLogic
   */
 
   /*     * **********************Getteur Setteur*************************** */
+private static function getIcalDataWithCurl($url, $timeout = 30, $retries = 3, $delay = 1) {
+    for ($i = 0; $i < $retries; $i++) {
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FAILONERROR => false, // On gère nous-mêmes les erreurs HTTP
+            CURLOPT_CONNECTTIMEOUT => 5,  // Timeout de connexion
+            CURLOPT_TIMEOUT => $timeout,  // Timeout total
+            CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+
+        curl_close($ch);
+
+        // Vérifie succès HTTP (2xx)
+        if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
+          log::add(__CLASS__, 'debug', '║ Fichier ICAL récupéré avec succès.');
+            return $response;
+        }
+
+        // Log d'erreur avec détails
+        log::add(__CLASS__, 'warning', sprintf(
+            'Tentative %d échouée : code HTTP %s, erreur cURL : %s',
+            $i + 1,
+            $httpCode ?: 'inconnu',
+            $curlError ?: 'aucune'
+        ));
+
+        // Attente avant retry
+        if ($i < $retries - 1) {
+            sleep($delay);
+        }
+    }
+
+    log::add(__CLASS__, 'error', '║ Impossible de récupérer le fichier iCal après ' . $retries . ' tentatives => ' . $url);
+    return null;
+}
+
+
   public static function parseIcal($eqlogicId)
   {
     log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
@@ -759,10 +804,10 @@ class import2calendar extends eqLogic
     // Remplacer 'webcal://' par 'https://' si nécessaire
     $file = str_replace('webcal://', 'https://', $file);
 
-    $icalData = @file_get_contents($file);
+    $icalData = self::getIcalDataWithCurl($file);
 
     // Vérifier si file_get_contents a réussi
-    if ($icalData === false) {
+    if ($icalData === null) {
       log::add(__CLASS__, 'error', '║ Impossible de parser le fichier ical => ' . $file);
       return null;
     }
@@ -1010,14 +1055,14 @@ class import2calendar extends eqLogic
         //  log::add(__CLASS__, 'debug', "║ Date Identique : " . json_encode($dtEqual));
 
         // Vérifier si c'est un événement Airbnb et ajuster la date de fin
-        if (stripos($prodId, 'Airbnb') !== false) {
+        if (stripos($prodId, 'Airbnb') !== false || stripos($prodId, 'booking') !== false) {
           // Nettoyer la date si elle contient VALUE=DATE:
           if (strpos($dtEnd, 'VALUE=DATE:') !== false) {
             $dtEnd = substr($dtEnd, strlen('VALUE=DATE:'));
           }
           $tempDate = new DateTime($dtEnd);
           $dtEnd = $tempDate->format('Y-m-d 23:59:59');
-          log::add(__CLASS__, 'debug', "║ Airbnb détecté - Date de fin ajustée à 23:59:59");
+          log::add(__CLASS__, 'debug', "║ Calendrier Airbnb ou Booking détecté - Date de fin ajustée à 23:59:59");
         }
 
         $event['end_date'] = self::formatDate($dtEnd, 'Y-m-d H:i:s', 1, $dtEqual);
