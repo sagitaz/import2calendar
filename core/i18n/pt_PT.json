@@ -109,6 +109,7 @@
         "aide Discord": "ajuda Discord"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Nombre de jours passé de retention": "Número de dias de retenção",
         "Version Plugin": "Versão do plugin",
         "Version du Plugin (A indiquer sur Community)": "Versão do plugin (a indicar na Comunidade)"
     }
