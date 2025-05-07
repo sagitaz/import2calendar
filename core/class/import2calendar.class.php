@@ -563,9 +563,9 @@ class import2calendar extends eqLogic
         $date2Only = clone $date2;
         $date1Only->setTime(0, 0, 0);
         $date2Only->setTime(0, 0, 0);
-   //     log::add('import2calendar_calculateDateDifference', 'debug', '║ Date 1: ' . $date1Only->format('Y-m-d H:i:s'));
-   //     log::add('import2calendar_calculateDateDifference', 'debug', '║ Date 2: ' . $date2Only->format('Y-m-d H:i:s'));
-    //    log::add('import2calendar_calculateDateDifference', 'debug', '║ Différence: ' . $date1Only->diff($date2Only)->format('%r%a'));
+        //     log::add('import2calendar_calculateDateDifference', 'debug', '║ Date 1: ' . $date1Only->format('Y-m-d H:i:s'));
+        //     log::add('import2calendar_calculateDateDifference', 'debug', '║ Date 2: ' . $date2Only->format('Y-m-d H:i:s'));
+        //    log::add('import2calendar_calculateDateDifference', 'debug', '║ Différence: ' . $date1Only->diff($date2Only)->format('%r%a'));
         return (int)$date1Only->diff($date2Only)->format('%r%a'); // %r pour le signe
 
       case 'month':
@@ -742,50 +742,130 @@ class import2calendar extends eqLogic
   */
 
   /*     * **********************Getteur Setteur*************************** */
-private static function getIcalDataWithCurl($url, $timeout = 30, $retries = 3, $delay = 1) {
+  private static function getIcalDataWithCurl($url, $timeout = 30, $retries = 3, $delay = 1)
+  {
     for ($i = 0; $i < $retries; $i++) {
-        $ch = curl_init();
+      $ch = curl_init();
 
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_FAILONERROR => false, // On gère nous-mêmes les erreurs HTTP
-            CURLOPT_CONNECTTIMEOUT => 5,  // Timeout de connexion
-            CURLOPT_TIMEOUT => $timeout,  // Timeout total
-            CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
-        ]);
+      curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_FAILONERROR => false, // On gère nous-mêmes les erreurs HTTP
+        CURLOPT_CONNECTTIMEOUT => 5,  // Timeout de connexion
+        CURLOPT_TIMEOUT => $timeout,  // Timeout total
+        CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
+      ]);
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
+      $response = curl_exec($ch);
+      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      $curlError = curl_error($ch);
 
-        curl_close($ch);
+      curl_close($ch);
 
-        // Vérifie succès HTTP (2xx)
-        if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
-          log::add(__CLASS__, 'debug', '║ Fichier ICAL récupéré avec succès.');
-            return $response;
-        }
+      // Vérifie succès HTTP (2xx)
+      if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
+        log::add(__CLASS__, 'debug', '║ Fichier ICAL récupéré avec succès.');
+        return $response;
+      }
 
-        // Log d'erreur avec détails
-        log::add(__CLASS__, 'warning', sprintf(
-            'Tentative %d échouée : code HTTP %s, erreur cURL : %s',
-            $i + 1,
-            $httpCode ?: 'inconnu',
-            $curlError ?: 'aucune'
-        ));
+      // Log d'erreur avec détails
+      log::add(__CLASS__, 'warning', sprintf(
+        'Tentative %d échouée : code HTTP %s, erreur cURL : %s',
+        $i + 1,
+        $httpCode ?: 'inconnu',
+        $curlError ?: 'aucune'
+      ));
 
-        // Attente avant retry
-        if ($i < $retries - 1) {
-            sleep($delay);
-        }
+      // Attente avant retry
+      if ($i < $retries - 1) {
+        sleep($delay);
+      }
     }
 
     log::add(__CLASS__, 'error', '║ Impossible de récupérer le fichier iCal après ' . $retries . ' tentatives => ' . $url);
     return null;
-}
+  }
 
+  private static function downloadIcalToFile($url, $destinationPath, $timeout = 30, $retries = 3, $delay = 1)
+  {
+    // Étape 1 : Obtenir Content-Length distant via HEAD
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+      CURLOPT_URL => $url,
+      CURLOPT_NOBODY => true,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_FOLLOWLOCATION => true,
+      CURLOPT_CONNECTTIMEOUT => 5,
+      CURLOPT_TIMEOUT => 10,
+      CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
+    ]);
+    curl_exec($ch);
+    $remoteSize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+    curl_close($ch);
+
+    // Étape 2 : Comparer avec fichier local (s’il existe)
+    if (file_exists($destinationPath)) {
+      $localSize = filesize($destinationPath);
+      log::add(__CLASS__, 'debug', "Fichier local trouvé : $localSize octets");
+      log::add(__CLASS__, 'debug', "Taille distante : $remoteSize octets");
+      // Vérification stricte sur la taille
+      if ($remoteSize > 0 && $remoteSize == $localSize) {
+        log::add(__CLASS__, 'info', "Fichier iCal déjà présent ($localSize octets), téléchargement évité.");
+        return true;
+      }
+    }
+
+    // Étape 3 : Procéder au téléchargement (si besoin)
+    for ($i = 0; $i < $retries; $i++) {
+      $fp = fopen($destinationPath, 'w+');
+      if (!$fp) {
+        log::add(__CLASS__, 'error', "Impossible d’ouvrir le fichier : $destinationPath");
+        return false;
+      }
+
+      $ch = curl_init();
+      curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_FILE => $fp,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
+      ]);
+
+      $start = microtime(true);
+      $success = curl_exec($ch);
+      $end = microtime(true);
+
+      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      $curlError = curl_error($ch);
+      curl_close($ch);
+      fclose($fp);
+
+      $duration = number_format($end - $start, 3);
+
+      if ($success && $httpCode >= 200 && $httpCode < 300) {
+        log::add(__CLASS__, 'info', "Fichier iCal téléchargé en $duration s");
+        return true;
+      }
+
+      log::add(__CLASS__, 'warning', sprintf(
+        'Échec tentative %d : code HTTP %s, erreur : %s, durée : %ss',
+        $i + 1,
+        $httpCode ?: 'inconnu',
+        $curlError ?: 'aucune',
+        $duration
+      ));
+
+      if ($i < $retries - 1) {
+        sleep($delay);
+      }
+    }
+
+    log::add(__CLASS__, 'error', "║ Échec du téléchargement après $retries tentatives => $url");
+    return false;
+  }
 
   public static function parseIcal($eqlogicId)
   {
@@ -804,8 +884,25 @@ private static function getIcalDataWithCurl($url, $timeout = 30, $retries = 3, $
     // Remplacer 'webcal://' par 'https://' si nécessaire
     $file = str_replace('webcal://', 'https://', $file);
 
-    $icalData = self::getIcalDataWithCurl($file);
-
+    //$localFile = "/tmp/calendar.ics";
+    // Chemin du répertoire contenant les fichiers
+    $folder = dirname(__FILE__, 3) . '/data/calendar/';
+    // Vérification si le répertoire existe 
+    if (!is_dir($folder)) {
+      log::add("jeemate_cache", 'error', 'Le répertoire n\'existe pas : ' . $folder);
+      ajax::error('Le répertoire n\'existe pas : ' . $folder);
+      return;
+    }
+    // $icalData = self::getIcalDataWithCurl($file);
+    $localFile = $folder . $eqlogic->getId() . '.ics';
+    if (self::downloadIcalToFile($file, $localFile)) {
+      $icalData = file_get_contents($localFile); // maintenant en local
+      // Traitement...
+    } else {
+      log::add(__CLASS__, 'error', '║ Impossible de télécharger le fichier iCal => ' . $file);
+      return null;
+    }
+    
     // Vérifier si file_get_contents a réussi
     if ($icalData === null) {
       log::add(__CLASS__, 'error', '║ Impossible de parser le fichier ical => ' . $file);

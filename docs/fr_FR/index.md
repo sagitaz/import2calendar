@@ -1,12 +1,16 @@
 # Plugin import2calendar
 
-Le plugin sert à importer un calendrier au format Ical dans le plugin Agenda officiel Jeedom (calendar).
+Le plugin sert à importer un calendrier au format Ical dans le plugin Agenda officiel Jeedom (calendar), ce dernier doit donc être installé et configuré.
+## Prérequis
+- Plugin Agenda
+- Plugin import2calendar
 
-**Attention : aucune modification du ical n'est possible, on récupère les infos du ical pour les envoyer au plugin Agenda de Jeedom. Ne faite aucune modification sur l'agenda créé dans le plugin Agenda, elles seraient supprimées au prochain update de votre ical.**
+## Attention
+**Aucune modification du ical n'est possible, on récupère les infos du ical pour les envoyer au plugin Agenda de Jeedom. Ne faite aucune modification sur l'agenda créé dans le plugin Agenda, elles seraient supprimées au prochain update de votre ical.**
 
-La configuration de celui-ci est très simple.
+# <u>Configuration</u>
 
-# Créer un équipement
+## Créer un équipement
 Commencer par ajouter un équipement et choisir son nom
 ### Paramètre d'import
 - **ical** : indiquer l'URL du fichier ical à convertir.
@@ -63,7 +67,7 @@ La configuration dans le plugin import2calendar
 On retourne sur l'agenda pour vérifier les actions
 ![Agenda vérification](../images/import2calendarActions.gif)
 
-# Édition d'un équipement
+## Édition d'un équipement
 Si vous modifiez une des options suivantes :
 - icône
 - couleur de fond
@@ -73,11 +77,11 @@ Si vous modifiez une des options suivantes :
 
 Les events seront modifiés dans l'agenda (calendar)
 
-# Gestion des événements
+## Gestion des événements
 A chaque sauvegarde ou à chaque fois que le cron défini parse l'ical alors si un événement n'est plus dans l'ical, il est supprimé de l'agenda.
 Les événements passés de plus de 3 jours ne sont pas importés et seront supprimés au fur et à mesure.
 
-# Occurrences
+## Occurrences
 Les règles défini dans votre ical sont convertit au format Jeedom Agenda. Je n'ai pas tester toutes les possibilités, si jamais certaines ne passent pas, merci de joindre la ligne du log import2calendar : **event options** (mettre vos log en warning ou debug).
 
 Les évènements présent dans l'occurence reste visible sur le calendrier tant que l'ocurrence est valide.
@@ -105,21 +109,21 @@ Pour que cela soit remonté dans jeedom il vous faut créer :
 - mardi toute les 3 semaines
 - mercredi toutes les 3 semaines
 
-# JeeMate
+# <u>JeeMate</u>
 - la description et le lieu seront visible dans l'agenda importé dans JeeMate.
 
-# Attention
+# <u>Attention</u>
 - le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
 - la pièce sera identique
 
-# Support
+# <u>Support</u>
 - Community Jeedom
 - Discord JeeMate
 
-# Demande d'aide
-Afin de me simplifier la tâche lors du débug d'une erreur de conversion, je vous demanderai de créer un aganda de test avec seulement l'événement qui pose problème et de me donner un accès à cet ICAL.
+# <u>Demande d'aide</u>
+Afin de me simplifier la tâche lors du débug d'une erreur de conversion, je vous demanderai de créer un agenda de test avec seulement l'événement qui pose problème et de me donner un accès à cet ICAL.
 
-# Remerciemment
+# <u>Remerciemment</u>
 Le plugin et le support sont gratuits, vous souhaitez néanmoins m'offrir un café ou des couches pour bébé, je vous remercie par avance.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C1C61AKVV7)
