@@ -66,6 +66,10 @@ class import2calendar extends eqLogic
             // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
             if ($eqLogic->getIsEnable() == 1) {
               $calendarEqId = self::parseIcal($eqLogic->getId());
+              //si parseicalr retourne null on quitte la fonction
+              if ($calendarEqId == null) {
+                return;
+              }
               $calendar = calendar::byId($calendarEqId);
               self::majCmdsAgenda($calendar);
             }
@@ -693,6 +697,10 @@ class import2calendar extends eqLogic
       return;
     }
     $calendarEqId = self::parseIcal($this->getId());
+    //si parseicalr retourne null on quitte la fonction
+    if ($calendarEqId == null) {
+      return;
+    }
     $calendar = calendar::byId($calendarEqId);
     self::majCmdsAgenda($calendar);
   }
@@ -742,85 +750,14 @@ class import2calendar extends eqLogic
   */
 
   /*     * **********************Getteur Setteur*************************** */
-  private static function getIcalDataWithCurl($url, $timeout = 30, $retries = 3, $delay = 1)
+  private static function downloadIcal($url, $destinationPath, $timeout = 30, $retries = 3, $delay = 1)
   {
+    $tmpFile = $destinationPath . '.new';
+
     for ($i = 0; $i < $retries; $i++) {
-      $ch = curl_init();
-
-      curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_FAILONERROR => false, // On gère nous-mêmes les erreurs HTTP
-        CURLOPT_CONNECTTIMEOUT => 5,  // Timeout de connexion
-        CURLOPT_TIMEOUT => $timeout,  // Timeout total
-        CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
-      ]);
-
-      $response = curl_exec($ch);
-      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-      $curlError = curl_error($ch);
-
-      curl_close($ch);
-
-      // Vérifie succès HTTP (2xx)
-      if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
-        log::add(__CLASS__, 'debug', '║ Fichier ICAL récupéré avec succès.');
-        return $response;
-      }
-
-      // Log d'erreur avec détails
-      log::add(__CLASS__, 'warning', sprintf(
-        'Tentative %d échouée : code HTTP %s, erreur cURL : %s',
-        $i + 1,
-        $httpCode ?: 'inconnu',
-        $curlError ?: 'aucune'
-      ));
-
-      // Attente avant retry
-      if ($i < $retries - 1) {
-        sleep($delay);
-      }
-    }
-
-    log::add(__CLASS__, 'error', '║ Impossible de récupérer le fichier iCal après ' . $retries . ' tentatives => ' . $url);
-    return null;
-  }
-
-  private static function downloadIcalToFile($url, $destinationPath, $timeout = 30, $retries = 3, $delay = 1)
-  {
-    // Étape 1 : Obtenir Content-Length distant via HEAD
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-      CURLOPT_URL => $url,
-      CURLOPT_NOBODY => true,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_FOLLOWLOCATION => true,
-      CURLOPT_CONNECTTIMEOUT => 5,
-      CURLOPT_TIMEOUT => 10,
-      CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
-    ]);
-    curl_exec($ch);
-    $remoteSize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-    curl_close($ch);
-
-    // Étape 2 : Comparer avec fichier local (s’il existe)
-    if (file_exists($destinationPath)) {
-      $localSize = filesize($destinationPath);
-      log::add(__CLASS__, 'debug', "Fichier local trouvé : $localSize octets");
-      log::add(__CLASS__, 'debug', "Taille distante : $remoteSize octets");
-      // Vérification stricte sur la taille
-      if ($remoteSize > 0 && $remoteSize == $localSize) {
-        log::add(__CLASS__, 'info', "Fichier iCal déjà présent ($localSize octets), téléchargement évité.");
-        return true;
-      }
-    }
-
-    // Étape 3 : Procéder au téléchargement (si besoin)
-    for ($i = 0; $i < $retries; $i++) {
-      $fp = fopen($destinationPath, 'w+');
+      $fp = fopen($tmpFile, 'w+');
       if (!$fp) {
-        log::add(__CLASS__, 'error', "Impossible d’ouvrir le fichier : $destinationPath");
+        log::add(__CLASS__, 'error', "║ Impossible d’ouvrir le fichier temporaire : $tmpFile");
         return false;
       }
 
@@ -846,12 +783,25 @@ class import2calendar extends eqLogic
       $duration = number_format($end - $start, 3);
 
       if ($success && $httpCode >= 200 && $httpCode < 300) {
-        log::add(__CLASS__, 'info', "Fichier iCal téléchargé en $duration s");
+        $newHash = self::getCleanIcalHash($tmpFile);
+        log::add(__CLASS__, 'debug', "║ Fichier iCal temporaire (hash filtré : $newHash)");
+
+        $existingHash = file_exists($destinationPath) ? self::getCleanIcalHash($destinationPath) : null;
+        log::add(__CLASS__, 'debug', "║ Fichier iCal existant (hash filtré : $existingHash)");
+
+        if ($newHash === $existingHash) {
+          unlink($tmpFile);
+          log::add(__CLASS__, 'info', "║ Hash du fichier iCal inchangé, téléchargement ignoré.");
+          return null;
+        }
+
+        rename($tmpFile, $destinationPath);
+        log::add(__CLASS__, 'info', "║ Fichier iCal mis à jour en $duration s (hash modifié : $newHash)");
         return true;
       }
 
       log::add(__CLASS__, 'warning', sprintf(
-        'Échec tentative %d : code HTTP %s, erreur : %s, durée : %ss',
+        'Échec tentative %d : HTTP %s, cURL : %s, durée : %ss',
         $i + 1,
         $httpCode ?: 'inconnu',
         $curlError ?: 'aucune',
@@ -863,14 +813,38 @@ class import2calendar extends eqLogic
       }
     }
 
-    log::add(__CLASS__, 'error', "║ Échec du téléchargement après $retries tentatives => $url");
+    log::add(__CLASS__, 'error', "║ Échec du téléchargement après $retries tentatives.");
     return false;
+  }
+
+ private static function getCleanIcalHash($filePath)
+  {
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $filtered = [];
+
+    foreach ($lines as $line) {
+      $line = trim($line);
+
+      if (
+        stripos($line, 'DTSTAMP:') === 0 ||
+        stripos($line, 'PRODID:') === 0 ||
+        stripos($line, 'CREATED:') === 0 ||
+        stripos($line, 'LAST-MODIFIED:') === 0
+      ) {
+        continue;
+      }
+
+      $filtered[] = $line;
+    }
+
+    return sha1(implode("\n", $filtered));
   }
 
   public static function parseIcal($eqlogicId)
   {
     log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
     $options = [];
+    $events = [];
     $eqlogic = eqLogic::byId($eqlogicId);
     // création du calendrier si inexistant
     $calendarEqId = self::calendarCreate($eqlogic);
@@ -889,28 +863,39 @@ class import2calendar extends eqLogic
     $folder = dirname(__FILE__, 3) . '/data/calendar/';
     // Vérification si le répertoire existe 
     if (!is_dir($folder)) {
-      log::add("jeemate_cache", 'error', 'Le répertoire n\'existe pas : ' . $folder);
+      log::add(__CLASS__, 'error', 'Le répertoire n\'existe pas : ' . $folder);
+      log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
       ajax::error('Le répertoire n\'existe pas : ' . $folder);
-      return;
+      return null;
     }
     // $icalData = self::getIcalDataWithCurl($file);
     $localFile = $folder . $eqlogic->getId() . '.ics';
-    if (self::downloadIcalToFile($file, $localFile)) {
-      $icalData = file_get_contents($localFile); // maintenant en local
-      // Traitement...
-    } else {
+    $icalChanged = self::downloadIcal($file, $localFile);
+
+    if ($icalChanged === false) {
       log::add(__CLASS__, 'error', '║ Impossible de télécharger le fichier iCal => ' . $file);
-      return null;
-    }
-    
-    // Vérifier si file_get_contents a réussi
-    if ($icalData === null) {
-      log::add(__CLASS__, 'error', '║ Impossible de parser le fichier ical => ' . $file);
+      log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
       return null;
     }
 
-    // parser le fichier ical 
-    $events = self::parse_icalendar_file($icalData);
+    if ($icalChanged === null) {
+      log::add(__CLASS__, 'info', '║ Le fichier iCal n’a pas changé, pas besoin de le parser.');
+      log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
+      return null;
+    }
+
+    if ($icalChanged === true) {
+      $icalData = file_get_contents($localFile); // Le fichier a été mis à jour, on le lit maintenant en local
+
+      if ($icalData === false) {
+        log::add(__CLASS__, 'error', '║ Impossible de lire le fichier ical local => ' . $localFile);
+        log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
+        return null;
+      }
+
+      // Parser le fichier uniquement si on a un nouveau contenu
+      $events = self::parse_icalendar_file($icalData);
+    }
 
     log::add(__CLASS__, 'debug', '║ EVENTS = ' . json_encode($events));
     $n = 1;
@@ -2201,6 +2186,10 @@ class import2calendar extends eqLogic
 
     $eqlogicId = $import2calendar->getId();
     $calendarEqId = self::parseIcal($eqlogicId);
+    //si parseicalr retourne null on quitte la fonction
+    if ($calendarEqId == null) {
+      return;
+    }
 
     return $calendarEqId;
   }
