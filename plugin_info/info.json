@@ -12,7 +12,11 @@
 	},
 	"licence": "AGPL",
 	"author": "Sagitaz",
-	"require": "4.3",
+	"require": "4.4",
+	"os": {
+		"min": "11",
+		"max": ""
+	},
 	"category": "organization",
 	"hasDependency": false,
 	"hasOwnDeamon": false,
