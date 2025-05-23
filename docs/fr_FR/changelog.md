@@ -3,6 +3,13 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 23/05/2025 Stable 1.4.0
+- Verion Jeedom minimum 4.4
+- Version Debian minimum 11
+
+# 07/05/2025 Beta 1.3.6
+- Téléchargement du fichier ical avant traitement
+
 # 25/04/2025 Beta 1.3.5
 - Ajout d'un timeout pour les requêtes
 - Ajout d'un retry pour les requêtes
