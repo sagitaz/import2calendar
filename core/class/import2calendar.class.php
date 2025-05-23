@@ -23,15 +23,6 @@
 /* * ***************************Includes********************************* */
 require_once __DIR__  . '/../../../../core/php/core.inc.php';
 
-/*
-use calendar;
-use calendar_event;
-use utils;
-use plugin;
-use message;
-use calendarCmd;
-*/
-
 class import2calendar extends eqLogic
 {
   /*     * *************************Attributs****************************** */
