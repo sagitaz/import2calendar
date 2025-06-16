@@ -48,7 +48,8 @@ class import2calendar extends eqLogic
    */
   public static function update()
   {
-    foreach (eqLogic::byType(__CLASS__, true) as $eqLogic) {
+		$eqLogics = self::byType(__CLASS__, true);
+    foreach ($eqLogics as $eqLogic) {
       $autorefresh = $eqLogic->getConfiguration('autorefresh');
       if ($autorefresh != '') {
         try {
@@ -58,11 +59,10 @@ class import2calendar extends eqLogic
             if ($eqLogic->getIsEnable() == 1) {
               $calendarEqId = self::parseIcal($eqLogic->getId());
               //si parseicalr retourne null on quitte la fonction
-              if ($calendarEqId == null) {
-                return;
-              }
+              if ($calendarEqId != null) {
               $calendar = calendar::byId($calendarEqId);
               self::majCmdsAgenda($calendar);
+              } 
             }
           }
         } catch (Exception $exc) {
@@ -70,6 +70,7 @@ class import2calendar extends eqLogic
         }
       }
     }
+    
   }
   /*
   * Fonction exécutée automatiquement toutes les minutes par Jeedom
