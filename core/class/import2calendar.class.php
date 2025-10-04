@@ -953,8 +953,8 @@ class import2calendar extends eqLogic
         }
       }
 
-
-      $summary = str_replace("\\", "", $event['summary']);
+      $replace = ["\\", '"'];
+      $summary = str_replace($replace, "", $event['summary']);
       // Nettoyer le nom de l'événement && de la description
       $eventName = self::emojiClean($summary);
       $note = ''; // Valeur par défaut pour éviter les erreurs
