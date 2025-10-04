@@ -3,6 +3,9 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 04/10/2025 Stable 1.4.2
+- Correction erreur sur double quotes dans le nom de l'évènement
+
 # 16/06/2025 beta 1.4.1
 - Correction bug sur Cron
 
