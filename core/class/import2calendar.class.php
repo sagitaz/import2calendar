@@ -953,8 +953,13 @@ class import2calendar extends eqLogic
         }
       }
 
+      // rechercher si des caractères non voulu existent dans le nom de l'événement
+      // les supprimer et ajouter un log si c'est le cas
       $replace = ["\\", '"'];
       $summary = str_replace($replace, "", $event['summary']);
+      if ($summary != $event['summary']) {
+        log::add(__CLASS__, 'warning', "║ Caractères non autorisés détectés dans le nom de l'événement : " . $event['summary'] . " => renommé en : " . $summary);
+      }
       // Nettoyer le nom de l'événement && de la description
       $eventName = self::emojiClean($summary);
       $note = ''; // Valeur par défaut pour éviter les erreurs
