@@ -95,6 +95,11 @@ class import2calendar extends eqLogic
    */
   public static function cronDaily()
   {
+    self::majCmds();
+  }
+
+  public static function majCmds()
+  {
     if (!config::byKey('nextEvents', 'import2calendar', 0)) {
       // On récupère tous les calendriers créés par le plugin
       $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
@@ -102,10 +107,11 @@ class import2calendar extends eqLogic
       // On récupère tous les calendriers
       $allCalendar = calendar::all();
     }
-    
+
     foreach ($allCalendar as $calendar) {
       self::majCmdsAgenda($calendar);
     }
+    return true;
   }
 
   /**
