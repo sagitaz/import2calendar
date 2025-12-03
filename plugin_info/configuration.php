@@ -45,5 +45,13 @@ if (!isConnect()) {
         <input type="number" class="configKey form-control" data-l1key="numberOfDays" />
       </div>
     </div>
+    <div class="form-group">
+      <label class="col-md-4 control-label">{{commande jours suivants}}
+        <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute les commandes jour suivant pour tous les agendas}}"></i></sup>
+      </label>
+      <div class="col-lg-2">
+        <input type="checkbox" class="configKey form-control" data-l1key="nextEvents" />
+      </div>
+    </div>
   </fieldset>
 </form>
