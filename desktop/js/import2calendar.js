@@ -117,9 +117,9 @@ document.getElementById('majCmds').addEventListener('click', function () {
           level: 'success'
         });
       }
-    }
-  })
-});
+    })
+    });
+
 
 document.getElementById('bt_documentation').addEventListener('click', function () {
   window.open('https://sagitaz.github.io/import2calendar/fr_FR/', '_blank');

@@ -105,7 +105,7 @@ class import2calendar extends eqLogic
       $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
     } else {
       // On récupère tous les calendriers
-      $allCalendar = calendar::all();
+      $allCalendar = calendar::byType('calendar', true);
     }
 
     foreach ($allCalendar as $calendar) {
