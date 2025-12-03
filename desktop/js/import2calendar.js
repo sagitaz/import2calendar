@@ -100,6 +100,27 @@ document.getElementById('bt_chooseIcon').addEventListener('click', function () {
   })
 })
 
+document.getElementById('majCmds').addEventListener('click', function () {
+  $.ajax({
+    type: "POST",
+    url: "plugins/import2calendar/core/ajax/import2calendar.ajax.php",
+    data: {
+      action: "majCmds"
+    },
+    dataType: 'json',
+    error: function (request, status, error) {
+      handleAjaxError(request, status, error);
+    },
+    success: function (data) {
+        $('#div_alert').showAlert({
+          message: '{{Mise à jour des commandes agenda réussie.}}',
+          level: 'success'
+        });
+      }
+    })
+    });
+
+
 document.getElementById('bt_documentation').addEventListener('click', function () {
   window.open('https://sagitaz.github.io/import2calendar/fr_FR/', '_blank');
 });

@@ -34,6 +34,12 @@ try {
   */
   ajax::init();
 
+  if (init('action') == 'majCmds') {
+    // Récupération des logs
+    $result = import2calendar::majCmds();
+    ajax::success($result);
+  }
+
 
   throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
   /*     * *********Catch exeption*************** */
