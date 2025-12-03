@@ -40,7 +40,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<span>{{Ajouter}}</span>
 			</div>
 			<div class="cursor eqLogicAction" id="majCmds">
-				<i class="fas fa-update"></i>
+				<i class="fas fa-arrow-circle-up"></i>
 				<br>
 				<span>{{Mise à jour J+}}</span>
 			</div>
