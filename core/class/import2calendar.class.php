@@ -127,7 +127,7 @@ class import2calendar extends eqLogic
     $name = $calendar->getName();
     $icalId = $calendar->getConfiguration('icalId');
     if (isset($icalId)) {
-    $icalEqlogic = import2calendar::byId($icalId);
+      $icalEqlogic = import2calendar::byId($icalId);
     }
     // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
@@ -241,10 +241,10 @@ class import2calendar extends eqLogic
     ];
 
     foreach ($periods as $period) {
-      self::updateEventCmd($id, $period['cmd'], $period['label'], $period['events'], $name);    
-    }
-    if (is_object($icalEqlogic)) {
-      self::updateEventCmd($icalId, $period['cmd'], $period['label'], $period['events'], $name);
+      self::updateEventCmd($id, $period['cmd'], $period['label'], $period['events'], $name);
+      if (is_object($icalEqlogic)) {
+        self::updateEventCmd($icalId, $period['cmd'], $period['label'], $period['events'], $name);
+      }
     }
 
     log::add('import2calendar_checkEvent' . $id, 'info', '╚════════ Fin du bilan ═══════');
