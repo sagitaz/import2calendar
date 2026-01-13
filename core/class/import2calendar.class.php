@@ -48,7 +48,7 @@ class import2calendar extends eqLogic
    */
   public static function update()
   {
-		$eqLogics = self::byType(__CLASS__, true);
+    $eqLogics = self::byType(__CLASS__, true);
     foreach ($eqLogics as $eqLogic) {
       $autorefresh = $eqLogic->getConfiguration('autorefresh');
       if ($autorefresh != '') {
@@ -60,9 +60,9 @@ class import2calendar extends eqLogic
               $calendarEqId = self::parseIcal($eqLogic->getId());
               //si parseicalr retourne null on quitte la fonction
               if ($calendarEqId != null) {
-              $calendar = calendar::byId($calendarEqId);
-              self::majCmdsAgenda($calendar);
-              } 
+                $calendar = calendar::byId($calendarEqId);
+                self::majCmdsAgenda($calendar);
+              }
             }
           }
         } catch (Exception $exc) {
@@ -70,7 +70,6 @@ class import2calendar extends eqLogic
         }
       }
     }
-    
   }
   /*
   * Fonction exécutée automatiquement toutes les minutes par Jeedom
@@ -821,7 +820,7 @@ class import2calendar extends eqLogic
     return false;
   }
 
- private static function getCleanIcalHash($filePath)
+  private static function getCleanIcalHash($filePath)
   {
     $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $filtered = [];
@@ -1749,6 +1748,8 @@ class import2calendar extends eqLogic
           $eqExist = TRUE;
           $calendarEqId = $cal->getId();
           $calendar = calendar::byId($calendarEqId);
+          $calendar->setConfiguration('icalId', $eqlogic->getId());
+          $calendar->save();
           log::add(__CLASS__, 'debug', '║ Le calendrier :b:' . $name . '-ical:/b: existe dans le plugin Agenda. Mise à jour des évènements.');
         }
       }
@@ -1761,6 +1762,7 @@ class import2calendar extends eqLogic
         $calendar->setLogicalId(__('import2calendar', __FILE__));
         $calendar->setEqType_name('calendar');
         $calendar->setName(__($name . '-ical', __FILE__));
+        $calendar->setConfiguration('icalId', $eqlogic->getId());
         $calendar->save();
         $calendarEqId = $calendar->getId();
         log::add(__CLASS__, 'info', '║ Conversion du calendrier iCal :b:' . $name . ':/b: dans le plugin Agenda.');
