@@ -125,6 +125,10 @@ class import2calendar extends eqLogic
     // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
+    $icalId = $calendar->getConfiguration('icalId');
+    if (isset($icalId)) {
+    $icalEqlogic = import2calendar::byId($icalId);
+    }
     // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
     $eventsYesterday = [];
@@ -221,112 +225,45 @@ class import2calendar extends eqLogic
       }
     }
 
-    // Créer les commandes pour les événements d'hier
-    $cmd = self::createCmd($id, 'yesterday_events', 'Hier');
-    $cmd->save();
-    if (!empty($eventsYesterday)) {
-      $cmd->event(implode(', ', $eventsYesterday));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-
     log::add('import2calendar_checkEvent' . $id, 'info', '╔═══════ Début du bilan ═══════');
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events hier : ' . implode(', ', $eventsYesterday));
 
-    // Créer les commandes pour les événements d'aujourd'hui
-    $cmd = self::createCmd($id, 'today_events', 'Aujourd\'hui');
-    $cmd->save();
+    // Configuration des périodes
+    $periods = [
+      ['cmd' => 'yesterday_events', 'label' => 'Hier', 'events' => $eventsYesterday],
+      ['cmd' => 'today_events', 'label' => 'Aujourd\'hui', 'events' => $eventsToday],
+      ['cmd' => 'tomorrow_events', 'label' => 'Demain', 'events' => $eventsTomorrow],
+      ['cmd' => 'j2_events', 'label' => 'après demain', 'events' => $eventsJ2],
+      ['cmd' => 'j3_events', 'label' => 'J+3', 'events' => $eventsJ3],
+      ['cmd' => 'j4_events', 'label' => 'J+4', 'events' => $eventsJ4],
+      ['cmd' => 'j5_events', 'label' => 'J+5', 'events' => $eventsJ5],
+      ['cmd' => 'j6_events', 'label' => 'J+6', 'events' => $eventsJ6],
+      ['cmd' => 'j7_events', 'label' => 'J+7', 'events' => $eventsJ7],
+    ];
 
-    if (!empty($eventsToday)) {
-      $cmd->event(implode(', ', $eventsToday));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
+    foreach ($periods as $period) {
+      self::updateEventCmd($id, $period['cmd'], $period['label'], $period['events'], $name);    
     }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events aujourd\'hui : ' . implode(', ', $eventsToday));
-
-    // Créer les commandes pour les événements de demain
-    $cmd = self::createCmd($id, 'tomorrow_events', 'Demain');
-    $cmd->save();
-    if (!empty($eventsTomorrow)) {
-      $cmd->event(implode(', ', $eventsTomorrow));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
+    if (is_object($icalEqlogic)) {
+      self::updateEventCmd($icalId, $period['cmd'], $period['label'], $period['events'], $name);
     }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events demain : ' . implode(', ', $eventsTomorrow));
 
-    // Créer les commandes pour les événements des jours suivants
-    $cmd = self::createCmd($id, 'j2_events', 'aprés demain');
-    $cmd->save();
-    if (!empty($eventsJ2)) {
-      $cmd->event(implode(', ', $eventsJ2));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events aprés demain : ' . implode(', ', $eventsJ2));
-
-    $cmd = self::createCmd($id, 'j3_events', 'J+3');
-    $cmd->save();
-    if (!empty($eventsJ3)) {
-      $cmd->event(implode(', ', $eventsJ3));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+3 : ' . implode(', ', $eventsJ3));
-
-    $cmd = self::createCmd($id, 'j4_events', 'J+4');
-    $cmd->save();
-    if (!empty($eventsJ4)) {
-      $cmd->event(implode(', ', $eventsJ4));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+4 : ' . implode(', ', $eventsJ4));
-
-    $cmd = self::createCmd($id, 'j5_events', 'J+5');
-    $cmd->save();
-    if (!empty($eventsJ5)) {
-      $cmd->event(implode(', ', $eventsJ5));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+5 : ' . implode(', ', $eventsJ5));
-
-    $cmd = self::createCmd($id, 'j6_events', 'J+6');
-    $cmd->save();
-    if (!empty($eventsJ6)) {
-      $cmd->event(implode(', ', $eventsJ6));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+6 : ' . implode(', ', $eventsJ6));
-
-    $cmd = self::createCmd($id, 'j7_events', 'J+7');
-    $cmd->save();
-    if (!empty($eventsJ7)) {
-      $cmd->event(implode(', ', $eventsJ7));
-      $cmd->save();
-    } else {
-      $cmd->event('Aucun');
-      $cmd->save();
-    }
-    log::add('import2calendar_checkEvent' . $id, 'info', '║ Calendrier : :b:' . $name . ':/b:, Events J+7 : ' . implode(', ', $eventsJ7));
     log::add('import2calendar_checkEvent' . $id, 'info', '╚════════ Fin du bilan ═══════');
+  }
+
+  private static function updateEventCmd($id, $cmdName, $label, $events, $name)
+  {
+    $cmd = self::createCmd($id, $cmdName, $label);
+    $cmd->save();
+
+    $eventText = !empty($events) ? implode(', ', $events) : 'Aucun';
+    $cmd->event($eventText);
+    $cmd->save();
+
+    log::add(
+      'import2calendar_checkEvent' . $id,
+      'info',
+      '║ Calendrier :b:' . $name . ':/b:, Events ' . $label . ' : ' . $eventText
+    );
   }
 
   /**
