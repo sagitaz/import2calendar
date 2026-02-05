@@ -115,7 +115,7 @@ Pour que cela soit remonté dans Jeedom, il vous faut créer :
 - la description et le lieu seront visible dans l'agenda importé dans JeeMate.
 
 # <u>Attention</u>
-- le nom de l'agenda créé est le même que celui de l'équipement + "-ical"
+- le nom de l'agenda créé est le même que celui de l'équipement + "-ical" (sa modification est désormais possible   )
 - la pièce sera identique
 
 # <u>Support</u>
