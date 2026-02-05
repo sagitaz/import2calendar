@@ -1673,21 +1673,24 @@ class import2calendar extends eqLogic
       $name = $eqlogic->getName();
       $object = $eqlogic->getObject_id();
 
-      // on vérifie si un calendrier existe déjà dans le plugin Agenda
-      $allCalendar = calendar::byLogicalId('ical2calendar', 'calendar', true);
-      foreach ($allCalendar as $cal) {
-        $cal->setLogicalId(__('import2calendar', __FILE__));
-        $cal->save();
-      }
+
       $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
       foreach ($allCalendar as $cal) {
         if ($name . '-ical' === $cal->getname()) {
           $eqExist = TRUE;
           $calendarEqId = $cal->getId();
           $calendar = calendar::byId($calendarEqId);
-          $calendar->setConfiguration('icalId', $eqlogic->getId());
-          $calendar->save();
+            $calendar->setConfiguration('icalId', $eqlogic->getId());
+            $calendar->setConfiguration('icalName', $name);
+            $calendar->save();
           log::add(__CLASS__, 'debug', '║ Le calendrier :b:' . $name . '-ical:/b: existe dans le plugin Agenda. Mise à jour des évènements.');
+        } else if ($cal->getConfiguration('icalId') == $eqlogic->getId()) {
+          $eqExist = TRUE;
+          $calendarEqId = $cal->getId();
+          $calendar = calendar::byId($calendarEqId);
+          $calendar->setConfiguration('icalName', $name);
+          $calendar->save();
+          log::add(__CLASS__, 'debug', '║ Le calendrier :b:' . $name . '-ical:/b: existe dans le plugin Agenda. Mise à jour du nom du calendrier.');
         }
       }
       // s'il n'exista pas, on le créé

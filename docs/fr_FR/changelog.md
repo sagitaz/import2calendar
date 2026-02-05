@@ -3,6 +3,9 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 05/02/2026 Beta 1.4.7
+- Autorisation de changer le nom de l'agenda
+
 # 04/10/2025 Stable 1.4.2
 - Correction erreur sur double quotes dans le nom de l'évènement
 
