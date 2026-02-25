@@ -258,12 +258,6 @@ class import2calendar extends eqLogic
     $eventText = !empty($events) ? implode(', ', $events) : 'Aucun';
     $cmd->event($eventText);
     $cmd->save();
-
-    log::add(
-      'import2calendar_checkEvent' . $id,
-      'info',
-      '║ Calendrier :b:' . $name . ':/b:, Events ' . $label . ' : ' . $eventText
-    );
   }
 
   /**
@@ -285,7 +279,7 @@ class import2calendar extends eqLogic
     $duration = $endDateTime->diff($startDateTime)->days;
     $isMultiDays = $duration > 0;
 
-    log::add('import2calendar_checkEvent' . $id, 'debug', '╔═════ Vérification événement ═════');
+    log::add('import2calendar_checkEvent' . $id, 'info', '╔═════ Vérification événement ═════');
     log::add('import2calendar_checkEvent' . $id, 'debug', '║ Nom: ' . $eventName);
     log::add('import2calendar_checkEvent' . $id, 'debug', '║ Durée: ' . $duration . ' jours');
 
@@ -298,7 +292,12 @@ class import2calendar extends eqLogic
 
     log::add('import2calendar_checkEvent' . $id, 'debug', '║ Date vérifiée: du ' . $checkDateStart->format('Y-m-d H:i:s') . ' au ' . $checkDateEnd->format('Y-m-d H:i:s'));
     log::add('import2calendar_checkEvent' . $id, 'debug', '║ Plage: du ' . $startDateTime->format('Y-m-d H:i:s') . ' au ' . $endDateTime->format('Y-m-d H:i:s'));
-
+    // Si la date à vérifier est antérieure à la date de début de l'événement, on peut directement exclure l'événement (même pour les événements récurrents)
+    if ($checkDateStr < $startDateTime->format('Y-m-d')) {
+      log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date non dans la plage');
+      log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+      return null;
+    } 
     // 1️⃣ Vérifier les dates incluses/exclues en priorité
     $includedDates = !empty($event["repeat"]["includeDate"]) ? array_map('trim', explode(",", $event["repeat"]["includeDate"])) : [];
     $excludedDates = !empty($event["repeat"]["excludeDate"]) ? array_map('trim', explode(",", $event["repeat"]["excludeDate"])) : [];
@@ -398,6 +397,8 @@ class import2calendar extends eqLogic
             $occurrenceStart->format('Y-m-d') . ' au ' . $occurrenceEnd->format('Y-m-d'));
           return null;
         }
+        log::add('import2calendar_checkEvent' . $id, 'info', '║ Date ' . $checkDateTime->format('Y-m-d') . ' dans la période du ' .
+          $occurrenceStart->format('Y-m-d') . ' au ' . $occurrenceEnd->format('Y-m-d'));
         log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Date dans la période du ' .
           $occurrenceStart->format('Y-m-d') . ' au ' . $occurrenceEnd->format('Y-m-d'));
 

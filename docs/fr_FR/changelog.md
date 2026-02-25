@@ -3,6 +3,9 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 25/02/2026 Beta 1.4.8
+- Correction bug sur la vérification de la date
+
 # 05/02/2026 Beta 1.4.7
 - Autorisation de changer le nom de l'agenda
 
