@@ -9,12 +9,12 @@ on:
         default: "en_US,es_ES,de_DE,it_IT,pt_PT"
   push:
     branches:
-      - beta
+      - dev
     paths:
       - docs/fr_FR/*.md
   pull_request:
     branches:
-      - beta
+      - dev
     paths:
       - docs/fr_FR/*.md
 
