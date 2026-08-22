@@ -33,6 +33,7 @@
         "Inverser": "Invert",
         "Max": "Maximum",
         "Min": "Minimum",
+        "Mise à jour des commandes agenda réussie.": "Calendar commands successfully updated.",
         "Nom": "Name",
         "Nom de la commande": "Command name",
         "Supprimer la commande": "Delete command",
@@ -79,6 +80,7 @@
         "Icône": "Icon",
         "Jours fériés Métropole": "Public holidays Metropolitan France",
         "Mes import2calendars": "My import2calendars",
+        "Mise à jour J+": "Update Day +",
         "Nom de l'équipement": "Equipment name",
         "Nom de l'évènement": "Event name",
         "Objet parent": "Parent object",
@@ -109,8 +111,10 @@
         "aide Discord": "help Discord"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Ajoute les commandes jour suivant pour tous les agendas": "Adds \"Next Day\" commands to all calendars",
         "Nombre de jours passé de retention": "Number of retention days",
         "Version Plugin": "Plugin version",
-        "Version du Plugin (A indiquer sur Community)": "Plugin version (To be indicated on Community)"
+        "Version du Plugin (A indiquer sur Community)": "Plugin version (To be indicated on Community)",
+        "commande jours suivants": "Command for the coming days"
     }
 }

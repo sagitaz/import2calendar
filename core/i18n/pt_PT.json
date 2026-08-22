@@ -33,6 +33,7 @@
         "Inverser": "Inverter",
         "Max": "Máx.",
         "Min": "Mínimo",
+        "Mise à jour des commandes agenda réussie.": "Atualização das ordens da agenda concluída com sucesso.",
         "Nom": "Nome",
         "Nom de la commande": "Nome do comando",
         "Supprimer la commande": "Apagar comando",
@@ -79,6 +80,7 @@
         "Icône": "Ícone",
         "Jours fériés Métropole": "Feriados nacionais França metropolitana",
         "Mes import2calendars": "O meu import2calendars",
+        "Mise à jour J+": "Atualização J+",
         "Nom de l'équipement": "Nome do equipamento",
         "Nom de l'évènement": "Nome do evento",
         "Objet parent": "Objeto pai",
@@ -109,8 +111,10 @@
         "aide Discord": "ajuda Discord"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Ajoute les commandes jour suivant pour tous les agendas": "Adiciona os compromissos do dia seguinte a todas as agendas",
         "Nombre de jours passé de retention": "Número de dias de retenção",
         "Version Plugin": "Versão do plugin",
-        "Version du Plugin (A indiquer sur Community)": "Versão do plugin (a indicar na Comunidade)"
+        "Version du Plugin (A indiquer sur Community)": "Versão do plugin (a indicar na Comunidade)",
+        "commande jours suivants": "encomenda para os próximos dias"
     }
 }
