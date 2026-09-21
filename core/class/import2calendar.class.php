@@ -297,7 +297,7 @@ class import2calendar extends eqLogic
       log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date non dans la plage');
       log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
       return null;
-    } 
+    }
     // 1️⃣ Vérifier les dates incluses/exclues en priorité
     $includedDates = !empty($event["repeat"]["includeDate"]) ? array_map('trim', explode(",", $event["repeat"]["includeDate"])) : [];
     $excludedDates = !empty($event["repeat"]["excludeDate"]) ? array_map('trim', explode(",", $event["repeat"]["excludeDate"])) : [];
@@ -789,7 +789,7 @@ class import2calendar extends eqLogic
     $eqlogic = eqLogic::byId($eqlogicId);
     // création du calendrier si inexistant
     $calendarEqId = self::calendarCreate($eqlogic);
-    // récupèration des valeurs communes à tous les évènement    
+    // récupèration des valeurs communes à tous les évènement
     $icon = $eqlogic->getConfiguration('icon');
     $startTime = $eqlogic->getConfiguration('startTime');
     $endTime = $eqlogic->getConfiguration('endTime');
@@ -802,7 +802,7 @@ class import2calendar extends eqLogic
     //$localFile = "/tmp/calendar.ics";
     // Chemin du répertoire contenant les fichiers
     $folder = dirname(__FILE__, 3) . '/data/calendar/';
-    // Vérification si le répertoire existe 
+    // Vérification si le répertoire existe
     if (!is_dir($folder)) {
       log::add(__CLASS__, 'error', 'Le répertoire n\'existe pas : ' . $folder);
       log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
@@ -1382,7 +1382,7 @@ class import2calendar extends eqLogic
   }
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
-    // remplace 
+    // remplace
     $firstDateString = str_replace('"', '', $dateString);
     $dateString = self::convertTimezone($firstDateString);
     if ($firstDateString != $dateString) {
@@ -1976,8 +1976,33 @@ class import2calendar extends eqLogic
     return $date;
   }
 
-  private static function convertTimezone($timezone)
+  /**
+   * Remplace le fuseau horaire annoncé par un TZID par son équivalent IANA.
+   *
+   * La table couvre les noms de fuseaux Windows, qu'Outlook et Exchange émettent à la
+   * place des identifiants IANA. La recherche se fait par égalité exacte, sur le seul
+   * segment compris entre 'TZID=' et le ':' qui le suit.
+   *
+   * @param string $dateString Valeur brute d'un DTSTART/DTEND, avec ou sans TZID
+   * @return string La même valeur, TZID converti s'il est connu de la table, inchangée
+   *                sinon. Un TZID absent de la table est laissé tel quel : c'est le
+   *                cas normal des identifiants IANA, que DateTimeZone accepte
+   *                directement, et formatDate() se charge des noms réellement inconnus
+   */
+  private static function convertTimezone($dateString)
   {
+    $positionTzid = strpos($dateString, 'TZID=');
+    if ($positionTzid === false) {
+      return $dateString;
+    }
+    $debutFuseau = $positionTzid + strlen('TZID=');
+    // Le ':' recherché est celui qui suit le TZID, pas le premier de la chaîne
+    $finFuseau = strpos($dateString, ':', $debutFuseau);
+    if ($finFuseau === false) {
+      return $dateString;
+    }
+    $timezone = substr($dateString, $debutFuseau, $finFuseau - $debutFuseau);
+
     $timezones = array(
       'Afghanistan Standard Time' => 'Asia/Kabul',
       'Alaskan Standard Time' => 'America/Anchorage',
@@ -1987,29 +2012,12 @@ class import2calendar extends eqLogic
       'Arabian Standard Time' => 'Asia/Dubai',
       'Argentina Standard Time' => 'America/Buenos_Aires',
       'Atlantic Standard Time' => 'America/Halifax',
-      // Ces trois entrées étaient inversées : elles transformaient un fuseau IANA valide
-      // en nom Windows, que DateTimeZone refuse. Elles doivent rester en tête de table :
-      // 'AUS Central Standard Time' contient 'Central Standard Time' et
-      // 'AUS Eastern Standard Time' contient 'Eastern Standard Time', qui sont des clés
-      // plus bas. La boucle étant séquentielle, la clé la plus longue doit passer avant.
       'AUS Central Standard Time' => 'Australia/Darwin',
       'AUS Eastern Standard Time' => 'Australia/Sydney',
       'W. Australia Standard Time' => 'Australia/Perth',
-      // Brisbane et Hobart sont déjà couverts dans le bon sens par
-      // 'E. Australia Standard Time' et 'Tasmania Standard Time' plus bas.
-      // Même motif : ces trois clés contiennent 'Central Asia Standard Time',
-      // 'Eastern Standard Time' et 'Pacific Standard Time'. Placées après elles dans
-      // la table, elles n'étaient jamais atteintes et produisaient 'N. Asia/Almaty',
-      // 'SA America/New_York' et 'SA America/Los_Angeles', que DateTimeZone refuse.
       'N. Central Asia Standard Time' => 'Asia/Novosibirsk',
       'SA Eastern Standard Time' => 'America/Cayenne',
       'SA Pacific Standard Time' => 'America/Bogota',
-      // Même motif encore : ces quatre clés contiennent 'Central Standard Time',
-      // 'Eastern Standard Time' ou 'Pacific Standard Time'. Placées après elles, elles
-      // produisaient des fuseaux que DateTimeZone accepte mais qui sont faux, donc une
-      // erreur d'heure silencieuse : 'America/New_York (Mexico)' au lieu de
-      // 'America/Cancun' (1 h), et surtout 'West America/Los_Angeles' que PHP retient
-      // comme 'WEST' à +00:00 au lieu de 'Pacific/Port_Moresby' à +10:00.
       'Central Standard Time (Mexico)' => 'America/Mexico_City',
       'Eastern Standard Time (Mexico)' => 'America/Cancun',
       'Pacific Standard Time (Mexico)' => 'America/Tijuana',
@@ -2091,10 +2099,6 @@ class import2calendar extends eqLogic
       'Tokyo Standard Time' => 'Asia/Tokyo',
       'Turkey Standard Time' => 'Europe/Istanbul',
       'Turks And Caicos Standard Time' => 'America/Grand_Turk',
-      // Les zones Etc/GMT ont un signe inversé par convention POSIX : Etc/GMT+12 vaut
-      // UTC-12, et Etc/GMT-12 vaut UTC+12. L'entrée précédente donnait donc +12 h au
-      // lieu de -12 h, soit 24 h d'écart. 'Dateline Standard Time' ci-dessus utilise
-      // déjà la bonne valeur.
       'UTC-12' => 'Etc/GMT+12', // Ligne de changement de date
       'UTC-11' => 'Pacific/Midway', // Samoa, Niue
       'UTC-10' => 'Pacific/Honolulu', // Hawaï
@@ -2131,10 +2135,10 @@ class import2calendar extends eqLogic
       'West Bank Standard Time' => 'Asia/Hebron',
       'Yakutsk Standard Time' => 'Asia/Yakutsk'
     );
-    foreach ($timezones as $key => $value) {
-      $timezone = str_replace($key, $value, $timezone);
+    if (!isset($timezones[$timezone])) {
+      return $dateString;
     }
-    return $timezone;
+    return substr($dateString, 0, $debutFuseau) . $timezones[$timezone] . substr($dateString, $finFuseau);
   }
 
   public static function createEqI2C($options)
