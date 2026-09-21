@@ -54,19 +54,27 @@ class import2calendar extends eqLogic
       if ($autorefresh != '') {
         try {
           $c = new Cron\CronExpression(checkAndFixCron($autorefresh), new Cron\FieldFactory);
-          if ($c->isDue()) {
-            // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
-            if ($eqLogic->getIsEnable() == 1) {
+          $isDue = $c->isDue();
+        } catch (Throwable $e) {
+          log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : expression cron invalide : ' . $autorefresh . ' => ' . $e->getMessage());
+          continue;
+        }
+        if ($isDue) {
+          // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+          if ($eqLogic->getIsEnable() == 1) {
+            // L'échec d'un équipement ne doit priver aucun des suivants de son
+            // actualisation. Throwable et non Exception : une TypeError ou un appel
+            // sur null relèvent d'Error, qu'un catch (Exception) laisse passer.
+            try {
               $calendarEqId = self::parseIcal($eqLogic->getId());
-              //si parseicalr retourne null on quitte la fonction
               if ($calendarEqId != null) {
                 $calendar = calendar::byId($calendarEqId);
                 self::majCmdsAgenda($calendar);
               }
+            } catch (Throwable $e) {
+              log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : échec du traitement de l\'agenda : ' . $e->getMessage());
             }
           }
-        } catch (Exception $exc) {
-          log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : Invalid cron expression : ' . $autorefresh);
         }
       }
     }
@@ -309,9 +317,19 @@ class import2calendar extends eqLogic
       $periodStart = clone $checkDate;
       $periodEnd = clone $checkDate;
 
-      // On recule jusqu'au début de la période
-      while ((int)$periodStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
+      // On recule jusqu'au début de la période. array_search rend false si aucun jour
+      // n'est retenu, et (int) false vaut 0, que format('N') ne vaut jamais : sans le
+      // contrôle ci-dessous la boucle ne se terminerait pas.
+      $premierJour = (int) array_search("1", $event["repeat"]["excludeDay"]);
+      if ($premierJour < 1) {
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Aucun jour de la semaine retenu pour la récurrence');
+        log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+        return null;
+      }
+      $garde = 0;
+      while ((int) $periodStart->format('N') !== $premierJour && $garde < 7) {
         $periodStart->modify('-1 day');
+        $garde++;
       }
 
       // On avance jusqu'à la fin de la période
@@ -381,10 +399,18 @@ class import2calendar extends eqLogic
 
       // Pour les événements multi-jours, calculer l'occurrence
       if ($isMultiDays) {
-        // Trouver le début de l'occurrence
+        // Trouver le début de l'occurrence. Même précaution que plus haut : sans jour
+        // retenu, (int) array_search vaut 0 et la boucle ne se terminerait pas.
+        $premierJour = (int) array_search("1", $event["repeat"]["excludeDay"]);
+        if ($premierJour < 1) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Aucun jour de la semaine retenu pour la récurrence');
+          return null;
+        }
         $occurrenceStart = clone $checkDateTime;
-        while ((int)$occurrenceStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
+        $garde = 0;
+        while ((int) $occurrenceStart->format('N') !== $premierJour && $garde < 7) {
           $occurrenceStart->modify('-1 day');
+          $garde++;
         }
 
         // Calculer la fin de l'occurrence
@@ -806,7 +832,6 @@ class import2calendar extends eqLogic
     if (!is_dir($folder)) {
       log::add(__CLASS__, 'error', 'Le répertoire n\'existe pas : ' . $folder);
       log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
-      ajax::error('Le répertoire n\'existe pas : ' . $folder);
       return null;
     }
     // $icalData = self::getIcalDataWithCurl($file);
@@ -1007,6 +1032,7 @@ class import2calendar extends eqLogic
     $dtEqual = "";
     $formattedDates = [];
     $inAlarm = false;
+    $endWithinRetention = false;
 
     // Extraire le PRODID
     preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
@@ -1032,6 +1058,9 @@ class import2calendar extends eqLogic
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
         $event = [];
         $exdates = [];
+        // Remise à zéro obligatoire : un événement sans DTEND hériterait sinon de la
+        // décision de rétention prise pour l'événement précédent.
+        $endWithinRetention = false;
       } elseif (strpos($line, 'END:VEVENT') === 0) {
         if (!empty($exdates)) {
           $event['exdate'] = $exdates;
@@ -1299,12 +1328,12 @@ class import2calendar extends eqLogic
             $position = "fourth";
           }
         }
-        // On exclut le jour correspondant à la position spécifiée
-        if (isset($matches[2])) {
-          $dayIndex = array_search(ucfirst(strtolower($matches[2])), $daysOfWeek);
-          if ($dayIndex !== false) {
-            $excludeDay[$dayIndex + 1] = "1";
-          }
+        // On retient le jour correspondant à la position spécifiée. Le code iCal est sur
+        // deux lettres ('MO', 'TU'...) : ce n'est pas un préfixe de $daysOfWeek, la
+        // correspondance doit donc être explicite.
+        $codesJours = ['MO' => 1, 'TU' => 2, 'WE' => 3, 'TH' => 4, 'FR' => 5, 'SA' => 6, 'SU' => 7];
+        if (isset($matches[2]) && isset($codesJours[strtoupper($matches[2])])) {
+          $excludeDay[$codesJours[strtoupper($matches[2])]] = "1";
         }
       } else {
         $excludeDay = ["1" => "1", "2" => "1", "3" => "1", "4" => "1", "5" => "1", "6" => "1", "7" => "1"];
@@ -1394,9 +1423,8 @@ class import2calendar extends eqLogic
     if (strpos($dateString, "TZID=") !== false) {
       $timezone = substr($dateString, strpos($dateString, "=") + 1, strpos($dateString, ":") - strpos($dateString, "=") - 1);
       $dateString = substr($dateString, strpos($dateString, ":") + 1);
-      // La table de convertTimezone() ne couvrira jamais tous les producteurs iCal.
-      // Sans ce garde-fou, un TZID inconnu levait une exception non rattrapée qui
-      // interrompait le parse de tout l'agenda à partir de cet événement.
+      // La table de convertTimezone() ne couvrira jamais tous les producteurs iCal :
+      // un TZID inconnu ne doit pas interrompre le parse de tout l'agenda.
       try {
         $dateTimeZone = new DateTimeZone($timezone);
       } catch (Exception $e) {
@@ -1471,8 +1499,8 @@ class import2calendar extends eqLogic
     }
     // log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
     // Une FREQ absente ou non gérée (HOURLY, MINUTELY, SECONDLY) ne permet pas de
-    // calculer une date de fin. On rend null : l'appelant traite déjà ce cas comme
-    // une récurrence sans fin, alors qu'appeler format() ici était une erreur fatale.
+    // calculer une date de fin. On rend null : l'appelant traite ce cas comme une
+    // récurrence sans fin.
     if ($endDate === null) {
       log::add(__CLASS__, 'warning', "║ FREQ non gérée pour le calcul de COUNT : " . json_encode($frequence) . ". Récurrence conservée sans date de fin.");
       return null;
@@ -1839,13 +1867,48 @@ class import2calendar extends eqLogic
 
     return $result;
   }
+  /**
+   * Déséchappe une valeur de texte iCal et la convertit en entités HTML.
+   *
+   * Les séquences traitées sont celles de la RFC 5545 (`\n`, `\N`, `\,`, `\;`, `\\`),
+   * plus les `\uXXXX` que certains producteurs émettent. Le déséchappement se fait en
+   * une seule passe : enchaîner des str_replace retraiterait l'antislash produit par la
+   * passe précédente. Une séquence non reconnue est conservée telle quelle plutôt que
+   * perdue.
+   *
+   * @param string $string Valeur brute d'un SUMMARY, DESCRIPTION ou LOCATION
+   * @return array Tableau à une clé, 'htmlFormat', prête à être stockée
+   */
   private static function emojiClean($string)
   {
-    // Convertir les séquences d'échappement Unicode en caractères UTF-8
-    $string_utf8 = json_decode('"' . $string . '"');
+    $string = preg_replace_callback(
+      '/\\\\([uU][0-9a-fA-F]{4}|.)/s',
+      function ($matches) {
+        $sequence = $matches[1];
+        if (strlen($sequence) === 5) {
+          $caractere = json_decode('"\u' . substr($sequence, 1) . '"');
+          return is_string($caractere) ? $caractere : $matches[0];
+        }
+        switch ($sequence) {
+          case 'n':
+          case 'N':
+            return "\n";
+          case '\\':
+          case ',':
+          case ';':
+            return $sequence;
+          default:
+            return $matches[0];
+        }
+      },
+      $string
+    );
 
-    // Convertir en format HTML
-    $result['htmlFormat'] = mb_convert_encoding($string_utf8, 'HTML-ENTITIES', 'UTF-8');
+    // mb_convert_encoding($s, 'HTML-ENTITIES') est déprécié depuis PHP 8.2.
+    // mb_encode_numericentity rend des entités numériques, que html_entity_decode
+    // reconnaît comme les entités nommées, et laisse l'ASCII intact.
+    $result = [];
+    $result['htmlFormat'] = mb_encode_numericentity($string, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8');
 
     return $result;
   }
