@@ -228,21 +228,18 @@ class import2calendar extends eqLogic
       $yesterdayEvents = self::checkEventForDate($event, $yesterday);
       if ($yesterdayEvents !== null) {
         $eventsYesterday = array_merge($eventsYesterday, $yesterdayEvents);
-        $eventsYesterday = array_unique($eventsYesterday);
       }
 
       // Vérifier pour aujourd'hui
       $todayEvents = self::checkEventForDate($event, $today);
       if ($todayEvents !== null) {
         $eventsToday = array_merge($eventsToday, $todayEvents);
-        $eventsToday = array_unique($eventsToday);
       }
 
       // Vérifier pour demain
       $tomorrowEvents = self::checkEventForDate($event, $tomorrow);
       if ($tomorrowEvents !== null) {
         $eventsTomorrow = array_merge($eventsTomorrow, $tomorrowEvents);
-        $eventsTomorrow = array_unique($eventsTomorrow);
       }
 
       // Vérifier pour les jours suivants
@@ -255,29 +252,36 @@ class import2calendar extends eqLogic
 
       if ($j2Events !== null) {
         $eventsJ2 = array_merge($eventsJ2, $j2Events);
-        $eventsJ2 = array_unique($eventsJ2);
       }
       if ($j3Events !== null) {
         $eventsJ3 = array_merge($eventsJ3, $j3Events);
-        $eventsJ3 = array_unique($eventsJ3);
       }
       if ($j4Events !== null) {
         $eventsJ4 = array_merge($eventsJ4, $j4Events);
-        $eventsJ4 = array_unique($eventsJ4);
       }
       if ($j5Events !== null) {
         $eventsJ5 = array_merge($eventsJ5, $j5Events);
-        $eventsJ5 = array_unique($eventsJ5);
       }
       if ($j6Events !== null) {
         $eventsJ6 = array_merge($eventsJ6, $j6Events);
-        $eventsJ6 = array_unique($eventsJ6);
       }
       if ($j7Events !== null) {
         $eventsJ7 = array_merge($eventsJ7, $j7Events);
-        $eventsJ7 = array_unique($eventsJ7);
       }
     }
+
+    // Dédoublonnage une seule fois, à la sortie de la boucle : le faire à chaque
+    // événement rejouait neuf array_unique sur des accumulateurs qui ne cessent de
+    // grossir, pour un résultat identique.
+    $eventsYesterday = array_unique($eventsYesterday);
+    $eventsToday = array_unique($eventsToday);
+    $eventsTomorrow = array_unique($eventsTomorrow);
+    $eventsJ2 = array_unique($eventsJ2);
+    $eventsJ3 = array_unique($eventsJ3);
+    $eventsJ4 = array_unique($eventsJ4);
+    $eventsJ5 = array_unique($eventsJ5);
+    $eventsJ6 = array_unique($eventsJ6);
+    $eventsJ7 = array_unique($eventsJ7);
 
     log::add('import2calendar_checkEvent' . $id, 'info', '╔═══════ Début du bilan ═══════');
 
@@ -302,19 +306,18 @@ class import2calendar extends eqLogic
     }
 
     log::add('import2calendar_checkEvent' . $id, 'info', '╚════════ Fin du bilan ═══════');
-    self::journaliseCompteurs(__CLASS__, 'majCmdsAgenda sur l\'agenda ' . $id . ', ' . count($inDB) . ' évènement(s) en base');
+    self::journaliseCompteurs(__CLASS__, 'majCmdsAgenda sur :b:' . $name . ':/b: (agenda ' . $id . '), ' . count($inDB) . ' évènement(s) en base');
   }
 
   private static function updateEventCmd($id, $cmdName, $label, $events, $name)
   {
+    // Aucun save() ici : createCmd() enregistre déjà la commande à sa création, et
+    // event() persiste la valeur par le cache — collectDate et valueDate sont des
+    // propriétés préfixées d'un souligné, donc hors colonnes de la table cmd.
     $cmd = self::createCmd($id, $cmdName, $label);
-    $cmd->save();
-    self::compte('écritures commande');
 
     $eventText = !empty($events) ? implode(', ', $events) : 'Aucun';
     $cmd->event($eventText);
-    $cmd->save();
-    self::compte('écritures commande');
   }
 
   /**
@@ -939,11 +942,11 @@ class import2calendar extends eqLogic
 
 
       log::add(__CLASS__, 'debug', "╠═ Event " . $n . ": " . json_encode($event));
-      $color = self::getColors($eqlogicId, $event['summary']);
-      $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
-      $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
-      $startDate = self::changeDate($eqlogicId, $event['summary'], $event['start_date'], "startEvent");
-      $endDate = self::changeDate($eqlogicId, $event['summary'], $event['end_date'], "endEvent");
+      $color = self::getColors($eqlogic, $event['summary']);
+      $allCmdStart = self::getActionCmd($eqlogic, $event['summary'], 'starts');
+      $allCmdEnd = self::getActionCmd($eqlogic, $event['summary'], 'ends');
+      $startDate = self::changeDate($eqlogic, $event['summary'], $event['start_date'], "startEvent");
+      $endDate = self::changeDate($eqlogic, $event['summary'], $event['end_date'], "endEvent");
       $repeat = [
         "includeDate" => "",
         "includeDateFromCalendar" => "",
@@ -1069,7 +1072,11 @@ class import2calendar extends eqLogic
     self::compte('lectures équipement (eqLogic::byId)');
     $calendarEqlogic->refreshWidget();
 
-    self::journaliseCompteurs(__CLASS__, 'parseIcal, ' . count($options) . ' évènement(s)');
+    self::journaliseCompteurs(
+      __CLASS__,
+      'parseIcal sur :b:' . $eqlogic->getName() . ':/b: (eq ' . $eqlogicId . ' => agenda ' . $calendarEqId . '), '
+        . count($events) . ' évènement(s) analysé(s) dont ' . count($options) . ' retenu(s)'
+    );
     log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
     return $calendarEqId;
   }
@@ -1597,7 +1604,9 @@ class import2calendar extends eqLogic
   {
     // Vérifier si les options sont un tableau non vide
     if (is_array($options) && !empty($options)) {
-      // Récupérer les événements existants pour l'ID de calendrier donné
+      // Les événements de l'agenda sont lus une seule fois pour tout le lot : chaque
+      // lecture est un SELECT complet suivi d'une hydratation d'objet par ligne.
+      $inDB = self::calendarGetEventsByEqId($calendarEqId);
 
       foreach ($options as $option) {
 
@@ -1606,13 +1615,14 @@ class import2calendar extends eqLogic
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
 
-        // Gestion des événements récurrents (recurrenceId)
-        if (!is_null($option['cmd_param']['recurrenceId'])) {
-          self::handleRecurrence($option, $calendarEqId);
+        // Gestion des événements récurrents (recurrenceId). La valeur vaut '' et non
+        // null quand RECURRENCE-ID est absent : un test !is_null() serait toujours vrai.
+        if (!empty($option['cmd_param']['recurrenceId'])) {
+          self::handleRecurrence($option, $inDB);
         }
 
         // Comparaison et détection des duplicatas
-        $existingEventId = self::isDuplicateEvent($option, $calendarEqId);
+        $existingEventId = self::isDuplicateEvent($option, $inDB);
         if ($existingEventId === true) {
           log::add(__CLASS__, 'debug', '║ Aucune modification sur les options de cet évènement.');
           log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
@@ -1627,7 +1637,13 @@ class import2calendar extends eqLogic
         $cleanOption = self::cleanDate($option);
         log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
         // Sauvegarder l'événement s'il n'est pas un duplicata
-        self::calendarSave($cleanOption);
+        $enregistre = self::calendarSave($cleanOption);
+        // L'événement enregistré rejoint la liste en mémoire : sans cela, deux options
+        // portant les mêmes nom et dates créeraient deux événements au lieu d'un,
+        // puisque la seconde ne retrouverait pas la première.
+        if (is_array($enregistre)) {
+          $inDB[] = $enregistre;
+        }
         log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
       }
     }
@@ -1672,11 +1688,10 @@ class import2calendar extends eqLogic
     }
   }
 
-  private static function handleRecurrence($option, $calendarEqId)
+  private static function handleRecurrence($option, &$inDB)
   {
     $uid = $option['cmd_param']['uid'];
     $recurrenceId = $option['cmd_param']['recurrenceId'];
-    $inDB = self::calendarGetEventsByEqId($calendarEqId);
     if (is_array($inDB) && !empty($inDB)) {
       foreach ($inDB as &$existingOption) {
         if (
@@ -1713,9 +1728,8 @@ class import2calendar extends eqLogic
 
 
   // $existingOption = calendar_event::byId($existingOption['id']);
-  private static function isDuplicateEvent(&$option, $calendarEqId)
+  private static function isDuplicateEvent(&$option, $inDB)
   {
-    $inDB = self::calendarGetEventsByEqId($calendarEqId);
     if (is_array($inDB) && !empty($inDB)) {
       foreach ($inDB as $existingOption) {
         if (
@@ -1839,6 +1853,9 @@ class import2calendar extends eqLogic
 
       $event->save();
       self::compte('écritures événement');
+      // L'id est renvoyé à l'appelant : DB::save() le renseigne sur insertion, et
+      // saveDB() en a besoin pour tenir à jour sa liste en mémoire.
+      $option['id'] = $event->getId();
       return $option;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
@@ -1973,11 +1990,8 @@ class import2calendar extends eqLogic
 
     return $result;
   }
-  private static function getColors($eqlogicId, $name)
+  private static function getColors($eqlogic, $name)
   {
-    $eqlogic = eqLogic::byId($eqlogicId);
-    self::compte('lectures équipement (eqLogic::byId)');
-
     // Définir des couleurs par défaut si aucune couleur n'est trouvée dans la configuration
     $defaultBackground = '#581845';
     $defaultText = '#FFFFFF';
@@ -2009,11 +2023,8 @@ class import2calendar extends eqLogic
     return $result;
   }
 
-  private static function getActionCmd($eqlogicId, $name, $type)
+  private static function getActionCmd($eqlogic, $name, $type)
   {
-    // Récupérer l'objet eqLogic et les actions
-    $eqlogic = eqLogic::byId($eqlogicId);
-    self::compte('lectures équipement (eqLogic::byId)');
     $actions = $eqlogic->getConfiguration($type)[0];
 
     $allNames = [];
@@ -2067,12 +2078,8 @@ class import2calendar extends eqLogic
   }
 
 
-  private static function changeDate($eqlogicId, $name, $date, $type)
+  private static function changeDate($eqlogic, $name, $date, $type)
   {
-    // Récupérer l'objet eqLogic
-    $eqlogic = eqLogic::byId($eqlogicId);
-    self::compte('lectures équipement (eqLogic::byId)');
-
     // Récupérer les configurations de couleurs
     $colors = $eqlogic->getConfiguration('colors');
     $nameLower = strtolower($name); // Mettre le nom en minuscule une fois pour éviter des appels répétés
