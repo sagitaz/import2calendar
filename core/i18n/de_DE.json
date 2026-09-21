@@ -31,6 +31,7 @@
         "Inverser": "Umgekehrt",
         "Max": "Max",
         "Min": "Minimum",
+        "Mise à jour des commandes agenda réussie.": "Aktualisierung der Kalenderbefehle erfolgreich abgeschlossen.",
         "Nom": "Name",
         "Nom de la commande": "Name des Befehls",
         "Supprimer la commande": "Befehl löschen",
@@ -77,6 +78,7 @@
         "Icône": "Symbol",
         "Jours fériés Métropole": "Feiertage Metropole",
         "Mes import2calendars": "Mes import2calendars",
+        "Mise à jour J+": "Update J+",
         "Nom de l'équipement": "Name des Geräts",
         "Nom de l'évènement": "Name des Ereignisses",
         "Objet parent": "Übergeordnetes Objekt",
@@ -107,8 +109,14 @@
         "aide Discord": "discord-Hilfe"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Ajoute les commandes jour suivant pour tous les agendas": "Fügt die Termine für den nächsten Tag zu allen Kalendern hinzu",
         "Nombre de jours passé de retention": "Anzahl der vergangenen Tage der Zurückhaltung",
         "Version Plugin": "Plugin-Version",
-        "Version du Plugin (A indiquer sur Community)": "Version des Plugins (Auf Community anzugeben)"
+        "Version du Plugin (A indiquer sur Community)": "Version des Plugins (Auf Community anzugeben)",
+        "commande jours suivants": "Bestellung für die nächsten Tage"
+    },
+    "plugins\/import2calendar\/plugin_info\/install.php": {
+        "Identifiants techniques corrigés sur": "Technische Kennungen korrigiert auf",
+        "équipement(s). Les versions précédentes pouvaient créer un agenda en double à chaque actualisation : vérifiez la liste de vos agendas dans le plugin Agenda et supprimez les doublons éventuels.": "Gerät(e). Frühere Versionen konnten bei jeder Aktualisierung einen doppelten Kalender erstellen: Überprüfen Sie die Liste Ihrer Kalender im Kalender-Plugin und löschen Sie eventuelle Duplikate."
     }
 }
