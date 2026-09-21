@@ -1700,9 +1700,11 @@ class import2calendar extends eqLogic
         $calendar->setObject_id($object);
         $calendar->setIsEnable(1);
         $calendar->setIsVisible(1);
-        $calendar->setLogicalId(__('import2calendar', __FILE__));
+        // Identifiant technique : jamais traduit, il sert de clé de recherche à
+        // calendar::byLogicalId() ci-dessus, qui compare en égalité stricte.
+        $calendar->setLogicalId('import2calendar');
         $calendar->setEqType_name('calendar');
-        $calendar->setName(__($name . '-ical', __FILE__));
+        $calendar->setName($name . '-ical');
         $calendar->setConfiguration('icalId', $eqlogic->getId());
         $calendar->save();
         $calendarEqId = $calendar->getId();
@@ -2118,9 +2120,11 @@ class import2calendar extends eqLogic
     // s'il n'exista pas, on le créé
     if (!$eqExist) {
       $import2calendar = new import2calendar();
-      $import2calendar->setName(__($name, __FILE__));
+      $import2calendar->setName($name);
       $import2calendar->setObject_id($object);
-      $import2calendar->setLogicalId(__('ical', __FILE__));
+      // Identifiant technique : jamais traduit, il sert de clé de recherche à
+      // import2calendar::byLogicalId() ci-dessus, qui compare en égalité stricte.
+      $import2calendar->setLogicalId('ical');
       $import2calendar->setEqType_name('import2calendar');
       $import2calendar->setIsVisible(1);
       log::add(__CLASS__, 'debug', "║ Equipement agenda créé");

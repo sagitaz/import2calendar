@@ -5,9 +5,7 @@
     },
     "plugins\/import2calendar\/core\/class\/import2calendar.class.php": {
         "Le plugin agenda n'est pas installé ou activé.": "O plug-in do calendário não está instalado ou ativado.",
-        "Rafraichir": "Recarregar",
-        "ical": "ical",
-        "import2calendar": "import2calendar"
+        "Rafraichir": "Recarregar"
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
         "1 heure après": "1 hora depois",
