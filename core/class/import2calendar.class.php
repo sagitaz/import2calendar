@@ -39,7 +39,51 @@ class import2calendar extends eqLogic
   public static $_encryptConfigKey = array('param1', 'param2');
   */
 
+  /**
+   * Compteurs d'accès base, destinés à mesurer la charge d'un parse.
+   *
+   * Remis à zéro au début de parseIcal() et de majCmdsAgenda(), journalisés à la fin de
+   * chacune des deux. Les valeurs ne sont pas persistées : elles ne vivent que le temps
+   * du processus.
+   *
+   * @var array<string, int>
+   */
+  private static $compteurs = [];
+
   /*     * ***********************Methode static*************************** */
+
+  /**
+   * Incrémente un compteur d'accès base.
+   *
+   * @param string $cle Libellé du compteur, tel qu'il apparaîtra dans le journal
+   * @param int $nombre Valeur à ajouter
+   * @return void
+   */
+  private static function compte($cle, $nombre = 1)
+  {
+    if (!isset(self::$compteurs[$cle])) {
+      self::$compteurs[$cle] = 0;
+    }
+    self::$compteurs[$cle] += $nombre;
+  }
+
+  /**
+   * Journalise les compteurs d'accès base puis les remet à zéro.
+   *
+   * @param string $canal Canal de journalisation
+   * @param string $contexte Ce qui vient d'être traité, pour situer la mesure
+   * @return void
+   */
+  private static function journaliseCompteurs($canal, $contexte)
+  {
+    $lignes = [];
+    foreach (self::$compteurs as $cle => $valeur) {
+      $lignes[] = $cle . ' = ' . $valeur;
+    }
+    log::add($canal, 'info', '║ :b:CHARGE:/b: ' . $contexte . ' => ' . (empty($lignes) ? 'aucun accès' : implode(', ', $lignes)));
+    self::$compteurs = [];
+  }
+
   /**
    * Fonction exécutée automatiquement pour mettre à jour les calendriers
    * Parcourt tous les équipements actifs du plugin et vérifie si une mise à jour est nécessaire selon le cron configuré
@@ -130,12 +174,14 @@ class import2calendar extends eqLogic
    */
   private static function majCmdsAgenda($calendar)
   {
+    self::$compteurs = [];
     // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
     $icalId = $calendar->getConfiguration('icalId');
     if (isset($icalId)) {
       $icalEqlogic = import2calendar::byId($icalId);
+      self::compte('lectures équipement (eqLogic::byId)');
     }
     // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
@@ -256,16 +302,19 @@ class import2calendar extends eqLogic
     }
 
     log::add('import2calendar_checkEvent' . $id, 'info', '╚════════ Fin du bilan ═══════');
+    self::journaliseCompteurs(__CLASS__, 'majCmdsAgenda sur l\'agenda ' . $id . ', ' . count($inDB) . ' évènement(s) en base');
   }
 
   private static function updateEventCmd($id, $cmdName, $label, $events, $name)
   {
     $cmd = self::createCmd($id, $cmdName, $label);
     $cmd->save();
+    self::compte('écritures commande');
 
     $eventText = !empty($events) ? implode(', ', $events) : 'Aucun';
     $cmd->event($eventText);
     $cmd->save();
+    self::compte('écritures commande');
   }
 
   /**
@@ -571,6 +620,7 @@ class import2calendar extends eqLogic
   private static function createCmd($eqLogicId, $logicalId, $name)
   {
     $eqLogic = eqLogic::byId($eqLogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
     $cmd = $eqLogic->getCmd(null, $logicalId);
 
     if (!is_object($cmd)) {
@@ -583,6 +633,7 @@ class import2calendar extends eqLogic
       $cmd->setIsVisible(0);
       $cmd->setIsHistorized(0);
       $cmd->save();
+      self::compte('écritures commande');
     }
     return $cmd;
   }
@@ -810,9 +861,11 @@ class import2calendar extends eqLogic
   public static function parseIcal($eqlogicId)
   {
     log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
+    self::$compteurs = [];
     $options = [];
     $events = [];
     $eqlogic = eqLogic::byId($eqlogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
     // création du calendrier si inexistant
     $calendarEqId = self::calendarCreate($eqlogic);
     // récupèration des valeurs communes à tous les évènement
@@ -1013,8 +1066,10 @@ class import2calendar extends eqLogic
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
+    self::compte('lectures équipement (eqLogic::byId)');
     $calendarEqlogic->refreshWidget();
 
+    self::journaliseCompteurs(__CLASS__, 'parseIcal, ' . count($options) . ' évènement(s)');
     log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
     return $calendarEqId;
   }
@@ -1773,6 +1828,7 @@ class import2calendar extends eqLogic
       $event = null;
       if (!empty($option['id'])) {
         $event = calendar_event::byId($option['id']);
+        self::compte('lectures événement par id');
         log::add(__CLASS__, 'debug', "║ Evènement :b:" . $option['cmd_param']['eventName'] . ":/b: (" . $option['id'] . ") mis à jour.");
       }
       if (!is_object($event)) {
@@ -1782,6 +1838,7 @@ class import2calendar extends eqLogic
       utils::a2o($event, jeedom::fromHumanReadable($option));
 
       $event->save();
+      self::compte('écritures événement');
       return $option;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
@@ -1795,8 +1852,10 @@ class import2calendar extends eqLogic
       log::add("calendar", 'debug', '║ calendar_event::remove ' . $id);
 
       $event = calendar_event::byId($id);
+      self::compte('lectures événement par id');
       if (is_object($event)) {
         $event->remove();
+        self::compte('suppressions événement');
         log::add(__CLASS__, 'debug', "║ Event id : " . $id . ", suppression éffectué.");
       } else {
         log::add(__CLASS__, 'debug', "║ Aucun event ne correspond à l'id : " . $id . ", suppression impossible.");
@@ -1812,6 +1871,8 @@ class import2calendar extends eqLogic
     $result = [];
     if (self::testPlugin()) {
       $getAllEvents = calendar_event::getEventsByEqLogic($calendarEqId);
+      self::compte('lectures agenda (SELECT complet)');
+      self::compte('événements hydratés', count($getAllEvents));
 
       if (count($getAllEvents) <= 0) {
         log::add(__CLASS__, 'debug', "║ Aucun calendrier correspondant à : " . $calendarEqId);
@@ -1915,6 +1976,7 @@ class import2calendar extends eqLogic
   private static function getColors($eqlogicId, $name)
   {
     $eqlogic = eqLogic::byId($eqlogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
 
     // Définir des couleurs par défaut si aucune couleur n'est trouvée dans la configuration
     $defaultBackground = '#581845';
@@ -1951,6 +2013,7 @@ class import2calendar extends eqLogic
   {
     // Récupérer l'objet eqLogic et les actions
     $eqlogic = eqLogic::byId($eqlogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
     $actions = $eqlogic->getConfiguration($type)[0];
 
     $allNames = [];
@@ -2008,6 +2071,7 @@ class import2calendar extends eqLogic
   {
     // Récupérer l'objet eqLogic
     $eqlogic = eqLogic::byId($eqlogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
 
     // Récupérer les configurations de couleurs
     $colors = $eqlogic->getConfiguration('colors');
