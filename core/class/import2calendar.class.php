@@ -1435,8 +1435,11 @@ class import2calendar extends eqLogic
     // Nombre d'occurrences pour la répétition
     $occurrences = intval($event['rrule']['COUNT']);
 
+    // FREQ peut manquer sur une RRULE mal formée : on ne suppose pas sa présence
+    $frequence = isset($event['rrule']['FREQ']) ? $event['rrule']['FREQ'] : '';
+
     // Calculer la date de fin en ajoutant le nombre d'occurrences à la date de début, en fonction de la fréquence de répétition
-    switch ($event['rrule']['FREQ']) {
+    switch ($frequence) {
       case 'DAILY':
         $endDate = clone $startDate;
         $endDate->add(new DateInterval('P' . ($occurrences) . 'D'));
@@ -1458,6 +1461,13 @@ class import2calendar extends eqLogic
         break;
     }
     // log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
+    // Une FREQ absente ou non gérée (HOURLY, MINUTELY, SECONDLY) ne permet pas de
+    // calculer une date de fin. On rend null : l'appelant traite déjà ce cas comme
+    // une récurrence sans fin, alors qu'appeler format() ici était une erreur fatale.
+    if ($endDate === null) {
+      log::add(__CLASS__, 'warning', "║ FREQ non gérée pour le calcul de COUNT : " . json_encode($frequence) . ". Récurrence conservée sans date de fin.");
+      return null;
+    }
     return $endDate->format("Y-m-d H:i:s");
   }
 
