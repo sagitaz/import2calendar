@@ -3,6 +3,19 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 27/09/2026 Beta 1.5.0
+- Début et fin des évènements personnalisés réglables à la minute (0 à 360 min)
+- Actualisation des agendas beaucoup moins gourmande en ressources, surtout pour les agendas volumineux
+- Un agenda en erreur ne bloque plus l'actualisation des agendas suivants
+- Messages d'erreur plus précis dans les logs
+- Correction des notes et lieux perdus lorsqu'ils contiennent une virgule ou un point-virgule
+- Correction des récurrences mensuelles du type « 2e lundi » ou « dernier vendredi », absentes des commandes des jours à venir
+- Correction de l'arrêt de l'import sur certains évènements récurrents
+- Correction d'anciens évènements sans date de fin conservés à tort
+- Correction de fuseaux horaires mal reconnus (Australie, Amérique du Sud, Mexique…) qui bloquaient l'import ou décalaient les horaires
+- Un fuseau horaire inconnu n'interrompt plus l'import : celui de Jeedom est utilisé à la place
+- Correction d'un agenda créé en double à chaque actualisation sur les Jeedom en italien, un message signale les doublons à supprimer
+
 # 25/02/2026 Beta 1.4.8
 - Correction bug sur la vérification de la date
 
