@@ -8,19 +8,6 @@
         "Rafraichir": "Refrescar"
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
-        "1 heure après": "1 hora más tarde",
-        "1 heure avant": "1 hora antes",
-        "2 heures après": "2 horas después",
-        "2 heures avant": "2 horas antes",
-        "3 heures après": "3 horas después",
-        "3 heures avant": "3 horas antes",
-        "4 heures après": "4 horas más tarde",
-        "4 heures avant": "4 horas antes",
-        "5 heures après": "5 horas después",
-        "5 heures avant": "5 horas antes",
-        "6 heures après": "6 horas después",
-        "6 heures avant": "6 horas antes",
-        "A l\\'heure": "Por horas",
         "Afficher": "Mostrar",
         "Aucune": "Alguna",
         "Choisir une icône": "Elija el icono",
@@ -31,6 +18,7 @@
         "Inverser": "Invertir",
         "Max": "Máx.",
         "Min": "Mínimo",
+        "Mise à jour des commandes agenda réussie.": "Actualización de los comandos de la agenda realizada con éxito.",
         "Nom": "Nombre",
         "Nom de la commande": "Nombre del comando",
         "Supprimer la commande": "Eliminar comando",
@@ -62,11 +50,11 @@
         "Couleur de fond": "Color de fondo",
         "Couleur du texte": "Color del texto",
         "Documentation": "Documentación",
-        "Début": "Inicio",
+        "Début (min avant)": "Inicio (minutos antes)",
         "Equipement": "Dispositivos",
         "Equipement non visible": "Equipos no visibles",
         "Equipement visible": "Equipos visibles",
-        "Fin": "Final",
+        "Fin (min après)": "Fin (minutos después)",
         "Fond": "Fondo",
         "Fréquence de rafraîchissement du calendrier": "Frecuencia de actualización del calendario",
         "Gestion": "Administración",
@@ -77,6 +65,7 @@
         "Icône": "Icono",
         "Jours fériés Métropole": "Días festivos Francia metropolitana",
         "Mes import2calendars": "Mi import2calendars",
+        "Mise à jour J+": "Actualización J+",
         "Nom de l'équipement": "Nombre del equipo",
         "Nom de l'évènement": "Nombre del evento",
         "Objet parent": "Objeto padre",
@@ -107,8 +96,14 @@
         "aide Discord": "ayuda Discordia"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Ajoute les commandes jour suivant pour tous les agendas": "Añade las órdenes del día siguiente a todas las agendas",
         "Nombre de jours passé de retention": "Número de días de retención",
         "Version Plugin": "Versión Plugin",
-        "Version du Plugin (A indiquer sur Community)": "Versión del plugin (Se indicará en la Comunidad)"
+        "Version du Plugin (A indiquer sur Community)": "Versión del plugin (Se indicará en la Comunidad)",
+        "commande jours suivants": "pedido para los próximos días"
+    },
+    "plugins\/import2calendar\/plugin_info\/install.php": {
+        "Identifiants techniques corrigés sur": "Datos técnicos corregidos en",
+        "équipement(s). Les versions précédentes pouvaient créer un agenda en double à chaque actualisation : vérifiez la liste de vos agendas dans le plugin Agenda et supprimez les doublons éventuels.": "equipo(s). Las versiones anteriores podían crear un calendario duplicado cada vez que se actualizaban: comprueba la lista de tus calendarios en el complemento «Agenda» y elimina los posibles duplicados."
     }
 }
