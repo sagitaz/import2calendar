@@ -2091,17 +2091,22 @@ class import2calendar extends eqLogic
         if (
           $colorName !== '' && strpos($nameLower, $colorName) !== false
         ) {
-          // Vérifier le type d'événement et ajuster la date
-          if (
-            $type === "startEvent" && !empty($color['startEvent'])
-          ) {
-            // On modifie la date pour startEvent
-            $date = date("Y-m-d H:i:s", strtotime($date) - ($color['startEvent'] * 3600));
-          } elseif (
-            $type === "endEvent" && !empty($color['endEvent'])
-          ) {
-            // On modifie la date pour endEvent
-            $date = date("Y-m-d H:i:s", strtotime($date) + ($color['endEvent'] * 3600));
+          // Un réglage enregistré en heures (startEvent / endEvent) n'a pas de clé en minutes :
+          // il est converti ici, jusqu'à ce que la sauvegarde de l'équipement réécrive colors
+          $minutesKey = $type . 'Minutes';
+          if (array_key_exists($minutesKey, $color)) {
+            $minutes = (int) $color[$minutesKey];
+          } else {
+            $minutes = (int) ($color[$type] ?? 0) * 60;
+          }
+          $minutes = max(0, min(360, $minutes));
+          if ($minutes === 0) {
+            return $date;
+          }
+          if ($type === "startEvent") {
+            $date = date("Y-m-d H:i:s", strtotime($date) - ($minutes * 60));
+          } elseif ($type === "endEvent") {
+            $date = date("Y-m-d H:i:s", strtotime($date) + ($minutes * 60));
           }
           return $date;
         }
