@@ -183,6 +183,14 @@ function addColor(_color) {
   if (!isset(_color.options)) {
     _color.options = {}
   }
+  // Un réglage enregistré en heures (startEvent / endEvent) est affiché converti en minutes ;
+  // la sauvegarde de l'équipement ne réécrit ensuite que les clés en minutes
+  if (!isset(_color.startEventMinutes) && isset(_color.startEvent)) {
+    _color.startEventMinutes = _color.startEvent * 60
+  }
+  if (!isset(_color.endEventMinutes) && isset(_color.endEvent)) {
+    _color.endEventMinutes = _color.endEvent * 60
+  }
   var div = '<div class="color form-group">'
   div += '<span class="input-group-btn">'
   div += '<div class="col-sm-1">'
@@ -198,26 +206,10 @@ function addColor(_color) {
   div += '<div><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
   div += '</div>'
   div += '<div class="col-sm-2">'
-  div += '<div><select class="expressionAttr form-control col-sm-10" data-l1key="startEvent">'
-  div += '<option value="0" selected>{{A l\'heure}}</option>'
-  div += '<option value="1">{{1 heure avant}}</option>'
-  div += '<option value="2">{{2 heures avant}}</option>'
-  div += '<option value="3">{{3 heures avant}}</option>'
-  div += '<option value="4">{{4 heures avant}}</option>'
-  div += '<option value="5">{{5 heures avant}}</option>'
-  div += '<option value="6">{{6 heures avant}}</option>'
-  div += '</select></div>'
+  div += '<div><input type="number" min="0" max="360" step="1" value="0" class="expressionAttr form-control col-sm-10" data-l1key="startEventMinutes"></div>'
   div += '</div>'
   div += '<div class="col-sm-2">'
-  div += '<div><select class="expressionAttr form-control col-sm-10" data-l1key="endEvent">'
-  div += '<option value="0" selected>{{A l\'heure}}</option>'
-  div += '<option value="1">{{1 heure après}}</option>'
-  div += '<option value="2">{{2 heures après}}</option>'
-  div += '<option value="3">{{3 heures après}}</option>'
-  div += '<option value="4">{{4 heures après}}</option>'
-  div += '<option value="5">{{5 heures après}}</option>'
-  div += '<option value="6">{{6 heures après}}</option>'
-  div += '</select></div>'
+  div += '<div><input type="number" min="0" max="360" step="1" value="0" class="expressionAttr form-control col-sm-10" data-l1key="endEventMinutes"></div>'
   div += '</div>'
   div += '</span>'
   div += '</div>'

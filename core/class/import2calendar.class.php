@@ -39,7 +39,51 @@ class import2calendar extends eqLogic
   public static $_encryptConfigKey = array('param1', 'param2');
   */
 
+  /**
+   * Compteurs d'accès base, destinés à mesurer la charge d'un parse.
+   *
+   * Remis à zéro au début de parseIcal() et de majCmdsAgenda(), journalisés à la fin de
+   * chacune des deux. Les valeurs ne sont pas persistées : elles ne vivent que le temps
+   * du processus.
+   *
+   * @var array<string, int>
+   */
+  private static $compteurs = [];
+
   /*     * ***********************Methode static*************************** */
+
+  /**
+   * Incrémente un compteur d'accès base.
+   *
+   * @param string $cle Libellé du compteur, tel qu'il apparaîtra dans le journal
+   * @param int $nombre Valeur à ajouter
+   * @return void
+   */
+  private static function compte($cle, $nombre = 1)
+  {
+    if (!isset(self::$compteurs[$cle])) {
+      self::$compteurs[$cle] = 0;
+    }
+    self::$compteurs[$cle] += $nombre;
+  }
+
+  /**
+   * Journalise les compteurs d'accès base puis les remet à zéro.
+   *
+   * @param string $canal Canal de journalisation
+   * @param string $contexte Ce qui vient d'être traité, pour situer la mesure
+   * @return void
+   */
+  private static function journaliseCompteurs($canal, $contexte)
+  {
+    $lignes = [];
+    foreach (self::$compteurs as $cle => $valeur) {
+      $lignes[] = $cle . ' = ' . $valeur;
+    }
+    log::add($canal, 'info', '║ :b:CHARGE:/b: ' . $contexte . ' => ' . (empty($lignes) ? 'aucun accès' : implode(', ', $lignes)));
+    self::$compteurs = [];
+  }
+
   /**
    * Fonction exécutée automatiquement pour mettre à jour les calendriers
    * Parcourt tous les équipements actifs du plugin et vérifie si une mise à jour est nécessaire selon le cron configuré
@@ -54,19 +98,27 @@ class import2calendar extends eqLogic
       if ($autorefresh != '') {
         try {
           $c = new Cron\CronExpression(checkAndFixCron($autorefresh), new Cron\FieldFactory);
-          if ($c->isDue()) {
-            // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
-            if ($eqLogic->getIsEnable() == 1) {
+          $isDue = $c->isDue();
+        } catch (Throwable $e) {
+          log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : expression cron invalide : ' . $autorefresh . ' => ' . $e->getMessage());
+          continue;
+        }
+        if ($isDue) {
+          // Mettre à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+          if ($eqLogic->getIsEnable() == 1) {
+            // L'échec d'un équipement ne doit priver aucun des suivants de son
+            // actualisation. Throwable et non Exception : une TypeError ou un appel
+            // sur null relèvent d'Error, qu'un catch (Exception) laisse passer.
+            try {
               $calendarEqId = self::parseIcal($eqLogic->getId());
-              //si parseicalr retourne null on quitte la fonction
               if ($calendarEqId != null) {
                 $calendar = calendar::byId($calendarEqId);
                 self::majCmdsAgenda($calendar);
               }
+            } catch (Throwable $e) {
+              log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : échec du traitement de l\'agenda : ' . $e->getMessage());
             }
           }
-        } catch (Exception $exc) {
-          log::add(__CLASS__, 'error', $eqLogic->getHumanName() . ' : Invalid cron expression : ' . $autorefresh);
         }
       }
     }
@@ -122,12 +174,14 @@ class import2calendar extends eqLogic
    */
   private static function majCmdsAgenda($calendar)
   {
+    self::$compteurs = [];
     // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
     $icalId = $calendar->getConfiguration('icalId');
     if (isset($icalId)) {
       $icalEqlogic = import2calendar::byId($icalId);
+      self::compte('lectures équipement (eqLogic::byId)');
     }
     // Récupération des événements existants dans la base de données
     $inDB = self::calendarGetEventsByEqId($id);
@@ -174,21 +228,18 @@ class import2calendar extends eqLogic
       $yesterdayEvents = self::checkEventForDate($event, $yesterday);
       if ($yesterdayEvents !== null) {
         $eventsYesterday = array_merge($eventsYesterday, $yesterdayEvents);
-        $eventsYesterday = array_unique($eventsYesterday);
       }
 
       // Vérifier pour aujourd'hui
       $todayEvents = self::checkEventForDate($event, $today);
       if ($todayEvents !== null) {
         $eventsToday = array_merge($eventsToday, $todayEvents);
-        $eventsToday = array_unique($eventsToday);
       }
 
       // Vérifier pour demain
       $tomorrowEvents = self::checkEventForDate($event, $tomorrow);
       if ($tomorrowEvents !== null) {
         $eventsTomorrow = array_merge($eventsTomorrow, $tomorrowEvents);
-        $eventsTomorrow = array_unique($eventsTomorrow);
       }
 
       // Vérifier pour les jours suivants
@@ -201,29 +252,36 @@ class import2calendar extends eqLogic
 
       if ($j2Events !== null) {
         $eventsJ2 = array_merge($eventsJ2, $j2Events);
-        $eventsJ2 = array_unique($eventsJ2);
       }
       if ($j3Events !== null) {
         $eventsJ3 = array_merge($eventsJ3, $j3Events);
-        $eventsJ3 = array_unique($eventsJ3);
       }
       if ($j4Events !== null) {
         $eventsJ4 = array_merge($eventsJ4, $j4Events);
-        $eventsJ4 = array_unique($eventsJ4);
       }
       if ($j5Events !== null) {
         $eventsJ5 = array_merge($eventsJ5, $j5Events);
-        $eventsJ5 = array_unique($eventsJ5);
       }
       if ($j6Events !== null) {
         $eventsJ6 = array_merge($eventsJ6, $j6Events);
-        $eventsJ6 = array_unique($eventsJ6);
       }
       if ($j7Events !== null) {
         $eventsJ7 = array_merge($eventsJ7, $j7Events);
-        $eventsJ7 = array_unique($eventsJ7);
       }
     }
+
+    // Dédoublonnage une seule fois, à la sortie de la boucle : le faire à chaque
+    // événement rejouait neuf array_unique sur des accumulateurs qui ne cessent de
+    // grossir, pour un résultat identique.
+    $eventsYesterday = array_unique($eventsYesterday);
+    $eventsToday = array_unique($eventsToday);
+    $eventsTomorrow = array_unique($eventsTomorrow);
+    $eventsJ2 = array_unique($eventsJ2);
+    $eventsJ3 = array_unique($eventsJ3);
+    $eventsJ4 = array_unique($eventsJ4);
+    $eventsJ5 = array_unique($eventsJ5);
+    $eventsJ6 = array_unique($eventsJ6);
+    $eventsJ7 = array_unique($eventsJ7);
 
     log::add('import2calendar_checkEvent' . $id, 'info', '╔═══════ Début du bilan ═══════');
 
@@ -248,16 +306,18 @@ class import2calendar extends eqLogic
     }
 
     log::add('import2calendar_checkEvent' . $id, 'info', '╚════════ Fin du bilan ═══════');
+    self::journaliseCompteurs(__CLASS__, 'majCmdsAgenda sur :b:' . $name . ':/b: (agenda ' . $id . '), ' . count($inDB) . ' évènement(s) en base');
   }
 
   private static function updateEventCmd($id, $cmdName, $label, $events, $name)
   {
+    // Aucun save() ici : createCmd() enregistre déjà la commande à sa création, et
+    // event() persiste la valeur par le cache — collectDate et valueDate sont des
+    // propriétés préfixées d'un souligné, donc hors colonnes de la table cmd.
     $cmd = self::createCmd($id, $cmdName, $label);
-    $cmd->save();
 
     $eventText = !empty($events) ? implode(', ', $events) : 'Aucun';
     $cmd->event($eventText);
-    $cmd->save();
   }
 
   /**
@@ -297,7 +357,7 @@ class import2calendar extends eqLogic
       log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date non dans la plage');
       log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
       return null;
-    } 
+    }
     // 1️⃣ Vérifier les dates incluses/exclues en priorité
     $includedDates = !empty($event["repeat"]["includeDate"]) ? array_map('trim', explode(",", $event["repeat"]["includeDate"])) : [];
     $excludedDates = !empty($event["repeat"]["excludeDate"]) ? array_map('trim', explode(",", $event["repeat"]["excludeDate"])) : [];
@@ -309,9 +369,19 @@ class import2calendar extends eqLogic
       $periodStart = clone $checkDate;
       $periodEnd = clone $checkDate;
 
-      // On recule jusqu'au début de la période
-      while ((int)$periodStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
+      // On recule jusqu'au début de la période. array_search rend false si aucun jour
+      // n'est retenu, et (int) false vaut 0, que format('N') ne vaut jamais : sans le
+      // contrôle ci-dessous la boucle ne se terminerait pas.
+      $premierJour = (int) array_search("1", $event["repeat"]["excludeDay"]);
+      if ($premierJour < 1) {
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Aucun jour de la semaine retenu pour la récurrence');
+        log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
+        return null;
+      }
+      $garde = 0;
+      while ((int) $periodStart->format('N') !== $premierJour && $garde < 7) {
         $periodStart->modify('-1 day');
+        $garde++;
       }
 
       // On avance jusqu'à la fin de la période
@@ -381,10 +451,18 @@ class import2calendar extends eqLogic
 
       // Pour les événements multi-jours, calculer l'occurrence
       if ($isMultiDays) {
-        // Trouver le début de l'occurrence
+        // Trouver le début de l'occurrence. Même précaution que plus haut : sans jour
+        // retenu, (int) array_search vaut 0 et la boucle ne se terminerait pas.
+        $premierJour = (int) array_search("1", $event["repeat"]["excludeDay"]);
+        if ($premierJour < 1) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Aucun jour de la semaine retenu pour la récurrence');
+          return null;
+        }
         $occurrenceStart = clone $checkDateTime;
-        while ((int)$occurrenceStart->format('N') !== (int)array_search("1", $event["repeat"]["excludeDay"])) {
+        $garde = 0;
+        while ((int) $occurrenceStart->format('N') !== $premierJour && $garde < 7) {
           $occurrenceStart->modify('-1 day');
+          $garde++;
         }
 
         // Calculer la fin de l'occurrence
@@ -545,6 +623,7 @@ class import2calendar extends eqLogic
   private static function createCmd($eqLogicId, $logicalId, $name)
   {
     $eqLogic = eqLogic::byId($eqLogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
     $cmd = $eqLogic->getCmd(null, $logicalId);
 
     if (!is_object($cmd)) {
@@ -557,6 +636,7 @@ class import2calendar extends eqLogic
       $cmd->setIsVisible(0);
       $cmd->setIsHistorized(0);
       $cmd->save();
+      self::compte('écritures commande');
     }
     return $cmd;
   }
@@ -784,12 +864,14 @@ class import2calendar extends eqLogic
   public static function parseIcal($eqlogicId)
   {
     log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
+    self::$compteurs = [];
     $options = [];
     $events = [];
     $eqlogic = eqLogic::byId($eqlogicId);
+    self::compte('lectures équipement (eqLogic::byId)');
     // création du calendrier si inexistant
     $calendarEqId = self::calendarCreate($eqlogic);
-    // récupèration des valeurs communes à tous les évènement    
+    // récupèration des valeurs communes à tous les évènement
     $icon = $eqlogic->getConfiguration('icon');
     $startTime = $eqlogic->getConfiguration('startTime');
     $endTime = $eqlogic->getConfiguration('endTime');
@@ -802,11 +884,10 @@ class import2calendar extends eqLogic
     //$localFile = "/tmp/calendar.ics";
     // Chemin du répertoire contenant les fichiers
     $folder = dirname(__FILE__, 3) . '/data/calendar/';
-    // Vérification si le répertoire existe 
+    // Vérification si le répertoire existe
     if (!is_dir($folder)) {
       log::add(__CLASS__, 'error', 'Le répertoire n\'existe pas : ' . $folder);
       log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
-      ajax::error('Le répertoire n\'existe pas : ' . $folder);
       return null;
     }
     // $icalData = self::getIcalDataWithCurl($file);
@@ -861,11 +942,11 @@ class import2calendar extends eqLogic
 
 
       log::add(__CLASS__, 'debug', "╠═ Event " . $n . ": " . json_encode($event));
-      $color = self::getColors($eqlogicId, $event['summary']);
-      $allCmdStart = self::getActionCmd($eqlogicId, $event['summary'], 'starts');
-      $allCmdEnd = self::getActionCmd($eqlogicId, $event['summary'], 'ends');
-      $startDate = self::changeDate($eqlogicId, $event['summary'], $event['start_date'], "startEvent");
-      $endDate = self::changeDate($eqlogicId, $event['summary'], $event['end_date'], "endEvent");
+      $color = self::getColors($eqlogic, $event['summary']);
+      $allCmdStart = self::getActionCmd($eqlogic, $event['summary'], 'starts');
+      $allCmdEnd = self::getActionCmd($eqlogic, $event['summary'], 'ends');
+      $startDate = self::changeDate($eqlogic, $event['summary'], $event['start_date'], "startEvent");
+      $endDate = self::changeDate($eqlogic, $event['summary'], $event['end_date'], "endEvent");
       $repeat = [
         "includeDate" => "",
         "includeDateFromCalendar" => "",
@@ -988,8 +1069,14 @@ class import2calendar extends eqLogic
     self::saveDB($calendarEqId, $options);
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
+    self::compte('lectures équipement (eqLogic::byId)');
     $calendarEqlogic->refreshWidget();
 
+    self::journaliseCompteurs(
+      __CLASS__,
+      'parseIcal sur :b:' . $eqlogic->getName() . ':/b: (eq ' . $eqlogicId . ' => agenda ' . $calendarEqId . '), '
+        . count($events) . ' évènement(s) analysé(s) dont ' . count($options) . ' retenu(s)'
+    );
     log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
     return $calendarEqId;
   }
@@ -1007,6 +1094,7 @@ class import2calendar extends eqLogic
     $dtEqual = "";
     $formattedDates = [];
     $inAlarm = false;
+    $endWithinRetention = false;
 
     // Extraire le PRODID
     preg_match('/PRODID:(.*?)\r?\n/i', $icalFile, $matches);
@@ -1032,6 +1120,9 @@ class import2calendar extends eqLogic
       if (strpos($line, 'BEGIN:VEVENT') === 0) {
         $event = [];
         $exdates = [];
+        // Remise à zéro obligatoire : un événement sans DTEND hériterait sinon de la
+        // décision de rétention prise pour l'événement précédent.
+        $endWithinRetention = false;
       } elseif (strpos($line, 'END:VEVENT') === 0) {
         if (!empty($exdates)) {
           $event['exdate'] = $exdates;
@@ -1299,12 +1390,12 @@ class import2calendar extends eqLogic
             $position = "fourth";
           }
         }
-        // On exclut le jour correspondant à la position spécifiée
-        if (isset($matches[2])) {
-          $dayIndex = array_search(ucfirst(strtolower($matches[2])), $daysOfWeek);
-          if ($dayIndex !== false) {
-            $excludeDay[$dayIndex + 1] = "1";
-          }
+        // On retient le jour correspondant à la position spécifiée. Le code iCal est sur
+        // deux lettres ('MO', 'TU'...) : ce n'est pas un préfixe de $daysOfWeek, la
+        // correspondance doit donc être explicite.
+        $codesJours = ['MO' => 1, 'TU' => 2, 'WE' => 3, 'TH' => 4, 'FR' => 5, 'SA' => 6, 'SU' => 7];
+        if (isset($matches[2]) && isset($codesJours[strtoupper($matches[2])])) {
+          $excludeDay[$codesJours[strtoupper($matches[2])]] = "1";
         }
       } else {
         $excludeDay = ["1" => "1", "2" => "1", "3" => "1", "4" => "1", "5" => "1", "6" => "1", "7" => "1"];
@@ -1382,7 +1473,7 @@ class import2calendar extends eqLogic
   }
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
-    // remplace 
+    // remplace
     $firstDateString = str_replace('"', '', $dateString);
     $dateString = self::convertTimezone($firstDateString);
     if ($firstDateString != $dateString) {
@@ -1394,7 +1485,15 @@ class import2calendar extends eqLogic
     if (strpos($dateString, "TZID=") !== false) {
       $timezone = substr($dateString, strpos($dateString, "=") + 1, strpos($dateString, ":") - strpos($dateString, "=") - 1);
       $dateString = substr($dateString, strpos($dateString, ":") + 1);
-      $dateTime = new DateTime($dateString, new DateTimeZone($timezone));
+      // La table de convertTimezone() ne couvrira jamais tous les producteurs iCal :
+      // un TZID inconnu ne doit pas interrompre le parse de tout l'agenda.
+      try {
+        $dateTimeZone = new DateTimeZone($timezone);
+      } catch (Exception $e) {
+        log::add(__CLASS__, 'warning', "║ Fuseau horaire inconnu : " . json_encode($timezone) . ". Fuseau horaire de Jeedom utilisé à la place.");
+        $dateTimeZone = new DateTimeZone(config::byKey('timezone'));
+      }
+      $dateTime = new DateTime($dateString, $dateTimeZone);
     } elseif (strpos($dateString, "VALUE=DATE:") !== false) {
       // Pour les dates sans indication de fuseau horaire
       $dateString = substr($dateString, strlen("VALUE=DATE:"));
@@ -1435,8 +1534,11 @@ class import2calendar extends eqLogic
     // Nombre d'occurrences pour la répétition
     $occurrences = intval($event['rrule']['COUNT']);
 
+    // FREQ peut manquer sur une RRULE mal formée : on ne suppose pas sa présence
+    $frequence = isset($event['rrule']['FREQ']) ? $event['rrule']['FREQ'] : '';
+
     // Calculer la date de fin en ajoutant le nombre d'occurrences à la date de début, en fonction de la fréquence de répétition
-    switch ($event['rrule']['FREQ']) {
+    switch ($frequence) {
       case 'DAILY':
         $endDate = clone $startDate;
         $endDate->add(new DateInterval('P' . ($occurrences) . 'D'));
@@ -1458,6 +1560,13 @@ class import2calendar extends eqLogic
         break;
     }
     // log::add(__CLASS__, 'debug', "║ Until count : " . json_encode($endDate));
+    // Une FREQ absente ou non gérée (HOURLY, MINUTELY, SECONDLY) ne permet pas de
+    // calculer une date de fin. On rend null : l'appelant traite ce cas comme une
+    // récurrence sans fin.
+    if ($endDate === null) {
+      log::add(__CLASS__, 'warning', "║ FREQ non gérée pour le calcul de COUNT : " . json_encode($frequence) . ". Récurrence conservée sans date de fin.");
+      return null;
+    }
     return $endDate->format("Y-m-d H:i:s");
   }
 
@@ -1495,7 +1604,9 @@ class import2calendar extends eqLogic
   {
     // Vérifier si les options sont un tableau non vide
     if (is_array($options) && !empty($options)) {
-      // Récupérer les événements existants pour l'ID de calendrier donné
+      // Les événements de l'agenda sont lus une seule fois pour tout le lot : chaque
+      // lecture est un SELECT complet suivi d'une hydratation d'objet par ligne.
+      $inDB = self::calendarGetEventsByEqId($calendarEqId);
 
       foreach ($options as $option) {
 
@@ -1504,13 +1615,14 @@ class import2calendar extends eqLogic
         // Gestion des dates d'exclusion (exdate)
         self::handleExdate($option);
 
-        // Gestion des événements récurrents (recurrenceId)
-        if (!is_null($option['cmd_param']['recurrenceId'])) {
-          self::handleRecurrence($option, $calendarEqId);
+        // Gestion des événements récurrents (recurrenceId). La valeur vaut '' et non
+        // null quand RECURRENCE-ID est absent : un test !is_null() serait toujours vrai.
+        if (!empty($option['cmd_param']['recurrenceId'])) {
+          self::handleRecurrence($option, $inDB);
         }
 
         // Comparaison et détection des duplicatas
-        $existingEventId = self::isDuplicateEvent($option, $calendarEqId);
+        $existingEventId = self::isDuplicateEvent($option, $inDB);
         if ($existingEventId === true) {
           log::add(__CLASS__, 'debug', '║ Aucune modification sur les options de cet évènement.');
           log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
@@ -1525,7 +1637,13 @@ class import2calendar extends eqLogic
         $cleanOption = self::cleanDate($option);
         log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
         // Sauvegarder l'événement s'il n'est pas un duplicata
-        self::calendarSave($cleanOption);
+        $enregistre = self::calendarSave($cleanOption);
+        // L'événement enregistré rejoint la liste en mémoire : sans cela, deux options
+        // portant les mêmes nom et dates créeraient deux événements au lieu d'un,
+        // puisque la seconde ne retrouverait pas la première.
+        if (is_array($enregistre)) {
+          $inDB[] = $enregistre;
+        }
         log::add(__CLASS__, 'debug', '╠════════════ END OPTIONS ');
       }
     }
@@ -1570,11 +1688,10 @@ class import2calendar extends eqLogic
     }
   }
 
-  private static function handleRecurrence($option, $calendarEqId)
+  private static function handleRecurrence($option, &$inDB)
   {
     $uid = $option['cmd_param']['uid'];
     $recurrenceId = $option['cmd_param']['recurrenceId'];
-    $inDB = self::calendarGetEventsByEqId($calendarEqId);
     if (is_array($inDB) && !empty($inDB)) {
       foreach ($inDB as &$existingOption) {
         if (
@@ -1611,9 +1728,8 @@ class import2calendar extends eqLogic
 
 
   // $existingOption = calendar_event::byId($existingOption['id']);
-  private static function isDuplicateEvent(&$option, $calendarEqId)
+  private static function isDuplicateEvent(&$option, $inDB)
   {
-    $inDB = self::calendarGetEventsByEqId($calendarEqId);
     if (is_array($inDB) && !empty($inDB)) {
       foreach ($inDB as $existingOption) {
         if (
@@ -1700,9 +1816,11 @@ class import2calendar extends eqLogic
         $calendar->setObject_id($object);
         $calendar->setIsEnable(1);
         $calendar->setIsVisible(1);
-        $calendar->setLogicalId(__('import2calendar', __FILE__));
+        // Identifiant technique : jamais traduit, il sert de clé de recherche à
+        // calendar::byLogicalId() ci-dessus, qui compare en égalité stricte.
+        $calendar->setLogicalId('import2calendar');
         $calendar->setEqType_name('calendar');
-        $calendar->setName(__($name . '-ical', __FILE__));
+        $calendar->setName($name . '-ical');
         $calendar->setConfiguration('icalId', $eqlogic->getId());
         $calendar->save();
         $calendarEqId = $calendar->getId();
@@ -1724,6 +1842,7 @@ class import2calendar extends eqLogic
       $event = null;
       if (!empty($option['id'])) {
         $event = calendar_event::byId($option['id']);
+        self::compte('lectures événement par id');
         log::add(__CLASS__, 'debug', "║ Evènement :b:" . $option['cmd_param']['eventName'] . ":/b: (" . $option['id'] . ") mis à jour.");
       }
       if (!is_object($event)) {
@@ -1733,6 +1852,10 @@ class import2calendar extends eqLogic
       utils::a2o($event, jeedom::fromHumanReadable($option));
 
       $event->save();
+      self::compte('écritures événement');
+      // L'id est renvoyé à l'appelant : DB::save() le renseigne sur insertion, et
+      // saveDB() en a besoin pour tenir à jour sa liste en mémoire.
+      $option['id'] = $event->getId();
       return $option;
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
@@ -1746,8 +1869,10 @@ class import2calendar extends eqLogic
       log::add("calendar", 'debug', '║ calendar_event::remove ' . $id);
 
       $event = calendar_event::byId($id);
+      self::compte('lectures événement par id');
       if (is_object($event)) {
         $event->remove();
+        self::compte('suppressions événement');
         log::add(__CLASS__, 'debug', "║ Event id : " . $id . ", suppression éffectué.");
       } else {
         log::add(__CLASS__, 'debug', "║ Aucun event ne correspond à l'id : " . $id . ", suppression impossible.");
@@ -1763,6 +1888,8 @@ class import2calendar extends eqLogic
     $result = [];
     if (self::testPlugin()) {
       $getAllEvents = calendar_event::getEventsByEqLogic($calendarEqId);
+      self::compte('lectures agenda (SELECT complet)');
+      self::compte('événements hydratés', count($getAllEvents));
 
       if (count($getAllEvents) <= 0) {
         log::add(__CLASS__, 'debug', "║ Aucun calendrier correspondant à : " . $calendarEqId);
@@ -1818,20 +1945,53 @@ class import2calendar extends eqLogic
 
     return $result;
   }
+  /**
+   * Déséchappe une valeur de texte iCal et la convertit en entités HTML.
+   *
+   * Les séquences traitées sont celles de la RFC 5545 (`\n`, `\N`, `\,`, `\;`, `\\`),
+   * plus les `\uXXXX` que certains producteurs émettent. Le déséchappement se fait en
+   * une seule passe : enchaîner des str_replace retraiterait l'antislash produit par la
+   * passe précédente. Une séquence non reconnue est conservée telle quelle plutôt que
+   * perdue.
+   *
+   * @param string $string Valeur brute d'un SUMMARY, DESCRIPTION ou LOCATION
+   * @return array Tableau à une clé, 'htmlFormat', prête à être stockée
+   */
   private static function emojiClean($string)
   {
-    // Convertir les séquences d'échappement Unicode en caractères UTF-8
-    $string_utf8 = json_decode('"' . $string . '"');
+    $string = preg_replace_callback(
+      '/\\\\([uU][0-9a-fA-F]{4}|.)/s',
+      function ($matches) {
+        $sequence = $matches[1];
+        if (strlen($sequence) === 5) {
+          $caractere = json_decode('"\u' . substr($sequence, 1) . '"');
+          return is_string($caractere) ? $caractere : $matches[0];
+        }
+        switch ($sequence) {
+          case 'n':
+          case 'N':
+            return "\n";
+          case '\\':
+          case ',':
+          case ';':
+            return $sequence;
+          default:
+            return $matches[0];
+        }
+      },
+      $string
+    );
 
-    // Convertir en format HTML
-    $result['htmlFormat'] = mb_convert_encoding($string_utf8, 'HTML-ENTITIES', 'UTF-8');
+    // mb_convert_encoding($s, 'HTML-ENTITIES') est déprécié depuis PHP 8.2.
+    // mb_encode_numericentity rend des entités numériques, que html_entity_decode
+    // reconnaît comme les entités nommées, et laisse l'ASCII intact.
+    $result = [];
+    $result['htmlFormat'] = mb_encode_numericentity($string, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8');
 
     return $result;
   }
-  private static function getColors($eqlogicId, $name)
+  private static function getColors($eqlogic, $name)
   {
-    $eqlogic = eqLogic::byId($eqlogicId);
-
     // Définir des couleurs par défaut si aucune couleur n'est trouvée dans la configuration
     $defaultBackground = '#581845';
     $defaultText = '#FFFFFF';
@@ -1863,10 +2023,8 @@ class import2calendar extends eqLogic
     return $result;
   }
 
-  private static function getActionCmd($eqlogicId, $name, $type)
+  private static function getActionCmd($eqlogic, $name, $type)
   {
-    // Récupérer l'objet eqLogic et les actions
-    $eqlogic = eqLogic::byId($eqlogicId);
     $actions = $eqlogic->getConfiguration($type)[0];
 
     $allNames = [];
@@ -1920,11 +2078,8 @@ class import2calendar extends eqLogic
   }
 
 
-  private static function changeDate($eqlogicId, $name, $date, $type)
+  private static function changeDate($eqlogic, $name, $date, $type)
   {
-    // Récupérer l'objet eqLogic
-    $eqlogic = eqLogic::byId($eqlogicId);
-
     // Récupérer les configurations de couleurs
     $colors = $eqlogic->getConfiguration('colors');
     $nameLower = strtolower($name); // Mettre le nom en minuscule une fois pour éviter des appels répétés
@@ -1936,17 +2091,22 @@ class import2calendar extends eqLogic
         if (
           $colorName !== '' && strpos($nameLower, $colorName) !== false
         ) {
-          // Vérifier le type d'événement et ajuster la date
-          if (
-            $type === "startEvent" && !empty($color['startEvent'])
-          ) {
-            // On modifie la date pour startEvent
-            $date = date("Y-m-d H:i:s", strtotime($date) - ($color['startEvent'] * 3600));
-          } elseif (
-            $type === "endEvent" && !empty($color['endEvent'])
-          ) {
-            // On modifie la date pour endEvent
-            $date = date("Y-m-d H:i:s", strtotime($date) + ($color['endEvent'] * 3600));
+          // Un réglage enregistré en heures (startEvent / endEvent) n'a pas de clé en minutes :
+          // il est converti ici, jusqu'à ce que la sauvegarde de l'équipement réécrive colors
+          $minutesKey = $type . 'Minutes';
+          if (array_key_exists($minutesKey, $color)) {
+            $minutes = (int) $color[$minutesKey];
+          } else {
+            $minutes = (int) ($color[$type] ?? 0) * 60;
+          }
+          $minutes = max(0, min(360, $minutes));
+          if ($minutes === 0) {
+            return $date;
+          }
+          if ($type === "startEvent") {
+            $date = date("Y-m-d H:i:s", strtotime($date) - ($minutes * 60));
+          } elseif ($type === "endEvent") {
+            $date = date("Y-m-d H:i:s", strtotime($date) + ($minutes * 60));
           }
           return $date;
         }
@@ -1955,8 +2115,33 @@ class import2calendar extends eqLogic
     return $date;
   }
 
-  private static function convertTimezone($timezone)
+  /**
+   * Remplace le fuseau horaire annoncé par un TZID par son équivalent IANA.
+   *
+   * La table couvre les noms de fuseaux Windows, qu'Outlook et Exchange émettent à la
+   * place des identifiants IANA. La recherche se fait par égalité exacte, sur le seul
+   * segment compris entre 'TZID=' et le ':' qui le suit.
+   *
+   * @param string $dateString Valeur brute d'un DTSTART/DTEND, avec ou sans TZID
+   * @return string La même valeur, TZID converti s'il est connu de la table, inchangée
+   *                sinon. Un TZID absent de la table est laissé tel quel : c'est le
+   *                cas normal des identifiants IANA, que DateTimeZone accepte
+   *                directement, et formatDate() se charge des noms réellement inconnus
+   */
+  private static function convertTimezone($dateString)
   {
+    $positionTzid = strpos($dateString, 'TZID=');
+    if ($positionTzid === false) {
+      return $dateString;
+    }
+    $debutFuseau = $positionTzid + strlen('TZID=');
+    // Le ':' recherché est celui qui suit le TZID, pas le premier de la chaîne
+    $finFuseau = strpos($dateString, ':', $debutFuseau);
+    if ($finFuseau === false) {
+      return $dateString;
+    }
+    $timezone = substr($dateString, $debutFuseau, $finFuseau - $debutFuseau);
+
     $timezones = array(
       'Afghanistan Standard Time' => 'Asia/Kabul',
       'Alaskan Standard Time' => 'America/Anchorage',
@@ -1966,11 +2151,16 @@ class import2calendar extends eqLogic
       'Arabian Standard Time' => 'Asia/Dubai',
       'Argentina Standard Time' => 'America/Buenos_Aires',
       'Atlantic Standard Time' => 'America/Halifax',
-      'Australia/Darwin' => 'AUS Central Standard Time',
-      'Australia/Brisbane' => 'E. Australia Standard Time',
-      'Australia/Hobart' => 'Tasmania Standard Time',
-      'Australia/Perth' => 'W. Australia Standard Time',
-      'Australia/Sydney' => 'AUS Eastern Standard Time',
+      'AUS Central Standard Time' => 'Australia/Darwin',
+      'AUS Eastern Standard Time' => 'Australia/Sydney',
+      'W. Australia Standard Time' => 'Australia/Perth',
+      'N. Central Asia Standard Time' => 'Asia/Novosibirsk',
+      'SA Eastern Standard Time' => 'America/Cayenne',
+      'SA Pacific Standard Time' => 'America/Bogota',
+      'Central Standard Time (Mexico)' => 'America/Mexico_City',
+      'Eastern Standard Time (Mexico)' => 'America/Cancun',
+      'Pacific Standard Time (Mexico)' => 'America/Tijuana',
+      'West Pacific Standard Time' => 'Pacific/Port_Moresby',
       'Azerbaijan Standard Time' => 'Asia/Baku',
       'Azores Standard Time' => 'Atlantic/Azores',
       'Bahia Standard Time' => 'America/Bahia',
@@ -1986,7 +2176,6 @@ class import2calendar extends eqLogic
       'Central Europe Standard Time' => 'Europe/Budapest',
       'Central Pacific Standard Time' => 'Pacific/Guadalcanal',
       'Central Standard Time' => 'America/Chicago',
-      'Central Standard Time (Mexico)' => 'America/Mexico_City',
       'China Standard Time' => 'Asia/Shanghai',
       'Cuba Standard Time' => 'America/Havana',
       'Customized Time Zone' => 'Europe/Paris',
@@ -1996,7 +2185,6 @@ class import2calendar extends eqLogic
       'E. Europe Standard Time' => 'Europe/Chisinau',
       'E. South America Standard Time' => 'America/Sao_Paulo',
       'Eastern Standard Time' => 'America/New_York',
-      'Eastern Standard Time (Mexico)' => 'America/Cancun',
       'Easter Island Standard Time' => 'Pacific/Easter',
       'Ekaterinburg Standard Time' => 'Asia/Yekaterinburg',
       'Egypt Standard Time' => 'Africa/Cairo',
@@ -2024,7 +2212,6 @@ class import2calendar extends eqLogic
       'Montevideo Standard Time' => 'America/Montevideo',
       'Morocco Standard Time' => 'Africa/Casablanca',
       'Myanmar Standard Time' => 'Asia/Rangoon',
-      'N. Central Asia Standard Time' => 'Asia/Novosibirsk',
       'Namibia Standard Time' => 'Africa/Windhoek',
       'Nepal Standard Time' => 'Asia/Katmandu',
       'New Zealand Standard Time' => 'Pacific/Auckland',
@@ -2033,13 +2220,10 @@ class import2calendar extends eqLogic
       'North Asia Standard Time' => 'Asia/Krasnoyarsk',
       'Pacific SA Standard Time' => 'America/Santiago',
       'Pacific Standard Time' => 'America/Los_Angeles',
-      'Pacific Standard Time (Mexico)' => 'America/Tijuana',
       'Pakistan Standard Time' => 'Asia/Karachi',
       'Paraguay Standard Time' => 'America/Asuncion',
       'Romance Standard Time' => 'Europe/Paris',
       'Russian Standard Time' => 'Europe/Moscow',
-      'SA Eastern Standard Time' => 'America/Cayenne',
-      'SA Pacific Standard Time' => 'America/Bogota',
       'SA Western Standard Time' => 'America/La_Paz',
       'Saint Pierre Standard Time' => 'America/Miquelon',
       'Samoa Standard Time' => 'Pacific/Apia',
@@ -2054,7 +2238,7 @@ class import2calendar extends eqLogic
       'Tokyo Standard Time' => 'Asia/Tokyo',
       'Turkey Standard Time' => 'Europe/Istanbul',
       'Turks And Caicos Standard Time' => 'America/Grand_Turk',
-      'UTC-12' => 'Etc/GMT-12', // Ligne de changement de date
+      'UTC-12' => 'Etc/GMT+12', // Ligne de changement de date
       'UTC-11' => 'Pacific/Midway', // Samoa, Niue
       'UTC-10' => 'Pacific/Honolulu', // Hawaï
       'UTC-09' => 'America/Anchorage', // Alaska
@@ -2088,13 +2272,12 @@ class import2calendar extends eqLogic
       'W. Europe Standard Time' => 'Europe/Berlin',
       'West Asia Standard Time' => 'Asia/Tashkent',
       'West Bank Standard Time' => 'Asia/Hebron',
-      'West Pacific Standard Time' => 'Pacific/Port_Moresby',
       'Yakutsk Standard Time' => 'Asia/Yakutsk'
     );
-    foreach ($timezones as $key => $value) {
-      $timezone = str_replace($key, $value, $timezone);
+    if (!isset($timezones[$timezone])) {
+      return $dateString;
     }
-    return $timezone;
+    return substr($dateString, 0, $debutFuseau) . $timezones[$timezone] . substr($dateString, $finFuseau);
   }
 
   public static function createEqI2C($options)
@@ -2118,9 +2301,11 @@ class import2calendar extends eqLogic
     // s'il n'exista pas, on le créé
     if (!$eqExist) {
       $import2calendar = new import2calendar();
-      $import2calendar->setName(__($name, __FILE__));
+      $import2calendar->setName($name);
       $import2calendar->setObject_id($object);
-      $import2calendar->setLogicalId(__('ical', __FILE__));
+      // Identifiant technique : jamais traduit, il sert de clé de recherche à
+      // import2calendar::byLogicalId() ci-dessus, qui compare en égalité stricte.
+      $import2calendar->setLogicalId('ical');
       $import2calendar->setEqType_name('import2calendar');
       $import2calendar->setIsVisible(1);
       log::add(__CLASS__, 'debug', "║ Equipement agenda créé");
