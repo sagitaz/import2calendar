@@ -31,8 +31,8 @@ Ici vous pouvez choisir de personnaliser certains évènements de votre ical.
 - Couleur du fond et couleur du texte.
 
 Ici par défaut, rien n'est modifié, ces options permettent de modifier l'heure de début et de fin pour par exemple, anticiper les actions programmées.
-- Heure de début : l'évènement verra son heure de début commencer X h avant.
-- Heure de fin : l'évènement verra son heure de fin finir X h après.
+- Début : l'évènement commencera X minutes avant son heure de début (de 0 à 360).
+- Fin : l'évènement finira X minutes après son heure de fin (de 0 à 360).
 
 ### Actions de début et de fin
 Pour tous les évènements de votre calendrier seront ajoutées les actions définies ici.
