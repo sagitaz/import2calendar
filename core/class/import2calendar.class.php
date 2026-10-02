@@ -140,12 +140,18 @@ class import2calendar extends eqLogic
 
   /**
    * Fonction exécutée automatiquement tous les jours par Jeedom
-   * Met à jour les commandes d'agenda pour afficher les événements du jour et du lendemain
+   * Met à jour les commandes d'agenda pour afficher les événements du jour et du lendemain.
+   * Le 1er du mois, demande en plus le retraitement de tous les agendas : les dates
+   * explicites calculées sur un an glissant s'épuiseraient sinon pour une source qui ne
+   * change jamais.
    *
    * @return void
    */
   public static function cronDaily()
   {
+    if ((int) date('j') === 1) {
+      self::demanderRetraitement('Retraitement mensuel');
+    }
     self::majCmds();
   }
 
@@ -163,6 +169,35 @@ class import2calendar extends eqLogic
       self::majCmdsAgenda($calendar);
     }
     return true;
+  }
+
+  /**
+   * Supprime les fichiers iCal locaux, pour que chaque agenda soit retraité au passage
+   * suivant de son cron même si sa source n'a pas changé.
+   *
+   * Rien n'est téléchargé ici : plugin::cronDaily enchaîne les cronDaily de tous les
+   * plugins dans un même processus, et le cron de chaque équipement fait ce travail à son
+   * heure. Un équipement sans cron n'est retraité qu'à sa prochaine sauvegarde.
+   *
+   * @param string $motif Motif écrit en tête de la ligne de log
+   * @return void
+   */
+  public static function demanderRetraitement($motif)
+  {
+    $fichiers = glob(dirname(__FILE__, 3) . '/data/calendar/*.ics');
+    if ($fichiers === false) {
+      log::add(__CLASS__, 'error', $motif . ' : impossible de lister les fichiers iCal locaux');
+      return;
+    }
+    $supprimes = 0;
+    foreach ($fichiers as $fichier) {
+      if (unlink($fichier)) {
+        $supprimes++;
+      } else {
+        log::add(__CLASS__, 'warning', $motif . ' : impossible de supprimer ' . $fichier);
+      }
+    }
+    log::add(__CLASS__, 'info', $motif . ' : ' . $supprimes . ' fichier(s) iCal local(aux) supprimé(s), chaque agenda sera retraité au passage suivant de son cron');
   }
 
   /**
@@ -835,8 +870,14 @@ class import2calendar extends eqLogic
           return null;
         }
 
-        $etat = ($newHash === $existingHash) ? 'inchangé, traitement forcé' : 'modifié';
-        log::add(__CLASS__, 'info', "║ Fichier iCal téléchargé en $duration s (hash $etat : $newHash)");
+        if ($existingHash === null) {
+          $etat = 'aucun iCal local, hash';
+        } elseif ($newHash === $existingHash) {
+          $etat = 'hash inchangé, traitement forcé';
+        } else {
+          $etat = 'hash modifié';
+        }
+        log::add(__CLASS__, 'info', "║ Fichier iCal téléchargé en $duration s ($etat : $newHash)");
         return $tmpFile;
       }
 
