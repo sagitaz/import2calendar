@@ -1263,7 +1263,14 @@ class import2calendar extends eqLogic
       $dayOfWeek = strtolower(date('l', strtotime($startDate)));
       // Convertir l'unité de répètition et la fréquence de répètition
       $icalUnit = $rrule['FREQ'];
-      $frequence = $rrule['INTERVAL'] ?? 1;
+      // INTERVAL est un entier positif (RFC 5545). Une valeur nulle, vide ou non numérique
+      // ferait boucler sans fin le calcul des périodes exclues ci-dessous, et le plugin
+      // Agenda refuse d'enregistrer une fréquence nulle : elle est ramenée à 1.
+      $frequence = (int) ($rrule['INTERVAL'] ?? 1);
+      if ($frequence < 1) {
+        log::add(__CLASS__, 'warning', "║ INTERVAL invalide dans la RRULE : " . json_encode($rrule['INTERVAL']) . ", 1 retenu.");
+        $frequence = 1;
+      }
       $nationalDay = "all";
       $includeDate = "";
       $excludeDate = "";
