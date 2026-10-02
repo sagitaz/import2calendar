@@ -717,7 +717,10 @@ class import2calendar extends eqLogic
     if ($this->getIsEnable() == 0) {
       return;
     }
-    $calendarEqId = self::parseIcal($this->getId());
+    // Sauvegarde de l'équipement, ou commande Rafraichir qui le sauvegarde : l'agenda est
+    // retraité même si l'iCal n'a pas changé, pour appliquer aussitôt couleurs, actions et
+    // décalages.
+    $calendarEqId = self::parseIcal($this->getId(), true);
     //si parseicalr retourne null on quitte la fonction
     if ($calendarEqId == null) {
       return;
@@ -771,7 +774,23 @@ class import2calendar extends eqLogic
   */
 
   /*     * **********************Getteur Setteur*************************** */
-  private static function downloadIcal($url, $destinationPath, $timeout = 30, $retries = 3, $delay = 1)
+  /**
+   * Télécharge l'iCal dans un fichier temporaire, à côté du fichier local.
+   *
+   * Le fichier local n'est pas remplacé ici : parseIcal() ne le fait qu'une fois le
+   * traitement réussi, pour qu'un échec laisse l'agenda à retraiter au passage suivant.
+   *
+   * @param string $url Adresse de l'iCal
+   * @param string $destinationPath Fichier local du dernier iCal traité
+   * @param bool $force Rendre le fichier même si son contenu n'a pas changé
+   * @param int $timeout Durée maximale d'une tentative, en secondes
+   * @param int $retries Nombre de tentatives
+   * @param int $delay Attente entre deux tentatives, en secondes
+   * @return string|false|null Chemin du fichier téléchargé, false si le téléchargement
+   *                           échoue, null si le contenu n'a pas changé et que rien ne force
+   *                           le traitement
+   */
+  private static function downloadIcal($url, $destinationPath, $force = false, $timeout = 30, $retries = 3, $delay = 1)
   {
     $tmpFile = $destinationPath . '.new';
 
@@ -810,15 +829,15 @@ class import2calendar extends eqLogic
         $existingHash = file_exists($destinationPath) ? self::getCleanIcalHash($destinationPath) : null;
         log::add(__CLASS__, 'debug', "║ Fichier iCal existant (hash filtré : $existingHash)");
 
-        if ($newHash === $existingHash) {
+        if ($newHash === $existingHash && !$force) {
           unlink($tmpFile);
           log::add(__CLASS__, 'info', "║ Hash du fichier iCal inchangé, téléchargement ignoré.");
           return null;
         }
 
-        rename($tmpFile, $destinationPath);
-        log::add(__CLASS__, 'info', "║ Fichier iCal mis à jour en $duration s (hash modifié : $newHash)");
-        return true;
+        $etat = ($newHash === $existingHash) ? 'inchangé, traitement forcé' : 'modifié';
+        log::add(__CLASS__, 'info', "║ Fichier iCal téléchargé en $duration s (hash $etat : $newHash)");
+        return $tmpFile;
       }
 
       log::add(__CLASS__, 'warning', sprintf(
@@ -861,7 +880,18 @@ class import2calendar extends eqLogic
     return sha1(implode("\n", $filtered));
   }
 
-  public static function parseIcal($eqlogicId)
+  /**
+   * Télécharge l'iCal d'un équipement et reporte ses évènements dans l'agenda associé.
+   *
+   * Sans forçage, rien n'est fait si l'iCal n'a pas changé depuis le dernier traitement
+   * réussi : c'est le cas du cron. Le fichier local n'est remplacé qu'à la fin d'un
+   * traitement réussi.
+   *
+   * @param int $eqlogicId Identifiant de l'équipement import2calendar
+   * @param bool $force Traiter l'iCal même s'il n'a pas changé
+   * @return int|null Identifiant de l'agenda, null si rien n'a été traité
+   */
+  public static function parseIcal($eqlogicId, $force = false)
   {
     log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
     self::$compteurs = [];
@@ -892,32 +922,27 @@ class import2calendar extends eqLogic
     }
     // $icalData = self::getIcalDataWithCurl($file);
     $localFile = $folder . $eqlogic->getId() . '.ics';
-    $icalChanged = self::downloadIcal($file, $localFile);
+    $fichierTelecharge = self::downloadIcal($file, $localFile, $force);
 
-    if ($icalChanged === false) {
+    if ($fichierTelecharge === false) {
       log::add(__CLASS__, 'error', '║ Impossible de télécharger le fichier iCal => ' . $file);
       log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
       return null;
     }
 
-    if ($icalChanged === null) {
+    if ($fichierTelecharge === null) {
       log::add(__CLASS__, 'info', '║ Le fichier iCal n’a pas changé, pas besoin de le parser.');
       log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
       return null;
     }
 
-    if ($icalChanged === true) {
-      $icalData = file_get_contents($localFile); // Le fichier a été mis à jour, on le lit maintenant en local
-
-      if ($icalData === false) {
-        log::add(__CLASS__, 'error', '║ Impossible de lire le fichier ical local => ' . $localFile);
-        log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
-        return null;
-      }
-
-      // Parser le fichier uniquement si on a un nouveau contenu
-      $events = self::parse_icalendar_file($icalData);
+    $icalData = file_get_contents($fichierTelecharge);
+    if ($icalData === false) {
+      log::add(__CLASS__, 'error', '║ Impossible de lire le fichier iCal téléchargé => ' . $fichierTelecharge);
+      log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
+      return null;
     }
+    $events = self::parse_icalendar_file($icalData);
 
     log::add(__CLASS__, 'debug', '║ EVENTS = ' . json_encode($events));
     $n = 1;
@@ -1071,6 +1096,13 @@ class import2calendar extends eqLogic
     $calendarEqlogic = eqLogic::byId($calendarEqId);
     self::compte('lectures équipement (eqLogic::byId)');
     $calendarEqlogic->refreshWidget();
+
+    // Le fichier local n'est remplacé qu'ici : après un échec, l'empreinte du fichier suivant
+    // diffère de celle de l'ancien, et l'agenda est retraité au prochain passage du cron au
+    // lieu de rester figé jusqu'au prochain changement de la source.
+    if (!rename($fichierTelecharge, $localFile)) {
+      log::add(__CLASS__, 'error', '║ Impossible de remplacer le fichier iCal local => ' . $localFile);
+    }
 
     self::journaliseCompteurs(
       __CLASS__,
