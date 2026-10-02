@@ -1342,17 +1342,19 @@ class import2calendar extends eqLogic
       elseif ($icalUnit === 'YEARLY') $unit = 'years';
       elseif ($icalUnit === 'WEEKLY') {
         $unit = 'days';
-        // si frequence est 1 alors on laisse 1, si frequence est 2 alors on met 1 et on exclue le type de semaine pair ou impair, si 3 alors on multiplis par 7 jours.
-        if ($frequence == 2) {
-          // Déterminer si la semaine est paire ou impaire
-          $weekNumber = date('W', strtotime($startDate));
-          $nationalDay = ($weekNumber % 2 == 0) ? "onlyEven" : "onlyOdd";
-          $frequence = 1;
-        } elseif ($frequence > 2) {
+        if ($frequence >= 2) {
+          // Pas de parité de semaine (onlyEven / onlyOdd) : elle se décale à chaque année
+          // de 53 semaines ISO. Sur le seul jour de DTSTART, la récurrence devient une
+          // répétition tous les 7 × INTERVAL jours, exacte et sans limite ; sur d'autres
+          // jours, une liste de dates explicites.
           $frequence = $frequence * 7;
-          // lister les jours sur 6 mois
-          $includeDate = self::occurrenceMultipleWeek($rrule, $startDate);
-          $enable = 0;
+          $joursRrule = isset($rrule['BYDAY']) ? strtoupper(trim($rrule['BYDAY'])) : '';
+          if ($joursRrule === '' || $joursRrule === strtoupper(substr($dayOfWeek, 0, 2))) {
+            $byDay = 1;
+          } else {
+            $includeDate = self::occurrenceMultipleWeek($rrule, $startDate);
+            $enable = 0;
+          }
         } else {
           $frequence = 1;
           $byDay = isset($rrule['BYDAY']) ? 0 : 1;
