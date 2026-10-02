@@ -1633,6 +1633,10 @@ class import2calendar extends eqLogic
           self::handleRecurrence($option, $inDB);
         }
 
+        // Les dates incluses sont enregistrées nettoyées : le nettoyage précède donc la
+        // comparaison, sans quoi elle verrait une différence à chaque passage.
+        $option = self::cleanDate($option);
+
         // Comparaison et détection des duplicatas
         $existingEventId = self::isDuplicateEvent($option, $inDB);
         if ($existingEventId === true) {
@@ -1645,11 +1649,9 @@ class import2calendar extends eqLogic
         }
 
         // log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
-        // Comparer les dates inclus et exclus
-        $cleanOption = self::cleanDate($option);
-        log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($cleanOption));
+        log::add(__CLASS__, 'debug', '║ OPTIONS ══ ' . json_encode($option));
         // Sauvegarder l'événement s'il n'est pas un duplicata
-        $enregistre = self::calendarSave($cleanOption);
+        $enregistre = self::calendarSave($option);
         // L'événement enregistré rejoint la liste en mémoire : sans cela, deux options
         // portant les mêmes nom et dates créeraient deux événements au lieu d'un,
         // puisque la seconde ne retrouverait pas la première.
@@ -1778,8 +1780,15 @@ class import2calendar extends eqLogic
       }
     }
 
-    // Liste des paramètres à vérifier pour détecter les changements dans repeat
-    $paramsToCheck = ['day', 'excludeDay'];
+    // Liste des paramètres à vérifier pour détecter les changements dans repeat. La
+    // fréquence n'est comparée que pour une répétition active : sinon, le plugin Agenda
+    // l'enregistre à 0 (calendar_event::preSave()) et la comparaison verrait une différence
+    // à chaque passage. Les dates exclues ne sont pas comparées : la base y ajoute les
+    // RECURRENCE-ID (handleRecurrence()), et EXDATE l'est déjà par cmd_param.
+    $paramsToCheck = ['day', 'excludeDay', 'enable', 'mode', 'positionAt', 'unite', 'nationalDay', 'includeDate'];
+    if (($option['repeat']['enable'] ?? 0) == 1) {
+      $paramsToCheck[] = 'freq';
+    }
     foreach ($paramsToCheck as $param) {
       // Comparer les valeurs des paramètres si elles existent
       $optionValue = $option['repeat'][$param] ?? null;
