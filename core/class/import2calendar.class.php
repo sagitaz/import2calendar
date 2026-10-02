@@ -1421,55 +1421,67 @@ class import2calendar extends eqLogic
     return $repeat;
   }
 
-  // fonctions pour les occurence de plus de 2 semaines
+  /**
+   * Liste les occurrences d'une récurrence hebdomadaire espacée de plusieurs semaines.
+   *
+   * Les semaines se comptent à partir de celle qui contient DTSTART, commencée le jour
+   * donné par WKST (lundi par défaut, comme le prévoit la RFC 5545). Sans BYDAY, le jour
+   * retenu est celui de DTSTART. Un code précédé d'une position (« 1MO ») est ramené à son
+   * jour, un code inconnu est ignoré. DTSTART n'est pas listé : c'est l'évènement lui-même.
+   *
+   * @param array $rrule Paramètres de la RRULE (INTERVAL, BYDAY, WKST, UNTIL)
+   * @param string $startDate Date de début de l'évènement
+   * @return string Dates au format Y-m-d, triées et séparées par des virgules, jusqu'à
+   *                UNTIL ou, à défaut, un an après aujourd'hui
+   */
   private static function occurrenceMultipleWeek($rrule, $startDate)
   {
+    $codesJours = ['MO' => 1, 'TU' => 2, 'WE' => 3, 'TH' => 4, 'FR' => 5, 'SA' => 6, 'SU' => 7];
 
-    // Dates de début et de fin sur un an
-    $startDate = new DateTime($startDate);
+    $debut = new DateTime($startDate);
+    $debut->setTime(0, 0);
     if (!empty($rrule['UNTIL'])) {
       $endDate = new DateTime($rrule['UNTIL']);
     } else {
       $endDate = (new DateTime('now'))->modify('+1 year');
     }
+    $intervalWeeks = max(1, (int) ($rrule['INTERVAL'] ?? 1));
 
-    // Configuration de l'intervalle et des jours de la semaine
-    $intervalWeeks = (int)$rrule['INTERVAL'];
-    $daysOfWeek = explode(',', $rrule['BYDAY']);
-    $dayMap = [
-      "MO" => "Monday",
-      "TU" => "Tuesday",
-      "WE" => "Wednesday",
-      "TH" => "Thursday",
-      "FR" => "Friday",
-      "SA" => "Saturday",
-      "SU" => "Sunday"
-    ];
+    $jourDebut = (int) $debut->format('N');
+    $premierJourSemaine = $codesJours[strtoupper(trim($rrule['WKST'] ?? ''))] ?? 1;
 
-    // Fonction pour générer les occurrences
+    $jours = [];
+    $codes = isset($rrule['BYDAY']) ? explode(',', $rrule['BYDAY']) : [];
+    foreach ($codes as $code) {
+      $code = strtoupper(preg_replace('/^[+-]?\d+/', '', trim($code)));
+      if (isset($codesJours[$code])) {
+        $jours[] = $codesJours[$code];
+      }
+    }
+    if (empty($jours)) {
+      $jours = [$jourDebut];
+    }
+    $jours = array_unique($jours);
+
+    // Partir de DTSTART lui-même décalerait d'une semaine tout jour de BYDAY qui le
+    // précède dans sa semaine : le calcul part donc du premier jour de cette semaine.
+    $semaine = clone $debut;
+    $semaine->modify('-' . (($jourDebut - $premierJourSemaine + 7) % 7) . ' days');
+
     $occurrenceDates = [];
-    $currentDate = clone $startDate;
-
-    // S'assurer que la partie heure est à 00:00:00 pour éviter les erreurs
-    $currentDate->setTime(0, 0);
-
-    while ($currentDate <= $endDate) {
-      foreach ($daysOfWeek as $dayCode) {
-        $occurrence = (clone $currentDate)->modify($dayMap[$dayCode]);
-        if ($occurrence >= $currentDate && $occurrence <= $endDate) {
+    while ($semaine <= $endDate) {
+      foreach ($jours as $jour) {
+        $occurrence = clone $semaine;
+        $occurrence->modify('+' . (($jour - $premierJourSemaine + 7) % 7) . ' days');
+        if ($occurrence > $debut && $occurrence <= $endDate) {
           $occurrenceDates[] = $occurrence->format('Y-m-d');
         }
       }
-      // Passer à la prochaine série de jours dans 7 semaines
-      $currentDate->modify("+$intervalWeeks week");
+      $semaine->modify('+' . $intervalWeeks . ' weeks');
     }
-    // Supprimer le premier jour de la liste des occurrences
-    array_shift($occurrenceDates);
-    // Trier les dates et les convertir en une chaîne de caractères
     sort($occurrenceDates);
-    $dates = implode(',', $occurrenceDates);
-    // Affichage des résultats
-    return $dates;
+
+    return implode(',', $occurrenceDates);
   }
   private static function formatDate($dateString, $format = 'Y-m-d H:i:s', $end = 0, $dtEqual = 0)
   {
