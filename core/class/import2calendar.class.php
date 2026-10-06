@@ -157,6 +157,11 @@ class import2calendar extends eqLogic
 
   public static function majCmds()
   {
+    // Le core ne charge pas la classe calendar d'un plugin Agenda inactif
+    if (!self::testPlugin()) {
+      log::add(__CLASS__, 'error', "Le plugin agenda n'est pas installé ou activé : commandes des jours suivants non mises à jour.");
+      return false;
+    }
     if (!config::byKey('nextEvents', 'import2calendar', 0)) {
       // On récupère tous les calendriers créés par le plugin
       $allCalendar = calendar::byLogicalId('import2calendar', 'calendar', true);
@@ -879,7 +884,9 @@ class import2calendar extends eqLogic
       return;
     }
     $calendar = calendar::byId($calendarEqId);
-    self::majCmdsAgenda($calendar);
+    if (is_object($calendar)) {
+      self::majCmdsAgenda($calendar);
+    }
   }
 
   // Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
@@ -1058,8 +1065,18 @@ class import2calendar extends eqLogic
     $events = [];
     $eqlogic = eqLogic::byId($eqlogicId);
     self::compte('lectures équipement (eqLogic::byId)');
-    // création du calendrier si inexistant
+    if (!is_object($eqlogic)) {
+      log::add(__CLASS__, 'error', '║ Équipement introuvable : ' . $eqlogicId);
+      log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
+      return null;
+    }
+    // création du calendrier si inexistant ; null si le plugin Agenda est absent ou
+    // inactif, auquel cas rien n'est téléchargé et le fichier local reste en place
     $calendarEqId = self::calendarCreate($eqlogic);
+    if ($calendarEqId === null) {
+      log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
+      return null;
+    }
     // récupèration des valeurs communes à tous les évènement
     $icon = $eqlogic->getConfiguration('icon');
     $startTime = $eqlogic->getConfiguration('startTime');
@@ -1254,7 +1271,9 @@ class import2calendar extends eqLogic
     self::cleanDB($calendarEqId, $options);
     $calendarEqlogic = eqLogic::byId($calendarEqId);
     self::compte('lectures équipement (eqLogic::byId)');
-    $calendarEqlogic->refreshWidget();
+    if (is_object($calendarEqlogic)) {
+      $calendarEqlogic->refreshWidget();
+    }
 
     // Le fichier local n'est remplacé qu'ici : après un échec, l'empreinte du fichier suivant
     // diffère de celle de l'ancien, et l'agenda est retraité au prochain passage du cron au
@@ -2053,6 +2072,7 @@ class import2calendar extends eqLogic
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
       log::add(__CLASS__, 'error', "║ Le plugin agenda n'est pas installé ou activé.");
+      return null;
     }
   }
 
@@ -2124,17 +2144,27 @@ class import2calendar extends eqLogic
     } else {
       message::add(__CLASS__, __("Le plugin agenda n'est pas installé ou activé.", __FILE__), null, null);
       log::add(__CLASS__, 'error', "║ Le plugin agenda n'est pas installé ou activé.");
+      return $result;
     }
   }
 
+  /**
+   * Indique si le plugin Agenda est installé et actif.
+   *
+   * plugin::byId() lève une exception quand le plugin n'est pas installé du tout, et le
+   * core ne charge pas les classes d'un plugin inactif : calendar et calendar_event ne
+   * doivent être appelées qu'après ce contrôle.
+   *
+   * @return bool
+   */
   private static function testPlugin()
   {
-    $result = FALSE;
-    $test = plugin::byId('calendar');
-    if ($test->isActive()) {
-      $result = TRUE;
+    try {
+      $plugin = plugin::byId('calendar');
+    } catch (Exception $e) {
+      return false;
     }
-    return $result;
+    return (bool) $plugin->isActive();
   }
 
   private static function translateName($name)
