@@ -9,7 +9,7 @@
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
         "Afficher": "Mostrar",
-        "Aucune": "Alguna",
+        "Aucune": "Ninguna",
         "Choisir une icône": "Elija el icono",
         "Cocher la case pour que la commande s\\'exécute en parallèle des autres actions": "Marque la casilla para que el comando se ejecute en paralelo con las demás acciones",
         "Commande info liée": "Comando de información relacionado",
@@ -76,7 +76,7 @@
         "Personnalisation des évènements": "Personalización de eventos",
         "Posez vos questions dans le salon dédié, support officiel": "Haga sus preguntas en la sala dedicada, soporte oficial",
         "Rechercher": "Buscar",
-        "Sauvegarder": "Para salvaguardar",
+        "Sauvegarder": "Guardar",
         "Supprimer": "Eliminar",
         "Texte": "Texto",
         "Vacances scolaires FR Guadeloupe": "Vacaciones escolares FR Guadalupe",
@@ -100,7 +100,7 @@
         "Nombre de jours passé de retention": "Número de días de retención",
         "Version Plugin": "Versión Plugin",
         "Version du Plugin (A indiquer sur Community)": "Versión del plugin (Se indicará en la Comunidad)",
-        "commande jours suivants": "pedido para los próximos días"
+        "commande jours suivants": "comandos de los días siguientes"
     },
     "plugins\/import2calendar\/plugin_info\/install.php": {
         "Identifiants techniques corrigés sur": "Datos técnicos corregidos en",
