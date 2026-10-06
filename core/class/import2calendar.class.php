@@ -1433,14 +1433,14 @@ class import2calendar extends eqLogic
         //  log::add(__CLASS__, 'debug', "║ Date END 01 : " . json_encode($event['end_date']));
         // ajouter gestion des timezones
       } elseif (strpos($line, 'SUMMARY') === 0) {
-        $summary = self::translateName(substr($line, strlen('SUMMARY:')));
+        $summary = self::translateName(self::propertyValue($line));
         // Attribuer le champ 'SUMMARY' ou un nom par défaut si 'SUMMARY' n'est pas trouvé
         $event['summary'] = $summary ? $summary : "Aucun nom";
       } elseif (strpos($line, 'DESCRIPTION') === 0) {
-        $description = substr($line, strlen('DESCRIPTION:'));
+        $description = self::propertyValue($line);
         $event['description'] = $description;
       } elseif (strpos($line, 'LOCATION') === 0) {
-        $location = substr($line, strlen('LOCATION:'));
+        $location = self::propertyValue($line);
         $location = str_replace("\,", ",", $location);
         $event['location'] = $location;
       } elseif (strpos($line, 'UID') === 0) {
@@ -1471,6 +1471,30 @@ class import2calendar extends eqLogic
 
     // log::add(__CLASS__, 'debug', "║ events after parse : " . json_encode($events));
     return $events;
+  }
+
+  /**
+   * Rend la valeur d'une ligne de propriété iCal, sans son nom ni ses paramètres
+   * (« SUMMARY;LANGUAGE=en-US:Réunion » donne « Réunion »).
+   *
+   * La valeur commence après le premier deux-points situé hors guillemets : une valeur
+   * de paramètre entre guillemets peut en contenir (ALTREP="http://…").
+   *
+   * @param string $line Ligne dépliée, commençant par le nom de la propriété
+   * @return string Valeur brute, chaîne vide si la ligne n'a pas de deux-points
+   */
+  private static function propertyValue($line)
+  {
+    $entreGuillemets = false;
+    $longueur = strlen($line);
+    for ($i = 0; $i < $longueur; $i++) {
+      if ($line[$i] === '"') {
+        $entreGuillemets = !$entreGuillemets;
+      } elseif ($line[$i] === ':' && !$entreGuillemets) {
+        return (string) substr($line, $i + 1);
+      }
+    }
+    return '';
   }
 
   /**
