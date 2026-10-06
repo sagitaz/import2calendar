@@ -8,19 +8,6 @@
         "Rafraichir": "Refresh"
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
-        "1 heure après": "1 hour later",
-        "1 heure avant": "1 hour before",
-        "2 heures après": "2 hours later",
-        "2 heures avant": "2 hours before",
-        "3 heures après": "3 hours later",
-        "3 heures avant": "3 hours before",
-        "4 heures après": "4 hours later",
-        "4 heures avant": "4 hours before",
-        "5 heures après": "5 hours later",
-        "5 heures avant": "5 hours before",
-        "6 heures après": "6 hours later",
-        "6 heures avant": "6 hours before",
-        "A l\\'heure": "By the hour",
         "Afficher": "Show",
         "Aucune": "None",
         "Choisir une icône": "Choose an icon",
@@ -31,6 +18,7 @@
         "Inverser": "Invert",
         "Max": "Maximum",
         "Min": "Minimum",
+        "Mise à jour des commandes agenda réussie.": "Calendar commands successfully updated.",
         "Nom": "Name",
         "Nom de la commande": "Command name",
         "Supprimer la commande": "Delete command",
@@ -62,11 +50,11 @@
         "Couleur de fond": "Background color",
         "Couleur du texte": "Text color",
         "Documentation": "Documentation",
-        "Début": "Start",
+        "Début (min avant)": "Start (minutes before)",
         "Equipement": "Equipment",
         "Equipement non visible": "Equipment not visible",
         "Equipement visible": "Visible equipment",
-        "Fin": "End",
+        "Fin (min après)": "End (minutes later)",
         "Fond": "Background",
         "Fréquence de rafraîchissement du calendrier": "Calendar refresh rate",
         "Gestion": "Management",
@@ -77,6 +65,7 @@
         "Icône": "Icon",
         "Jours fériés Métropole": "Public holidays Metropolitan France",
         "Mes import2calendars": "My import2calendars",
+        "Mise à jour J+": "Update Day +",
         "Nom de l'équipement": "Equipment name",
         "Nom de l'évènement": "Event name",
         "Objet parent": "Parent object",
@@ -107,8 +96,14 @@
         "aide Discord": "help Discord"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Ajoute les commandes jour suivant pour tous les agendas": "Adds the next day's commands to all calendars",
         "Nombre de jours passé de retention": "Number of retention days",
         "Version Plugin": "Plugin version",
-        "Version du Plugin (A indiquer sur Community)": "Plugin version (To be indicated on Community)"
+        "Version du Plugin (A indiquer sur Community)": "Plugin version (To be indicated on Community)",
+        "commande jours suivants": "Command for the coming days"
+    },
+    "plugins\/import2calendar\/plugin_info\/install.php": {
+        "Identifiants techniques corrigés sur": "Technical identifiers corrected on",
+        "équipement(s). Les versions précédentes pouvaient créer un agenda en double à chaque actualisation : vérifiez la liste de vos agendas dans le plugin Agenda et supprimez les doublons éventuels.": "equipment. Previous versions might have created duplicate calendars each time they were updated: check your list of calendars in the Calendar plugin and delete any duplicates."
     }
 }
