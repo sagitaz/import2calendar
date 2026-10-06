@@ -926,7 +926,8 @@ class import2calendar extends eqLogic
   // Fonction exécutée automatiquement après la suppression de l'équipement
   public function postRemove()
   {
-    message::add(__CLASS__, __("Vous venez de supprimer l'équipement ical :b:" . $this->getName() . ":/b: ,l'agenda associé n'est pas supprimé dans le plugin agenda(calendar).", __FILE__), null, null);
+    // Nom hors de __() : un texte concaténé n'est ni extrait pour la traduction, ni retrouvé
+    message::add(__CLASS__, __("Vous venez de supprimer l'équipement ical", __FILE__) . ' :b:' . $this->getName() . ':/b:, ' . __("l'agenda associé n'est pas supprimé dans le plugin Agenda.", __FILE__), null, null);
     log::add(__CLASS__, 'warning', "Vous venez de supprimer l'équipement ical :b:" . $this->getName() . ":/b: ,l'agenda associé n'est pas supprimé dans le plugin agenda(calendar).");
   }
 
