@@ -1326,7 +1326,9 @@ class import2calendar extends eqLogic
   private static function parse_icalendar_file($icalFile)
   {
     $events = [];
-    $icalFile = str_replace("\r\n ", "", $icalFile);
+    // Dépliage (RFC 5545, 3.1) : une ligne qui commence par un espace ou une tabulation
+    // prolonge la précédente. Certains producteurs n'emploient que LF comme fin de ligne.
+    $icalFile = preg_replace('/\r?\n[ \t]/', '', $icalFile);
     $lines = preg_split('/\r?\n/', $icalFile);
 
     $event = [];
