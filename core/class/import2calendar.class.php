@@ -170,8 +170,14 @@ class import2calendar extends eqLogic
       $allCalendar = calendar::byType('calendar', true);
     }
 
+    // Une erreur sur un agenda ne doit pas priver les suivants de leurs commandes : avec
+    // l'option nextEvents, la boucle traite aussi des agendas créés dans le plugin Agenda.
     foreach ($allCalendar as $calendar) {
-      self::majCmdsAgenda($calendar);
+      try {
+        self::majCmdsAgenda($calendar);
+      } catch (Throwable $e) {
+        log::add(__CLASS__, 'error', 'Mise à jour des commandes de l\'agenda ' . $calendar->getName() . ' (' . $calendar->getId() . ') en échec : ' . $e->getMessage());
+      }
     }
     return true;
   }
