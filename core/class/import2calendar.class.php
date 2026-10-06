@@ -395,7 +395,10 @@ class import2calendar extends eqLogic
     }
     // 1️⃣ Vérifier les dates incluses/exclues en priorité
     $includedDates = !empty($event["repeat"]["includeDate"]) ? array_map('trim', explode(",", $event["repeat"]["includeDate"])) : [];
-    $excludedDates = !empty($event["repeat"]["excludeDate"]) ? array_map('trim', explode(",", $event["repeat"]["excludeDate"])) : [];
+    $excludedDates = self::parseDateRanges($event["repeat"]["excludeDate"] ?? '');
+    // En mode avancé, comme dans le plugin Agenda, une exclusion ne porte que sur le jour de
+    // début d'une occurrence : isPositionalOccurrence() la vérifie.
+    $modeAvance = !empty($event["repeat"]["enable"]) && ($event["repeat"]["mode"] ?? '') === 'advance';
     log::add('import2calendar_checkEvent' . $id, 'debug', '║ Dates exclues: ' . json_encode($excludedDates));
     log::add('import2calendar_checkEvent' . $id, 'debug', '║ Dates incluses: ' . json_encode($includedDates));
 
@@ -436,7 +439,7 @@ class import2calendar extends eqLogic
       // Vérifier si une des dates de la période est explicitement exclue
       $currentDate = clone $periodStart;
       while ($currentDate <= $periodEnd) {
-        if (in_array($currentDate->format('Y-m-d'), $excludedDates)) {
+        if (!$modeAvance && self::isDateInRanges($currentDate->format('Y-m-d'), $excludedDates)) {
           log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Période explicitement exclue');
           log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
           return null;
@@ -450,7 +453,7 @@ class import2calendar extends eqLogic
         return [$eventName];
       }
 
-      if (in_array($checkDateStr, $excludedDates)) {
+      if (!$modeAvance && self::isDateInRanges($checkDateStr, $excludedDates)) {
         log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Date explicitement exclue');
         log::add('import2calendar_checkEvent' . $id, 'debug', '╠═════ Fin de la vérification ════════════════════');
         return null;
@@ -483,6 +486,28 @@ class import2calendar extends eqLogic
         }
       }
 
+      // Mode avancé (« le 2e lundi du mois ») : le plugin Agenda place chaque occurrence
+      // par sa position dans le mois, sans fréquence, unité ni jours retenus, et son
+      // interface laisse la fréquence vide dans ce mode (calendar_event::calculOccurrence()).
+      if ($modeAvance) {
+        if (self::isPositionalOccurrence($event["repeat"], $startDateTime, $checkDateTime, $duration, $excludedDates)) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Occurrence validée (position dans le mois)');
+          return [$eventName];
+        }
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Aucune occurrence à cette position dans le mois');
+        return null;
+      }
+
+      // Fréquence vide ou nulle : le plugin Agenda n'affiche que la première occurrence.
+      $frequence = (int) ($event["repeat"]["freq"] ?? 0);
+      if ($frequence < 1) {
+        if ($startDateTime <= $checkDateEnd && $endDateTime >= $checkDateStart) {
+          log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✓ Fréquence vide ou nulle : première occurrence');
+          return [$eventName];
+        }
+        log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Fréquence vide ou nulle : seule la première occurrence compte');
+        return null;
+      }
 
       // Pour les événements multi-jours, calculer l'occurrence
       if ($isMultiDays) {
@@ -523,7 +548,7 @@ class import2calendar extends eqLogic
           return null;
         }
 
-        if ($difference % $event["repeat"]["freq"] !== 0) {
+        if ($difference % $frequence !== 0) {
           log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Écart de ' . $difference . ' ' .
             $event["repeat"]["unite"] . ' ne correspond pas à la fréquence de ' .
             $event["repeat"]["freq"] . ' ' . $event["repeat"]["unite"]);
@@ -569,7 +594,7 @@ class import2calendar extends eqLogic
           return null;
         }
 
-        if ($difference % $event["repeat"]["freq"] !== 0) {
+        if ($difference % $frequence !== 0) {
           log::add('import2calendar_checkEvent' . $id, 'debug', '║ ✗ Écart de ' . $difference . ' ' .
             $event["repeat"]["unite"] . ' ne correspond pas à la fréquence de ' .
             $event["repeat"]["freq"] . ' ' . $event["repeat"]["unite"]);
@@ -606,12 +631,105 @@ class import2calendar extends eqLogic
   }
 
   /**
-   * Calcule la différence entre deux dates selon l'unité spécifiée
+   * Lit une liste de dates exclues comme le plugin Agenda : dates séparées par des
+   * virgules, chacune seule ou en plage « début:fin ».
    *
-   * @param DateTime $date1 Première date
-   * @param DateTime $date2 Seconde date
+   * Les plages servent notamment aux récurrences positionnelles espacées de plusieurs
+   * mois, où elles masquent les mois intermédiaires.
+   *
+   * @param string $liste Liste de dates
+   * @return array Plages [début, fin] au format Y-m-d, une date seule formant une plage d'un jour
+   */
+  private static function parseDateRanges($liste)
+  {
+    $plages = [];
+    foreach (explode(',', (string) $liste) as $element) {
+      $bornes = array_map('trim', explode(':', $element));
+      if ($bornes[0] === '' || count($bornes) > 2) {
+        continue;
+      }
+      $debut = strtotime($bornes[0]);
+      $fin = strtotime(end($bornes));
+      if ($debut === false || $fin === false) {
+        continue;
+      }
+      $plages[] = [date('Y-m-d', $debut), date('Y-m-d', $fin)];
+    }
+    return $plages;
+  }
+
+  /**
+   * Indique si une date appartient à l'une des plages lues par parseDateRanges().
+   *
+   * @param string $date Date au format Y-m-d
+   * @param array $plages Plages [début, fin] au format Y-m-d
+   * @return bool
+   */
+  private static function isDateInRanges($date, $plages)
+  {
+    foreach ($plages as $plage) {
+      if ($date >= $plage[0] && $date <= $plage[1]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Indique si une date tombe dans une occurrence d'un évènement répété en mode avancé
+   * (« le 2e lundi du mois »).
+   *
+   * Comme dans le plugin Agenda, la première occurrence est la date de début elle-même,
+   * et les suivantes sont placées par leur position dans le mois (« second monday of
+   * October 2026 »).
+   *
+   * @param array $repeat Paramètres de répétition de l'évènement (positionAt, day)
+   * @param DateTime $startDateTime Début de l'évènement
+   * @param DateTime $checkDateTime Date vérifiée
+   * @param int $duration Durée de l'évènement, en jours
+   * @param array $plagesExclues Plages lues par parseDateRanges() : une occurrence qui y commence est écartée
+   * @return bool
+   */
+  private static function isPositionalOccurrence($repeat, $startDateTime, $checkDateTime, $duration, $plagesExclues)
+  {
+    $positions = ['first', 'second', 'third', 'fourth', 'last'];
+    $jours = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    $position = $repeat['positionAt'] ?? '';
+    $jour = $repeat['day'] ?? '';
+    $debut = $startDateTime->format('Y-m-d');
+    $date = $checkDateTime->format('Y-m-d');
+
+    $occurrences = [$debut];
+    if (in_array($position, $positions, true) && in_array($jour, $jours, true)) {
+      // Mois de la date vérifiée, et ceux d'avant tant qu'une occurrence peut la couvrir
+      $mois = new DateTime($checkDateTime->format('Y-m-01'));
+      $moisEnArriere = (int) ceil($duration / 28);
+      for ($i = 0; $i <= $moisEnArriere; $i++) {
+        $occurrences[] = date('Y-m-d', strtotime($position . ' ' . $jour . ' of ' . $mois->format('F Y')));
+        $mois->modify('-1 month');
+      }
+    }
+
+    foreach ($occurrences as $occurrence) {
+      if ($occurrence < $debut || $occurrence > $date || self::isDateInRanges($occurrence, $plagesExclues)) {
+        continue;
+      }
+      $fin = (new DateTime($occurrence))->modify('+' . $duration . ' days')->format('Y-m-d');
+      if ($date <= $fin) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Calcule l'écart entre deux dates selon l'unité spécifiée
+   *
+   * @param DateTime $date1 Date de référence (début de l'évènement)
+   * @param DateTime $date2 Date comparée
    * @param string $unit Unité (days, month, years)
-   * @return int Différence entre les deux dates dans l'unité spécifiée
+   * @return int Écart de $date1 à $date2 dans l'unité, positif quand $date2 est postérieure ;
+   *             -1 quand $date2 ne tombe pas le même jour du mois (month) ou de l'année (years)
    */ private static function calculateDateDifference($date1, $date2, $unit)
   {
     switch ($unit) {
@@ -631,15 +749,15 @@ class import2calendar extends eqLogic
         if ($date1->format('d') !== $date2->format('d')) {
           return -1;
         }
-        return (($date1->format('Y') - $date2->format('Y')) * 12) +
-          ($date1->format('n') - $date2->format('n'));
+        return (($date2->format('Y') - $date1->format('Y')) * 12) +
+          ($date2->format('n') - $date1->format('n'));
 
       case 'years':
         // Doit tomber le même jour et le même mois
         if ($date1->format('m-d') !== $date2->format('m-d')) {
           return -1;
         }
-        return $date1->format('Y') - $date2->format('Y');
+        return $date2->format('Y') - $date1->format('Y');
 
       default:
         return 0;
