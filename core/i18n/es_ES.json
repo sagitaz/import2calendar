@@ -1,11 +1,14 @@
 {
     "plugins\/import2calendar\/core\/ajax\/import2calendar.ajax.php": {
         "401 - Accès non autorisé": "401 - Acceso no autorizado",
-        "Aucune méthode correspondante à": "Ningún método correspondiente a"
+        "Aucune méthode correspondante à": "Ningún método correspondiente a",
+        "Le plugin agenda n'est pas installé ou activé.": "El plugin de calendario no está instalado ni activado."
     },
     "plugins\/import2calendar\/core\/class\/import2calendar.class.php": {
         "Le plugin agenda n'est pas installé ou activé.": "El plugin de calendario no está instalado ni activado.",
-        "Rafraichir": "Refrescar"
+        "Rafraichir": "Refrescar",
+        "Vous venez de supprimer l'équipement ical": "Acaba de eliminar el equipo ical",
+        "l'agenda associé n'est pas supprimé dans le plugin Agenda.": "el calendario asociado no se elimina en el plugin de calendario."
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
         "Afficher": "Mostrar",
@@ -37,6 +40,7 @@
         "Ajouter une action de début": "Añadir una acción de inicio",
         "Ajouter une action de fin": "Añadir una acción final",
         "Ajouter une couleur personnalisée": "Añadir un color personalizado",
+        "Assistant cron": "Asistente cron",
         "Attention, ne pas modifier l'agenda créé depuis le plugin agenda": "Atención: no modifique el calendario creado con el plugin de calendario",
         "Attention, ne pas modifier les actions depuis le plugin agenda": "Atención: no modifique las acciones del plugin de calendario",
         "Attention, ne pas modifier les couleurs depuis le plugin agenda": "Atención: no cambie los colores del plugin de calendario",

@@ -1,11 +1,14 @@
 {
     "plugins\/import2calendar\/core\/ajax\/import2calendar.ajax.php": {
         "401 - Accès non autorisé": "401 - Nicht autorisierter Zugriff",
-        "Aucune méthode correspondante à": "Keine passende Methode zu"
+        "Aucune méthode correspondante à": "Keine passende Methode zu",
+        "Le plugin agenda n'est pas installé ou activé.": "Das Agenda-Plugin ist nicht installiert oder aktiviert."
     },
     "plugins\/import2calendar\/core\/class\/import2calendar.class.php": {
         "Le plugin agenda n'est pas installé ou activé.": "Das Agenda-Plugin ist nicht installiert oder aktiviert.",
-        "Rafraichir": "Auffrischen"
+        "Rafraichir": "Auffrischen",
+        "Vous venez de supprimer l'équipement ical": "Sie haben soeben das iCal-Gerät gelöscht",
+        "l'agenda associé n'est pas supprimé dans le plugin Agenda.": "der zugehörige Kalender wird im Agenda-Plugin nicht gelöscht."
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
         "Afficher": "Anzeige",
@@ -37,6 +40,7 @@
         "Ajouter une action de début": "Hinzufügen einer Startaktion",
         "Ajouter une action de fin": "Eine Ende-Aktion hinzufügen",
         "Ajouter une couleur personnalisée": "Hinzufügen einer benutzerdefinierten Farbe",
+        "Assistant cron": "Cron Assistent",
         "Attention, ne pas modifier l'agenda créé depuis le plugin agenda": "Achtung: Bearbeiten Sie nicht den Terminkalender, der über das Agenda-Plugin erstellt wurde",
         "Attention, ne pas modifier les actions depuis le plugin agenda": "Achtung, ändern Sie die Aktionen nicht vom Agenda-Plugin aus",
         "Attention, ne pas modifier les couleurs depuis le plugin agenda": "Achtung, ändern Sie die Farben nicht vom Agenda-Plugin aus",
