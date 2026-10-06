@@ -361,6 +361,9 @@ class import2calendar extends eqLogic
     // event() persiste la valeur par le cache — collectDate et valueDate sont des
     // propriétés préfixées d'un souligné, donc hors colonnes de la table cmd.
     $cmd = self::createCmd($id, $cmdName, $label);
+    if (!is_object($cmd)) {
+      return;
+    }
 
     $eventText = !empty($events) ? implode(', ', $events) : 'Aucun';
     $cmd->event($eventText);
@@ -782,12 +785,16 @@ class import2calendar extends eqLogic
    * @param int $eqLogicId Identifiant de l'équipement
    * @param string $logicalId Identifiant logique de la commande
    * @param string $name Nom de la commande
-   * @return cmd Objet commande créé ou mis à jour
+   * @return cmd|null Objet commande créé ou mis à jour, null si l'équipement est introuvable
    */
   private static function createCmd($eqLogicId, $logicalId, $name)
   {
     $eqLogic = eqLogic::byId($eqLogicId);
     self::compte('lectures équipement (eqLogic::byId)');
+    if (!is_object($eqLogic)) {
+      log::add(__CLASS__, 'error', 'Équipement ' . $eqLogicId . ' introuvable, commande ' . $logicalId . ' non mise à jour');
+      return null;
+    }
     $cmd = $eqLogic->getCmd(null, $logicalId);
 
     if (!is_object($cmd)) {
@@ -990,13 +997,19 @@ class import2calendar extends eqLogic
 
       if ($success && $httpCode >= 200 && $httpCode < 300) {
         $newHash = self::getCleanIcalHash($tmpFile);
+        if ($newHash === false) {
+          log::add(__CLASS__, 'error', "║ Impossible de lire le fichier iCal téléchargé : $tmpFile");
+          return false;
+        }
         log::add(__CLASS__, 'debug', "║ Fichier iCal temporaire (hash filtré : $newHash)");
 
         $existingHash = file_exists($destinationPath) ? self::getCleanIcalHash($destinationPath) : null;
         log::add(__CLASS__, 'debug', "║ Fichier iCal existant (hash filtré : $existingHash)");
 
         if ($newHash === $existingHash && !$force) {
-          unlink($tmpFile);
+          if (!unlink($tmpFile)) {
+            log::add(__CLASS__, 'warning', "║ Impossible de supprimer le fichier iCal temporaire : $tmpFile");
+          }
           log::add(__CLASS__, 'info', "║ Hash du fichier iCal inchangé, téléchargement ignoré.");
           return null;
         }
@@ -1026,12 +1039,26 @@ class import2calendar extends eqLogic
     }
 
     log::add(__CLASS__, 'error', "║ Échec du téléchargement après $retries tentatives.");
+    // Le fichier temporaire ne contient que la réponse d'erreur du dernier essai
+    if (file_exists($tmpFile) && !unlink($tmpFile)) {
+      log::add(__CLASS__, 'warning', "║ Impossible de supprimer le fichier iCal temporaire : $tmpFile");
+    }
     return false;
   }
 
+  /**
+   * Empreinte d'un fichier iCal, sans les lignes que le producteur change à chaque
+   * génération (DTSTAMP, PRODID, CREATED, LAST-MODIFIED).
+   *
+   * @param string $filePath Fichier iCal
+   * @return string|false Empreinte sha1, false si le fichier ne peut pas être lu
+   */
   private static function getCleanIcalHash($filePath)
   {
     $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+      return false;
+    }
     $filtered = [];
 
     foreach ($lines as $line) {
@@ -1430,8 +1457,12 @@ class import2calendar extends eqLogic
         $rrule = substr($line, strlen('RRULE:'));
         $rrule_params = explode(';', $rrule);
         foreach ($rrule_params as $param) {
-          list($key, $value) = explode('=', $param);
-          $event['rrule'][$key] = $value;
+          // Partie vide (point-virgule final) ou sans « = » : ignorée
+          $morceaux = explode('=', $param, 2);
+          if (count($morceaux) !== 2) {
+            continue;
+          }
+          $event['rrule'][$morceaux[0]] = $morceaux[1];
         }
       }
     }
@@ -2282,7 +2313,9 @@ class import2calendar extends eqLogic
 
   private static function getActionCmd($eqlogic, $name, $type)
   {
-    $actions = $eqlogic->getConfiguration($type)[0];
+    // Sans action enregistrée, la configuration vaut '' et non un tableau
+    $configuration = $eqlogic->getConfiguration($type);
+    $actions = (is_array($configuration) && isset($configuration[0]) && is_array($configuration[0])) ? $configuration[0] : [];
 
     $allNames = [];
     $result = [];
@@ -2541,6 +2574,7 @@ class import2calendar extends eqLogic
   {
     log::add(__CLASS__, 'debug', "║ Création d'un nouveau équipement.");
     $eqExist = FALSE;
+    $calendarEqId = null;
 
     $name = $options['name'];
     $object = $options['roomId'];
