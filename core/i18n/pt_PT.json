@@ -1,26 +1,16 @@
 {
     "plugins\/import2calendar\/core\/ajax\/import2calendar.ajax.php": {
         "401 - Accès non autorisé": "401 - Acesso não autorizado",
-        "Aucune méthode correspondante à": "Nenhum método correspondente a"
+        "Aucune méthode correspondante à": "Nenhum método correspondente a",
+        "Le plugin agenda n'est pas installé ou activé.": "O plug-in do calendário não está instalado ou ativado."
     },
     "plugins\/import2calendar\/core\/class\/import2calendar.class.php": {
         "Le plugin agenda n'est pas installé ou activé.": "O plug-in do calendário não está instalado ou ativado.",
-        "Rafraichir": "Recarregar"
+        "Rafraichir": "Recarregar",
+        "Vous venez de supprimer l'équipement ical": "Acabou de eliminar o equipamento ical",
+        "l'agenda associé n'est pas supprimé dans le plugin Agenda.": "o calendário associado não é eliminado no plug-in do calendário."
     },
     "plugins\/import2calendar\/desktop\/js\/import2calendar.js": {
-        "1 heure après": "1 hora depois",
-        "1 heure avant": "1 hora antes",
-        "2 heures après": "2 horas depois",
-        "2 heures avant": "2 horas antes",
-        "3 heures après": "3 horas depois",
-        "3 heures avant": "3 horas antes",
-        "4 heures après": "4 horas depois",
-        "4 heures avant": "4 horas antes",
-        "5 heures après": "5 horas depois",
-        "5 heures avant": "5 horas antes",
-        "6 heures après": "6 horas depois",
-        "6 heures avant": "6 horas antes",
-        "A l\\'heure": "Por hora",
         "Afficher": "Mostrar",
         "Aucune": "Nenhuma",
         "Choisir une icône": "Escolha um ícone",
@@ -31,6 +21,7 @@
         "Inverser": "Inverter",
         "Max": "Máx.",
         "Min": "Mínimo",
+        "Mise à jour des commandes agenda réussie.": "Atualização das encomendas da agenda bem-sucedida.",
         "Nom": "Nome",
         "Nom de la commande": "Nome do comando",
         "Supprimer la commande": "Apagar comando",
@@ -49,6 +40,7 @@
         "Ajouter une action de début": "Adicionar uma ação de início",
         "Ajouter une action de fin": "Adicionar uma ação final",
         "Ajouter une couleur personnalisée": "Adicionar uma cor personalizada",
+        "Assistant cron": "Assistente de cron",
         "Attention, ne pas modifier l'agenda créé depuis le plugin agenda": "Atenção: não modifique o calendário criado com o plugin de calendário",
         "Attention, ne pas modifier les actions depuis le plugin agenda": "Atenção: não modifique as acções do plugin do calendário",
         "Attention, ne pas modifier les couleurs depuis le plugin agenda": "Atenção: não altere as cores no plugin do calendário",
@@ -62,11 +54,11 @@
         "Couleur de fond": "Cor de fundo",
         "Couleur du texte": "Cor do texto",
         "Documentation": "Documentação",
-        "Début": "Inicio",
+        "Début (min avant)": "Início (minutos antes)",
         "Equipement": "Equipamento",
         "Equipement non visible": "Equipamento não visível",
         "Equipement visible": "Equipamentos visíveis",
-        "Fin": "Fim",
+        "Fin (min après)": "Fim (minutos depois)",
         "Fond": "Contexto",
         "Fréquence de rafraîchissement du calendrier": "Frequência de atualização do calendário",
         "Gestion": "Gestão",
@@ -77,6 +69,7 @@
         "Icône": "Ícone",
         "Jours fériés Métropole": "Feriados nacionais França metropolitana",
         "Mes import2calendars": "O meu import2calendars",
+        "Mise à jour J+": "Atualização J+",
         "Nom de l'équipement": "Nome do equipamento",
         "Nom de l'évènement": "Nome do evento",
         "Objet parent": "Objeto pai",
@@ -107,8 +100,14 @@
         "aide Discord": "ajuda Discord"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
+        "Ajoute les commandes jour suivant pour tous les agendas": "Adiciona as tarefas do dia seguinte a todas as agendas",
         "Nombre de jours passé de retention": "Número de dias de retenção",
         "Version Plugin": "Versão do plugin",
-        "Version du Plugin (A indiquer sur Community)": "Versão do plugin (a indicar na Comunidade)"
+        "Version du Plugin (A indiquer sur Community)": "Versão do plugin (a indicar na Comunidade)",
+        "commande jours suivants": "comandos dos dias seguintes"
+    },
+    "plugins\/import2calendar\/plugin_info\/install.php": {
+        "Identifiants techniques corrigés sur": "Identificadores técnicos corrigidos em",
+        "équipement(s). Les versions précédentes pouvaient créer un agenda en double à chaque actualisation : vérifiez la liste de vos agendas dans le plugin Agenda et supprimez les doublons éventuels.": "equipamento(s). As versões anteriores podiam criar uma agenda duplicada a cada atualização: verifique a lista das suas agendas no plugin Agenda e elimine eventuais duplicados."
     }
 }

@@ -58,6 +58,10 @@ function import2calendar_update()
     $cron->save();
     $cron->stop();
     import2calendar_migrateLogicalId();
+    // Les corrections de conversion n'atteignent les évènements déjà importés qu'au
+    // traitement suivant de leur agenda : on le provoque pour tous, sans attendre un
+    // changement de la source.
+    import2calendar::demanderRetraitement('Mise à jour du plugin');
 }
 
 /**

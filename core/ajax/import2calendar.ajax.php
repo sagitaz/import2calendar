@@ -35,9 +35,11 @@ try {
   ajax::init();
 
   if (init('action') == 'majCmds') {
-    // Récupération des logs
-    $result = import2calendar::majCmds();
-    ajax::success($result);
+    // false : plugin Agenda absent ou inactif, l'utilisateur doit le savoir
+    if (!import2calendar::majCmds()) {
+      throw new Exception(__("Le plugin agenda n'est pas installé ou activé.", __FILE__));
+    }
+    ajax::success(true);
   }
 
 
