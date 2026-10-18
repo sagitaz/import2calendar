@@ -46,9 +46,13 @@ class import2calendar extends eqLogic
    * chacune des deux. Les valeurs ne sont pas persistées : elles ne vivent que le temps
    * du processus.
    *
+   * Le préfixe « _ » est obligatoire : DB::save() du core traite comme une colonne de la
+   * table eqLogic toute propriété de la classe, statique comprise, dont le nom ne commence
+   * pas par « _ ».
+   *
    * @var array<string, int>
    */
-  private static $compteurs = [];
+  private static $_compteurs = [];
 
   /*     * ***********************Methode static*************************** */
 
@@ -61,10 +65,10 @@ class import2calendar extends eqLogic
    */
   private static function compte($cle, $nombre = 1)
   {
-    if (!isset(self::$compteurs[$cle])) {
-      self::$compteurs[$cle] = 0;
+    if (!isset(self::$_compteurs[$cle])) {
+      self::$_compteurs[$cle] = 0;
     }
-    self::$compteurs[$cle] += $nombre;
+    self::$_compteurs[$cle] += $nombre;
   }
 
   /**
@@ -77,11 +81,11 @@ class import2calendar extends eqLogic
   private static function journaliseCompteurs($canal, $contexte)
   {
     $lignes = [];
-    foreach (self::$compteurs as $cle => $valeur) {
+    foreach (self::$_compteurs as $cle => $valeur) {
       $lignes[] = $cle . ' = ' . $valeur;
     }
     log::add($canal, 'info', '║ :b:CHARGE:/b: ' . $contexte . ' => ' . (empty($lignes) ? 'aucun accès' : implode(', ', $lignes)));
-    self::$compteurs = [];
+    self::$_compteurs = [];
   }
 
   /**
@@ -220,7 +224,7 @@ class import2calendar extends eqLogic
    */
   private static function majCmdsAgenda($calendar)
   {
-    self::$compteurs = [];
+    self::$_compteurs = [];
     // Récupération des informations du calendrier
     $id = $calendar->getid();
     $name = $calendar->getName();
@@ -1094,7 +1098,7 @@ class import2calendar extends eqLogic
   public static function parseIcal($eqlogicId, $force = false)
   {
     log::add(__CLASS__, 'debug', '╔════════════ :fg-warning:START PARSE ICAL:/fg:');
-    self::$compteurs = [];
+    self::$_compteurs = [];
     $options = [];
     $events = [];
     $eqlogic = eqLogic::byId($eqlogicId);
