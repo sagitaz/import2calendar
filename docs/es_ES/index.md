@@ -2,7 +2,13 @@
 
 El complemento sirve para importar un calendario en formato iCal al complemento oficial de Jeedom «Agenda» (calendar), por lo que este último debe estar instalado y configurado.
 ## Requisitos previos
+### Estable
 - Jeedom 4.4 como mínimo, Debian 11 como mínimo
+- Complemento Agenda, instalado y activado
+- Complemento import2calendar
+
+### Beta
+- Jeedom 4.6 como mínimo, Debian 12 como mínimo
 - Complemento Agenda, instalado y activado
 - Complemento import2calendar
 
