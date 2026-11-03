@@ -39,6 +39,7 @@ function import2calendar_install()
         $cron->setTimeout(30);
         $cron->save();
     }
+    import2calendar_checkDebian();
 }
 
 function import2calendar_update()
@@ -62,6 +63,24 @@ function import2calendar_update()
     // traitement suivant de leur agenda : on le provoque pour tous, sans attendre un
     // changement de la source.
     import2calendar::demanderRetraitement('Mise à jour du plugin');
+    import2calendar_checkDebian();
+}
+
+/**
+ * Avertit d'une box antérieure à Debian 12. Le market écarte ces box au téléchargement,
+ * mais une installation depuis GitHub, une URL ou un fichier échappe à son contrôle.
+ *
+ * La version est comparée en nombre : le core renvoie 0 hors Debian, et
+ * /etc/debian_version contient un nom de code sur Debian testing ou Ubuntu.
+ *
+ * @return void
+ */
+function import2calendar_checkDebian()
+{
+    $debian = (string) system::getOsVersion();
+    if ((float) $debian > 0 && (float) $debian < 12) {
+        message::add('import2calendar', str_replace('#version#', $debian, __("Attention, vous utilisez la version #version# de Debian, aucun support n'est disponible. La version 12 de Debian est recommandée.", __FILE__)));
+    }
 }
 
 /**

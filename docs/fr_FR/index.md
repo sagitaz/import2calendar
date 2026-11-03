@@ -2,7 +2,13 @@
 
 Le plugin sert à importer un calendrier au format Ical dans le plugin Agenda officiel Jeedom (calendar), ce dernier doit donc être installé et configuré.
 ## Prérequis
+### Stable
 - Jeedom 4.4 minimum, Debian 11 minimum
+- Plugin Agenda, installé et activé
+- Plugin import2calendar
+
+### Beta
+- Jeedom 4.6 minimum, Debian 12 minimum
 - Plugin Agenda, installé et activé
 - Plugin import2calendar
 
