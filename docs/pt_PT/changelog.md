@@ -3,6 +3,23 @@
 >**IMPORTANTE**
 Se não houver informações sobre a atualização, isso significa que esta diz respeito apenas à atualização da documentação, da tradução ou do texto.
 
+# 03/11/2026 Beta 1.5.1
+- Botões para adicionar cor e ação mais visíveis
+- Correção da criação de um equipamento, impossível desde a versão 1.5.0
+- Correção de eventos repetidos a cada duas semanas ou mais: datas deslocadas, dias em falta, desfasamento de uma semana a partir de janeiro de 2027
+- As alterações a um evento recorrente na agenda original são refletidas nos eventos já importados
+- O armazenamento do equipamento e o comando «Atualizar» aplicam imediatamente cores, ações e desfasamentos
+- Todas as agendas são atualizadas após a atualização do plugin e, posteriormente, no primeiro dia de cada mês
+- Uma tarefa cuja importação falhe será tentada novamente na próxima execução do seu cron
+- Comandos para os próximos dias: correção de eventos mensais, anuais (aniversários) e do tipo «segunda segunda-feira do mês»
+- Opção «comando para os dias seguintes»: uma agenda criada no plugin Agenda já não impede a atualização das outras
+- Nomes, notas e locais completos para agendas do Outlook e ficheiros iCal com linhas longas
+- O plugin já não falha quando o plugin Agenda está desativado ou desinstalado
+- Botão «Atualização J+»: os erros são agora apresentados
+- Correção de regras de recorrência inválidas que podiam bloquear a importação
+- Traduções corrigidas e completadas
+- Documentação atualizada
+
 # 27/09/2026 Beta 1.5.0
 - Início e fim dos eventos personalizados ajustáveis ao minuto (0 a 360 min)
 - A atualização das agendas consome muito menos recursos, sobretudo no caso de agendas volumosas

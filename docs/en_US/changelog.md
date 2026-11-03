@@ -3,6 +3,23 @@
 >**IMPORTANT**
 If there is no information about the update, it means that the update only involves documentation, translations, or text.
 
+# November 3, 2026 Beta 1.5.1
+- More visible buttons for adding colors and actions
+- Fixed an issue with creating a device, which had been impossible since version 1.5.0
+- Fix for events recurring every two weeks or more: misaligned dates, missing days, one-week offset starting in January 2027
+- Changes made to a recurring event in the original calendar are applied to events that have already been imported
+- Saving the settings and issuing the "Refresh" command immediately applies colors, actions, and offsets
+- All calendars are updated after the plugin is updated, and then on the 1st of each month
+- If an import fails, it is retried the next time the cron job runs
+- Commands for the coming days: correction of monthly and annual events (birthdays) and events of the “second Monday of the month” type
+- "Command for Future Days" option: A calendar created in the Calendar plugin no longer prevents other calendars from updating
+- Full names, notes, and locations for Outlook calendars and iCal events with long lines
+- The plugin no longer crashes when the Calendar plugin is disabled or uninstalled
+- "J+ Update" button: Errors are now displayed
+- Fixed invalid recurrence rules that could block the import
+- Corrected and completed translations
+- Updated documentation
+
 # September 27, 2026 Beta 1.5.0
 - Start and end times for custom events can be set to the minute (0 to 360 min)
 - Calendar updates use far fewer resources, especially for large calendars

@@ -2,23 +2,28 @@
 
 Il plugin serve a importare un calendario in formato iCal nel plugin Agenda ufficiale di Jeedom (calendar); quest'ultimo deve quindi essere installato e configurato.
 ## Requisiti
-- Plugin Agenda
+- Jeedom 4.4 o versioni successive, Debian 11 o versioni successive
+- Plugin Agenda, installato e attivato
 - Plugin import2calendar
 
 ## Attenzione
-**Non è possibile apportare modifiche al file iCal; le informazioni vengono recuperate dal file iCal per essere inviate al plugin Agenda di Jeedom. Non apportate alcuna modifica all'agenda creata nel plugin Agenda, poiché verrebbero eliminate al prossimo aggiornamento del vostro file iCal.**
+**Non è possibile apportare modifiche al file iCal: le informazioni vengono recuperate dal file iCal per essere inviate al plugin Agenda di Jeedom. Non apportate alcuna modifica all'agenda creata nel plugin Agenda, poiché verrebbero eliminate al prossimo aggiornamento del vostro file iCal.**
 
 
 # <u>Configurazione</u>
+
+## Configurazione del plugin
+- **Numero di giorni di conservazione**: periodo durante il quale un evento passato rimane nell'agenda, da 3 a 31 giorni (3 per impostazione predefinita).
+- **ordini dei giorni successivi**: aggiunge gli ordini dei giorni a venire (vedi la sezione Plugin Agenda) a tutti i calendari del plugin Agenda, compresi quelli che non sono stati creati da import2calendar.
 
 ## Crea un dispositivo
 Inizia aggiungendo un dispositivo e scegliendone il nome
 ### Impostazioni di importazione
 - **ical**: specificare l'URL del file ical da convertire.
-- **Ora di inizio forzata**: scegli un'ora di inizio per tutti gli eventi del calendario. Per impostazione predefinita, saranno le ore di inizio dell'evento salvato nel file iCal.
-- **ora di fine forzata**: scegliere un'ora di fine evento per tutti gli eventi del calendario. Per impostazione predefinita, saranno le ore di fine dell'evento registrate nel file iCal.
-- **ical auto**: vacanze francesi e giorni festivi. Se selezionato, non inserire nulla nel campo ical.
-- **cron**: scegliere l'intervallo di aggiornamento desiderato per il calendario.
+- **Orari di inizio predefiniti**: scegli un orario di inizio per tutti gli eventi del calendario. Per impostazione predefinita, saranno gli orari di inizio dell'evento salvato nel file iCal.
+- **Orari di fine forzati**: scegliere un orario di fine per tutti gli eventi del calendario. Per impostazione predefinita, saranno gli orari di fine dell'evento registrati nel file iCal.
+- **ICAL generale**: vacanze scolastiche francesi e giorni festivi. Se selezionato, non inserire nulla nel campo ical.
+- **Aggiornamento automatico**: selezionare il cron di aggiornamento desiderato per il calendario.
 
 ### Impostazioni di visualizzazione
 - **icona**: l'icona che verrà applicata a ogni evento.
@@ -31,8 +36,8 @@ Qui puoi scegliere di personalizzare alcuni eventi del tuo calendario iCal.
 - Colore dello sfondo e colore del testo.
 
 Qui, per impostazione predefinita, non viene modificato nulla; queste opzioni consentono di modificare l'ora di inizio e di fine, ad esempio per anticipare le azioni programmate.
-- Ora di inizio: l'evento avrà inizio X ore prima.
-- Ora di fine: l'evento terminerà X ore dopo.
+- Inizio: l'evento inizierà X minuti prima dell'ora di inizio (da 0 a 360).
+- Fine: l'evento terminerà X minuti dopo l'ora di fine (da 0 a 360).
 
 ### Azioni di inizio e fine
 A tutti gli eventi del tuo calendario verranno aggiunte le azioni definite qui.
@@ -73,25 +78,29 @@ Se si modifica una delle seguenti opzioni:
 - icona
 - colore di sfondo
 - colore del testo
+- personalizzazione degli eventi (colori, inizio e fine)
+- orari di inizio e fine fissi
 - azioni iniziali
 - azioni di chiusura
 
-Gli eventi verranno modificati nel calendario
+Gli eventi verranno modificati nel calendario non appena l'apparecchio verrà salvato.
 
 ## Gestione degli eventi
-Ad ogni salvataggio o ogni volta che il cron impostato analizza il file iCal, se un evento non è più presente nel file iCal, viene eliminato dal calendario.
-Gli eventi passati risalenti a più di 3 giorni fa non vengono importati e verranno eliminati man mano.
+L'ical viene elaborato ogni volta che si salva la configurazione dell'apparecchiatura e ogni volta che si esegue il comando **Aggiorna**. Il cron definito, invece, lo elabora solo se l'ical è cambiato.
+Il primo giorno di ogni mese, nonché dopo ogni aggiornamento del plugin, tutte le agende vengono rielaborate al successivo passaggio del loro cron. Un dispositivo privo di cron viene rielaborato solo al successivo salvataggio.
+Se un evento non è più presente nel file iCal, viene eliminato dal calendario.
+Gli eventi risalenti a più di 3 giorni fa (durata regolabile nelle impostazioni del plugin) non vengono importati e verranno eliminati man mano.
 
 ## Occorrenze
-Le regole definite nel tuo ical vengono convertite nel formato Jeedom Agenda. Non ho testato tutte le possibilità; se alcune non dovessero funzionare, ti prego di allegare la riga del log di import2calendar: **event options** (imposta i tuoi log su warning o debug).
+Le regole definite nel vostro ical vengono convertite nel formato Jeedom Agenda. Non ho testato tutte le possibilità; se alcune non dovessero funzionare, vi prego di allegare la riga del log di import2calendar: **START OPTIONS** (impostate i vostri log in modalità debug).
 
 
 Gli eventi presenti nell'occorrenza rimangono visibili sul calendario finché l'occorrenza è valida.
 
-Esempio: 1 evento ogni 5 giorni dal 01-03-2024 al 24-11-2024. Tutti gli eventi sono visibili sul calendario fino al 27-11-2024 (3 giorni dopo la fine della ricorrenza).
+Esempio: 1 evento ogni 5 giorni dal 01-03-2024 al 24-11-2024. Tutti gli eventi sono visibili sul calendario fino al 27-11-2024 (3 giorni dopo la fine dell'evento, con la durata predefinita).
 
 ## Plugin Agenda
-Nel vostro calendario verranno aggiunti gli avvisi relativi ai prossimi eventi.
+Nel vostro calendario verranno aggiunte le informazioni relative agli eventi in programma. Queste vengono aggiornate ogni notte oppure su richiesta tramite il pulsante **Aggiornamento J+** nella pagina del plugin.
 Avrete quindi 9 nuovi comandi:
 - ieri
 - oggi
@@ -104,18 +113,16 @@ Avrete quindi 9 nuovi comandi:
 - giorno 7
 
 ## ical <-> Jeedom
-In alcuni casi non sarà possibile convertire i dati nel formato Jeedom, pertanto è necessario adattare i vostri calendari.
-È il caso, ad esempio, di questo:
+Alcune ricorrenze non sono disponibili nel plugin Agenda, ad esempio:
 - martedì e mercoledì ogni tre settimane
-Affinché i dati vengano trasmessi a Jeedom, è necessario creare:
-- martedì ogni tre settimane
-- mercoledì ogni 3 settimane
+
+Vengono quindi importate sotto forma di date, calcolate su base annuale e ricalcolate ad ogni elaborazione dell'agenda, al più tardi il primo giorno di ogni mese. Un dispositivo privo di cron deve quindi essere salvato almeno una volta all'anno affinché queste date non scadano.
 
 # <u>JeeMate</u>
 - la descrizione e il luogo saranno visibili nel calendario importato in JeeMate.
 
 # <u>Attenzione</u>
-- il nome dell'agenda creata è lo stesso di quello dell'apparecchio + "-ical" (ora è possibile modificarlo   )
+- il nome dell'agenda creata è lo stesso di quello del dispositivo + "-ical" (può poi essere rinominata)
 - la stanza sarà identica
 
 # <u>Assistenza</u>
