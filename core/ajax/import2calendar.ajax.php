@@ -34,6 +34,14 @@ try {
   */
   ajax::init();
 
+  if (init('action') == 'majCmds') {
+    // false : plugin Agenda absent ou inactif, l'utilisateur doit le savoir
+    if (!import2calendar::majCmds()) {
+      throw new Exception(__("Le plugin agenda n'est pas installé ou activé.", __FILE__));
+    }
+    ajax::success(true);
+  }
+
 
   throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
   /*     * *********Catch exeption*************** */

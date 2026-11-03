@@ -3,6 +3,42 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 03/11/2026 Beta 1.5.1
+- Boutons d'ajout de couleur et d'action plus visibles
+- Correction de la création d'un équipement, impossible depuis la 1.5.0
+- Correction des évènements répétés toutes les deux semaines ou plus : dates décalées, jours manquants, décalage d'une semaine à partir de janvier 2027
+- Les modifications d'une récurrence dans l'agenda d'origine sont reportées sur les évènements déjà importés
+- La sauvegarde de l'équipement et la commande Rafraichir appliquent aussitôt couleurs, actions et décalages
+- Tous les agendas sont retraités après la mise à jour du plugin, puis le 1er de chaque mois
+- Un agenda dont l'import échoue est retenté au passage suivant de son cron
+- Commandes des jours à venir : correction des évènements mensuels, annuels (anniversaires) et du type « 2e lundi du mois »
+- Option « commande jours suivants » : un agenda créé dans le plugin Agenda ne bloque plus la mise à jour des autres
+- Noms, notes et lieux complets pour les agendas Outlook et les ical aux lignes longues
+- Le plugin ne plante plus quand le plugin Agenda est désactivé ou désinstallé
+- Bouton « Mise à jour J+ » : les erreurs sont désormais affichées
+- Correction de règles de récurrence invalides qui pouvaient bloquer l'import
+- Traductions corrigées et complétées
+- Documentation mise à jour
+
+# 27/09/2026 Beta 1.5.0
+- Début et fin des évènements personnalisés réglables à la minute (0 à 360 min)
+- Actualisation des agendas beaucoup moins gourmande en ressources, surtout pour les agendas volumineux
+- Un agenda en erreur ne bloque plus l'actualisation des agendas suivants
+- Messages d'erreur plus précis dans les logs
+- Correction des notes et lieux perdus lorsqu'ils contiennent une virgule ou un point-virgule
+- Correction des récurrences mensuelles du type « 2e lundi » ou « dernier vendredi », absentes des commandes des jours à venir
+- Correction de l'arrêt de l'import sur certains évènements récurrents
+- Correction d'anciens évènements sans date de fin conservés à tort
+- Correction de fuseaux horaires mal reconnus (Australie, Amérique du Sud, Mexique…) qui bloquaient l'import ou décalaient les horaires
+- Un fuseau horaire inconnu n'interrompt plus l'import : celui de Jeedom est utilisé à la place
+- Correction d'un agenda créé en double à chaque actualisation sur les Jeedom en italien, un message signale les doublons à supprimer
+
+# 25/02/2026 Beta 1.4.8
+- Correction bug sur la vérification de la date
+
+# 05/02/2026 Beta 1.4.7
+- Autorisation de changer le nom de l'agenda
+
 # 04/10/2025 Stable 1.4.2
 - Correction erreur sur double quotes dans le nom de l'évènement
 

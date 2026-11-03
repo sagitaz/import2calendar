@@ -29,7 +29,6 @@ $("#table_cmd").sortable({
   forcePlaceholderSize: true
 })
 /* Fonction permettant l'affichage des commandes dans l'équipement */
-/* Fonction permettant l'affichage des commandes dans l'équipement */
 function addCmdToTable(_cmd) {
   if (!isset(_cmd)) {
     var _cmd = { configuration: {} }
@@ -94,21 +93,55 @@ function addCmdToTable(_cmd) {
 
 var actionOptions = null
 
-document.getElementById('bt_chooseIcon').addEventListener('click', function () {
+/* Un identifiant absent de la page ne doit pas interrompre le script : les gestionnaires
+   déclarés plus bas ne seraient plus posés, sans message visible */
+function onClickById(_id, _handler) {
+  var element = document.getElementById(_id)
+  if (element) {
+    element.addEventListener('click', _handler)
+  }
+}
+
+onClickById('bt_chooseIcon', function () {
   jeedomUtils.chooseIcon(function (_icon) {
     document.querySelector('.eqLogicAttr[data-l1key=configuration][data-l2key=icon]').innerHTML = _icon
   })
 })
 
-document.getElementById('bt_documentation').addEventListener('click', function () {
+onClickById('majCmds', function () {
+  $.ajax({
+    type: "POST",
+    url: "plugins/import2calendar/core/ajax/import2calendar.ajax.php",
+    data: {
+      action: "majCmds"
+    },
+    dataType: 'json',
+    error: function (request, status, error) {
+      handleAjaxError(request, status, error);
+    },
+    success: function (data) {
+      // ajax::error() répond en HTTP 200 : le refus du serveur arrive ici
+      if (data.state != 'ok') {
+        $('#div_alert').showAlert({ message: data.result, level: 'danger' })
+        return
+      }
+      $('#div_alert').showAlert({
+        message: '{{Mise à jour des commandes agenda réussie.}}',
+        level: 'success'
+      });
+    }
+  })
+});
+
+onClickById('bt_documentation', function () {
   window.open('https://sagitaz.github.io/import2calendar/fr_FR/', '_blank');
 });
 
-document.getElementById('bt_changelog').addEventListener('click', function () {
+onClickById('bt_changelog', function () {
   window.open('https://sagitaz.github.io/import2calendar/fr_FR/changelog', '_blank');
 });
 
-document.getElementById('bt_discord').addEventListener('click', function () {
+onClickById('bt_discord', function () {
   window.open('https://discord.gg/PGAPDHhdtC', '_blank');
 });
 
@@ -162,6 +195,14 @@ function addColor(_color) {
   if (!isset(_color.options)) {
     _color.options = {}
   }
+  // Un réglage enregistré en heures (startEvent / endEvent) est affiché converti en minutes ;
+  // la sauvegarde de l'équipement ne réécrit ensuite que les clés en minutes
+  if (!isset(_color.startEventMinutes) && isset(_color.startEvent)) {
+    _color.startEventMinutes = _color.startEvent * 60
+  }
+  if (!isset(_color.endEventMinutes) && isset(_color.endEvent)) {
+    _color.endEventMinutes = _color.endEvent * 60
+  }
   var div = '<div class="color form-group">'
   div += '<span class="input-group-btn">'
   div += '<div class="col-sm-1">'
@@ -177,26 +218,10 @@ function addColor(_color) {
   div += '<div><input type="color" class="expressionAttr" data-l1key="colorText" value="#ffffff"></div>'
   div += '</div>'
   div += '<div class="col-sm-2">'
-  div += '<div><select class="expressionAttr form-control col-sm-10" data-l1key="startEvent">'
-  div += '<option value="0" selected>{{A l\'heure}}</option>'
-  div += '<option value="1">{{1 heure avant}}</option>'
-  div += '<option value="2">{{2 heures avant}}</option>'
-  div += '<option value="3">{{3 heures avant}}</option>'
-  div += '<option value="4">{{4 heures avant}}</option>'
-  div += '<option value="5">{{5 heures avant}}</option>'
-  div += '<option value="6">{{6 heures avant}}</option>'
-  div += '</select></div>'
+  div += '<div><input type="number" min="0" max="360" step="1" value="0" class="expressionAttr form-control col-sm-10" data-l1key="startEventMinutes"></div>'
   div += '</div>'
   div += '<div class="col-sm-2">'
-  div += '<div><select class="expressionAttr form-control col-sm-10" data-l1key="endEvent">'
-  div += '<option value="0" selected>{{A l\'heure}}</option>'
-  div += '<option value="1">{{1 heure après}}</option>'
-  div += '<option value="2">{{2 heures après}}</option>'
-  div += '<option value="3">{{3 heures après}}</option>'
-  div += '<option value="4">{{4 heures après}}</option>'
-  div += '<option value="5">{{5 heures après}}</option>'
-  div += '<option value="6">{{6 heures après}}</option>'
-  div += '</select></div>'
+  div += '<div><input type="number" min="0" max="360" step="1" value="0" class="expressionAttr form-control col-sm-10" data-l1key="endEventMinutes"></div>'
   div += '</div>'
   div += '</span>'
   div += '</div>'
@@ -275,22 +300,19 @@ function saveEqLogic(_eqLogic) {
 
   _eqLogic.configuration.starts = []
   $('#div_start').each(function () {
-    let actionStart = $(this).getValues('.startAttr')
-    actionStart = $(this).find('.start').getValues('.expressionAttr')
+    let actionStart = $(this).find('.start').getValues('.expressionAttr')
     _eqLogic.configuration.starts.push(actionStart)
   })
 
   _eqLogic.configuration.ends = []
   $('#div_end').each(function () {
-    let actionEnd = $(this).getValues('.endAttr')
-    actionEnd = $(this).find('.end').getValues('.expressionAttr')
+    let actionEnd = $(this).find('.end').getValues('.expressionAttr')
     _eqLogic.configuration.ends.push(actionEnd)
   })
 
   _eqLogic.configuration.colors = []
   $('#div_color').each(function () {
-    let actionColor = $(this).getValues('.colorAttr')
-    actionColor = $(this).find('.color').getValues('.expressionAttr')
+    let actionColor = $(this).find('.color').getValues('.expressionAttr')
     _eqLogic.configuration.colors.push(actionColor)
   })
   return _eqLogic
@@ -298,14 +320,11 @@ function saveEqLogic(_eqLogic) {
 
 function printEqLogic(_eqLogic) {
   $('#div_start').empty()
-  START_LIST = []
   if (isset(_eqLogic.configuration) && isset(_eqLogic.configuration.starts)) {
     actionOptions = []
-    console.log(_eqLogic.configuration.starts);
     for (var i in _eqLogic.configuration.starts[0]) {
       addAction(_eqLogic.configuration.starts[0][i], "start")
     }
-    START_LIST = null
     jeedom.cmd.displayActionsOption({
       params: actionOptions,
       async: false,
@@ -322,13 +341,11 @@ function printEqLogic(_eqLogic) {
   }
 
   $('#div_end').empty()
-  END_LIST = []
   if (isset(_eqLogic.configuration) && isset(_eqLogic.configuration.ends)) {
     actionOptions = []
     for (var i in _eqLogic.configuration.ends[0]) {
       addAction(_eqLogic.configuration.ends[0][i], "end")
     }
-    END_LIST = null
     jeedom.cmd.displayActionsOption({
       params: actionOptions,
       async: false,
@@ -344,28 +361,11 @@ function printEqLogic(_eqLogic) {
     })
   }
 
+  // Les couleurs n'ont pas d'options d'action à charger depuis le serveur
   $('#div_color').empty()
-  COLOR_LIST = []
   if (isset(_eqLogic.configuration) && isset(_eqLogic.configuration.colors)) {
-    colorOptions = []
     for (var i in _eqLogic.configuration.colors[0]) {
       addColor(_eqLogic.configuration.colors[0][i])
     }
-    COLOR_LIST = null
-    jeedom.cmd.displayActionsOption({
-      params: colorOptions,
-      async: false,
-      error: function (error) {
-        $('#div_alert').showAlert({ message: error.message, level: 'danger' })
-      },
-      success: function (data) {
-        for (var i in data) {
-          $('#' + data[i].id).append(data[i].html.html)
-        }
-        jeedomUtils.taAutosize()
-      }
-    })
   }
-
-
 }

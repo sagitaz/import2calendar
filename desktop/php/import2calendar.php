@@ -39,6 +39,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<br>
 				<span>{{Ajouter}}</span>
 			</div>
+			<div class="cursor eqLogicAction" id="majCmds">
+				<i class="fas fa-arrow-circle-up"></i>
+				<br>
+				<span>{{Mise à jour J+}}</span>
+			</div>
 			<div class="cursor eqLogicAction logoSecondary" data-action="gotoPluginConf">
 				<i class="fas fa-wrench"></i>
 				<br>
@@ -165,7 +170,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 										<a class="btn btn-default form-control bt_showPass roundedRight"><i class="fas fa-eye"></i></a>
 									</span>
 								</div>
-								</br>
+								<br>
 								<label class="col-sm-4 control-label">{{Heures de début forcées}}
 								</label>
 								<div class="col-sm-6">
@@ -180,7 +185,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 										</script>
 									</select>
 								</div>
-								</br>
+								<br>
 								<label class="col-sm-4 control-label">{{Heures de fin forcées}}
 								</label>
 								<div class="col-sm-6">
@@ -195,8 +200,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 										</script>
 									</select>
 								</div>
-								</br>
-								</br>
+								<br>
+								<br>
 								<label class="col-sm-4 control-label">{{ICAL général}}
 								</label>
 								<div class="col-sm-6">
@@ -227,7 +232,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 									<div class="input-group">
 										<input type="text" class="eqLogicAttr form-control roundedLeft" data-l1key="configuration" data-l2key="autorefresh" placeholder="{{Cliquer sur ? pour afficher l'assistant cron}}">
 										<span class="input-group-btn">
-											<a class="btn btn-default cursor jeeHelper roundedRight" data-helper="cron" title="Assistant cron">
+											<a class="btn btn-default cursor jeeHelper roundedRight" data-helper="cron" title="{{Assistant cron}}">
 												<i class="fas fa-question-circle"></i>
 											</a>
 										</span>
@@ -249,14 +254,14 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								<label class="col-sm-4 control-label">{{Couleur de fond}}
 								</label>
 								<div class="col-sm-6">
-									<input type="color" class="eqLogicAttr" data-l1key="configuration" data-l2key="color" value='2980b9'>
+									<input type="color" class="eqLogicAttr" data-l1key="configuration" data-l2key="color" value='#2980b9'>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-4 control-label">{{Couleur du texte}}
 								</label>
 								<div class="col-sm-6">
-									<input type="color" class="eqLogicAttr" data-l1key="configuration" data-l2key="text_color" value='2980b9'>
+									<input type="color" class="eqLogicAttr" data-l1key="configuration" data-l2key="text_color" value='#ffffff'>
 								</div>
 							</div>
 						</div>
@@ -272,15 +277,15 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<div class="alert alert-info" role="alert">
 					{{Attention, ne pas modifier les couleurs depuis le plugin agenda}}.<br>
 				</div>
-				<div class="colorAttr form-group" id="actionTab">
+				<div class="colorAttr form-group">
 					<br>
-					<div class="alert alert-success bt_addColor" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une couleur personnalisée}}.
+					<div class="text-right" style="margin-bottom:10px;">
+						<a class="btn btn-success btn-sm bt_addColor"><i class="fas fa-plus-circle"></i> {{Ajouter une couleur personnalisée}}</a>
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
 							<div class="form-control">
-								<a class="col-sm-1">{{}}
+								<a class="col-sm-1">
 								</a>
 								<a class="col-sm-5">{{Nom de l'évènement}}
 								</a>
@@ -288,9 +293,9 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								</a>
 								<a class="col-sm-1 text-center">{{Texte}}
 								</a>
-								<a class="col-sm-2 text-center">{{Début}}
+								<a class="col-sm-2 text-center">{{Début (min avant)}}
 								</a>
-								<a class="col-sm-2 text-center">{{Fin}}
+								<a class="col-sm-2 text-center">{{Fin (min après)}}
 								</a>
 							</div>
 							<div id="div_color" class="col-xs-12" style="padding:10px;margin-bottom:15px;background-color:rgb(var(--bg-color));">
@@ -303,10 +308,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<div class="alert alert-info" role="alert">
 					{{Attention, ne pas modifier les actions depuis le plugin agenda}}.<br>
 				</div>
-				<div class="startAttr form-group" id="actionTab">
+				<div class="startAttr form-group">
 					<br>
-					<div class="alert alert-success bt_addActionStart" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une action de début}}.
+					<div class="text-right" style="margin-bottom:10px;">
+						<a class="btn btn-success btn-sm bt_addActionStart"><i class="fas fa-plus-circle"></i> {{Ajouter une action de début}}</a>
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
@@ -320,10 +325,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<div class="alert alert-info" role="alert">
 					{{Attention, ne pas modifier les actions depuis le plugin agenda}}.<br>
 				</div>
-				<div class="endAttr" id="actionTab">
+				<div class="endAttr">
 					<br>
-					<div class="alert alert-warning bt_addActionEnd" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une action de fin}}.
+					<div class="text-right" style="margin-bottom:10px;">
+						<a class="btn btn-success btn-sm bt_addActionEnd"><i class="fas fa-plus-circle"></i> {{Ajouter une action de fin}}</a>
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
@@ -333,7 +338,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 					</form>
 				</div>
 			</div><!-- /.tabpanel  #endtab-->
-		</div><!-- /.eqLogic -->
+		</div><!-- /.tab-content -->
+	</div><!-- /.eqLogic -->
 	</div><!-- /.row row-overflow -->
 
 	<?php
