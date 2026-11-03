@@ -279,8 +279,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</div>
 				<div class="colorAttr form-group">
 					<br>
-					<div class="alert alert-success bt_addColor" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une couleur personnalisée}}.
+					<div class="text-right" style="margin-bottom:10px;">
+						<a class="btn btn-success btn-sm bt_addColor"><i class="fas fa-plus-circle"></i> {{Ajouter une couleur personnalisée}}</a>
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
@@ -310,8 +310,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</div>
 				<div class="startAttr form-group">
 					<br>
-					<div class="alert alert-success bt_addActionStart" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une action de début}}.
+					<div class="text-right" style="margin-bottom:10px;">
+						<a class="btn btn-success btn-sm bt_addActionStart"><i class="fas fa-plus-circle"></i> {{Ajouter une action de début}}</a>
 					</div>
 					<form class="form-horizontal">
 						<fieldset>
@@ -327,8 +327,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				</div>
 				<div class="endAttr">
 					<br>
-					<div class="alert alert-warning bt_addActionEnd" role="alert" style="cursor:pointer !important;">
-						{{Ajouter une action de fin}}.
+					<div class="text-right" style="margin-bottom:10px;">
+						<a class="btn btn-success btn-sm bt_addActionEnd"><i class="fas fa-plus-circle"></i> {{Ajouter une action de fin}}</a>
 					</div>
 					<form class="form-horizontal">
 						<fieldset>

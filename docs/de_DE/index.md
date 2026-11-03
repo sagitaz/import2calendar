@@ -2,23 +2,28 @@
 
 Das Plugin dient dazu, einen Kalender im iCal-Format in das offizielle Jeedom-Kalender-Plugin (calendar) zu importieren. Dieses muss daher installiert und konfiguriert sein.
 ## Voraussetzungen
-- Kalender-Plugin
+- Mindestens Jeedom 4.4, mindestens Debian 11
+- Plugin „Agenda“, installiert und aktiviert
 - Plugin „import2calendar“
 
 ## Achtung
-**Es sind keine Änderungen am iCal möglich. Die Daten werden aus dem iCal abgerufen und an das Jeedom-Kalender-Plugin gesendet. Nehmen Sie keine Änderungen am im Kalender-Plugin erstellten Kalender vor, da diese beim nächsten Update Ihres iCal gelöscht würden.**
+**Es sind keine Änderungen am iCal möglich. Die Daten werden aus dem iCal abgerufen und an das Jeedom-Plugin „Agenda“ gesendet. Nehmen Sie keine Änderungen am im Plugin „Agenda“ erstellten Kalender vor, da diese beim nächsten Update Ihres iCal gelöscht würden.**
 
 
 # <u>Konfiguration</u>
+
+## Einrichtung des Plugins
+- **Anzahl der Tage, die ein Ereignis gespeichert bleibt**: Zeitraum, in dem ein vergangenes Ereignis im Kalender verbleibt, von 3 bis 31 Tagen (Standardwert: 3).
+- **Aufträge der kommenden Tage**: Fügt die Aufträge der kommenden Tage (siehe Abschnitt „Agenda-Plugin“) zu allen Kalendern des Agenda-Plugins hinzu, einschließlich derjenigen, die nicht von import2calendar erstellt wurden.
 
 ## Gerät anlegen
 Fügen Sie zunächst ein Gerät hinzu und wählen Sie einen Namen dafür aus
 ### Importparameter
 - **ical**: Geben Sie die URL der zu konvertierenden iCal-Datei an.
-- **Festgelegte Startzeit**: Wählen Sie eine Startzeit für alle Ereignisse im Kalender aus. Standardmäßig werden die im iCal gespeicherten Startzeiten der Ereignisse übernommen.
-- **Festgelegte Endzeit**: Wählen Sie eine Endzeit für alle Ereignisse im Kalender aus. Standardmäßig werden die im iCal gespeicherten Endzeiten der Ereignisse verwendet.
-- **ical auto**: Französische Feiertage und gesetzliche Feiertage. Wenn diese Option ausgewählt ist, geben Sie im Feld „ical“ nichts ein.
-- **cron**: Wählen Sie die gewünschte Aktualisierungszeit für den Kalender aus.
+- **Vorgeschriebene Startzeiten**: Wählen Sie eine Startzeit für alle Ereignisse im Kalender aus. Standardmäßig werden die im iCal gespeicherten Startzeiten der Ereignisse verwendet.
+- **Vorgeschriebene Endzeiten**: Wählen Sie eine Endzeit für alle Ereignisse im Kalender aus. Standardmäßig werden die im iCal gespeicherten Endzeiten der Ereignisse verwendet.
+- **Allgemeiner iCal**: Französische Schulferien und Feiertage. Wenn diese Option ausgewählt ist, geben Sie im iCal-Feld nichts ein.
+- **Automatische Aktualisierung**: Wählen Sie den gewünschten Cron-Job für die Aktualisierung des Kalenders aus.
 
 ### Anzeigeeinstellungen
 - **Symbol**: Das Symbol, das jedem Ereignis zugewiesen wird.
@@ -31,8 +36,8 @@ Hier können Sie bestimmte Ereignisse in Ihrem iCal individuell anpassen.
 - Hintergrundfarbe und Textfarbe.
 
 Hier sind standardmäßig keine Änderungen vorgenommen worden. Mit diesen Optionen können Sie die Start- und Endzeit ändern, um beispielsweise geplante Aktionen vorwegzunehmen.
-- Startzeit: Die Startzeit der Veranstaltung beginnt X Stunden vorher.
-- Endzeit: Das Ereignis endet X Stunden später.
+- Start: Die Veranstaltung beginnt X Minuten vor der angegebenen Startzeit (von 0 bis 360).
+- Ende: Die Veranstaltung endet X Minuten nach ihrer Endzeit (von 0 bis 360).
 
 ### Maßnahmen zu Beginn und am Ende
 Für alle Termine in Ihrem Kalender werden die hier definierten Aktionen hinzugefügt.
@@ -55,7 +60,7 @@ Der entsprechende Kalender wird im Kalender-Plugin erstellt.
 
 Beispiel:
 
-Hier sehen wir die Termine im Kalender-Plugin; außerdem ist zu erkennen, dass ich die Farbe angepasst habe.
+Hier sehen wir die Termine im Kalender-Plugin; außerdem ist zu erkennen, dass ich die Farbe ebenfalls angepasst habe.
 
 ![Terminkalender](../images/Agenda-exemple.png)
 
@@ -73,25 +78,29 @@ Wenn Sie eine der folgenden Optionen ändern:
 - Symbol
 - Hintergrundfarbe
 - Textfarbe
+- Anpassung von Ereignissen (Farben, Start und Ende)
+- festgelegte Start- und Endzeiten
 - Erste Schritte
 - Abschlussaktionen
 
-Die Termine werden im Kalender geändert.
+Die Ereignisse werden im Kalender aktualisiert, sobald das Gerät gespeichert wurde.
 
 ## Ereignisverwaltung
-Bei jeder Sicherung oder jedes Mal, wenn der festgelegte Cron-Job die iCal-Datei auswertet, wird ein Ereignis, das nicht mehr in der iCal-Datei enthalten ist, aus dem Kalender gelöscht.
-Veranstaltungen, die länger als drei Tage zurückliegen, werden nicht importiert und nach und nach gelöscht.
+Der iCal wird bei jedem Speichern des Geräts und bei jeder Ausführung seines Befehls **Aktualisieren** verarbeitet. Der definierte Cron-Job verarbeitet ihn hingegen nur, wenn sich der iCal geändert hat.
+Am 1. jedes Monats sowie nach jedem Update des Plugins werden alle Kalender beim nächsten Durchlauf ihres Cron-Jobs erneut verarbeitet. Ein Gerät ohne Cron-Job wird erst bei seiner nächsten Sicherung verarbeitet.
+Wenn ein Termin nicht mehr im iCal enthalten ist, wird er aus dem Kalender gelöscht.
+Ereignisse, die länger als 3 Tage zurückliegen (die Dauer kann in den Plugin-Einstellungen angepasst werden), werden nicht importiert und nach und nach gelöscht.
 
 ## Vorkommen
-Die in Ihrer iCal-Datei definierten Regeln werden in das Jeedom-Agenda-Format konvertiert. Ich habe nicht alle Möglichkeiten getestet. Sollten einige davon nicht funktionieren, fügen Sie bitte die entsprechende Zeile aus dem Import2Calendar-Protokoll bei: **event options** (stellen Sie Ihre Protokolle auf „Warning“ oder „Debug“ ein).
+Die in Ihrem iCal definierten Regeln werden in das Jeedom-Agenda-Format konvertiert. Ich habe nicht alle Möglichkeiten getestet. Falls einige davon nicht funktionieren sollten, fügen Sie bitte die Zeile aus dem Import2Calendar-Protokoll bei: **START OPTIONS** (stellen Sie Ihre Protokolle auf „Debug“ ein).
 
 
 Die in der Instanz enthaltenen Ereignisse bleiben im Kalender sichtbar, solange die Instanz gültig ist.
 
-Beispiel: 1 Ereignis alle 5 Tage vom 01.03.2024 bis zum 24.11.2024. Alle Ereignisse sind im Kalender bis zum 27.11.2024 (3 Tage nach Ende des Ereignisses) sichtbar.
+Beispiel: 1 Ereignis alle 5 Tage vom 01.03.2024 bis zum 24.11.2024. Alle Ereignisse sind im Kalender bis zum 27.11.2024 sichtbar (3 Tage nach Ende des Ereignisses, bei Standarddauer).
 
 ## Kalender-Plugin
-In Ihrem Kalender werden die Informationen zu den bevorstehenden Veranstaltungen hinzugefügt.
+In Ihrem Kalender werden die Einträge mit Informationen zu bevorstehenden Veranstaltungen hinzugefügt. Diese werden jede Nacht aktualisiert oder auf Wunsch über die Schaltfläche **„J+ aktualisieren“** auf der Plugin-Seite.
 Sie erhalten somit 9 neue Befehle:
 - gestern
 - heute
@@ -104,18 +113,16 @@ Sie erhalten somit 9 neue Befehle:
 - Tag 7
 
 ## ical <-> Jeedom
-Bei bestimmten Einträgen ist eine Konvertierung in das Jeedom-Format nicht möglich; daher müssen Sie Ihre Kalender entsprechend anpassen.
-Das ist zum Beispiel hier der Fall:
+Bestimmte wiederkehrende Termine sind im Kalender-Plugin nicht verfügbar, zum Beispiel:
 - Dienstag und Mittwoch alle drei Wochen
-Damit die Daten in Jeedom übertragen werden, müssen Sie Folgendes erstellen:
-- jeden Dienstag alle drei Wochen
-- Mittwochs alle drei Wochen
+
+Diese werden dann als Datumsangaben importiert, auf ein Jahr berechnet und bei jeder Verarbeitung des Kalenders neu berechnet, spätestens am 1. jedes Monats. Ein Gerät ohne Cron-Job muss daher mindestens einmal im Jahr gesichert werden, damit diese Datumsangaben nicht verfallen.
 
 # <u>JeeMate</u>
 - Die Beschreibung und der Ort werden im in JeeMate importierten Kalender angezeigt.
 
 # <u>Achtung</u>
-- Der Name des erstellten Termins entspricht dem Namen des Geräts + „-ical“ (er kann nun geändert werden)
+- Der Name des erstellten Termins entspricht dem Namen des Geräts + „-ical“ (er kann anschließend umbenannt werden)
 - Der Raum wird identisch sein
 
 # <u>Support</u>
@@ -126,7 +133,7 @@ Damit die Daten in Jeedom übertragen werden, müssen Sie Folgendes erstellen:
 Um mir die Arbeit beim Debuggen eines Konvertierungsfehlers zu erleichtern, bitte ich Sie, einen Testkalender zu erstellen, der ausschließlich das problematische Ereignis enthält, und mir Zugriff auf diesen iCal zu gewähren.
 
 
-# <u>Vielen Dank</u>
+# <u>Danksagungen</u>
 Das Plugin und der Support sind kostenlos. Wenn Sie mir dennoch gerne einen Kaffee oder Babywindeln spendieren möchten, bedanke ich mich schon im Voraus.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/C1C61AKVV7)

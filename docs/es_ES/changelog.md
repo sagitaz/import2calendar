@@ -3,6 +3,23 @@
 >**IMPORTANTE**
 Si no hay información sobre la actualización, es porque esta se refiere únicamente a la actualización de la documentación, la traducción o el texto.
 
+# 03/11/2026 Beta 1.5.1
+- Botones para añadir colores y acciones más visibles
+- Se ha corregido el error que impedía crear un dispositivo desde la versión 1.5.0
+- Corrección de eventos que se repiten cada dos semanas o más: fechas desplazadas, días que faltan, desfase de una semana a partir de enero de 2027
+- Los cambios realizados en una tarea recurrente del calendario original se aplican a los eventos ya importados
+- Al guardar la configuración y pulsar el botón «Actualizar», se aplican inmediatamente los colores, las acciones y los retrasos
+- Todas las agendas se actualizan tras la actualización del complemento y, posteriormente, el primer día de cada mes.
+- Si falla la importación de una agenda, se vuelve a intentar en la siguiente ejecución de su cron
+- Comandos para los próximos días: corrección de eventos mensuales, anuales (cumpleaños) y del tipo «segundo lunes del mes»
+- Opción «programación para los próximos días»: una agenda creada en el complemento Agenda ya no impide la actualización de las demás
+- Nombres, notas y ubicaciones completas para las agendas de Outlook y los archivos iCal con líneas largas
+- El complemento ya no se cuelga cuando el complemento Agenda está desactivado o desinstalado
+- Botón «Actualización J+»: ahora se muestran los errores
+- Se han corregido las reglas de recurrencia no válidas que podían bloquear la importación
+- Traducciones corregidas y completadas
+- Documentación actualizada
+
 # 27/09/2026 Beta 1.5.0
 - Inicio y fin de los eventos personalizados ajustables al minuto (de 0 a 360 min)
 - La actualización de las agendas consume muchos menos recursos, sobre todo en el caso de las agendas con gran volumen de datos
