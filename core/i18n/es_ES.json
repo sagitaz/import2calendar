@@ -107,6 +107,7 @@
         "commande jours suivants": "comandos de los días siguientes"
     },
     "plugins\/import2calendar\/plugin_info\/install.php": {
+        "Attention, vous utilisez la version #version# de Debian, aucun support n'est disponible. La version 12 de Debian est recommandée.": "Atención: estás utilizando la versión #version# de Debian; no hay soporte disponible. Se recomienda la versión 12 de Debian.",
         "Identifiants techniques corrigés sur": "Datos técnicos corregidos en",
         "équipement(s). Les versions précédentes pouvaient créer un agenda en double à chaque actualisation : vérifiez la liste de vos agendas dans le plugin Agenda et supprimez les doublons éventuels.": "equipo(s). Las versiones anteriores podían crear un calendario duplicado cada vez que se actualizaban: comprueba la lista de tus calendarios en el complemento «Agenda» y elimina los posibles duplicados."
     }
