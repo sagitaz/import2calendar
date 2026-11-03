@@ -2,23 +2,28 @@
 
 El complemento sirve para importar un calendario en formato iCal al complemento oficial de Jeedom «Agenda» (calendar), por lo que este último debe estar instalado y configurado.
 ## Requisitos previos
-- Complemento Agenda
+- Jeedom 4.4 como mínimo, Debian 11 como mínimo
+- Complemento Agenda, instalado y activado
 - Complemento import2calendar
 
 ## Atención
-**No es posible realizar modificaciones en el archivo iCal; se recopila la información del iCal para enviarla al complemento «Agenda» de Jeedom. No realices ninguna modificación en la agenda creada en el complemento «Agenda», ya que se borrarían con la próxima actualización de tu iCal.**
+**No es posible realizar modificaciones en el archivo iCal; se recogen los datos del iCal para enviarlos al complemento «Agenda» de Jeedom. No realices ninguna modificación en la agenda creada en el complemento «Agenda», ya que se eliminarían con la próxima actualización de tu iCal.**
 
 
 # <u>Configuración</u>
+
+## Configuración del complemento
+- **Número de días de retención**: periodo durante el cual un evento pasado permanece en la agenda, de 3 a 31 días (3 por defecto).
+- **comandos de los próximos días**: añade los comandos de los próximos días (véase la sección «Plugin Agenda») a todas las agendas del plugin Agenda, incluidas aquellas que no hayan sido creadas por import2calendar.
 
 ## Crear un dispositivo
 Empieza por añadir un dispositivo y elige su nombre
 ### Parámetros de importación
 - **ical**: indica la URL del archivo ical que se va a convertir.
-- **Hora de inicio forzada**: elige una hora de inicio para todos los eventos del calendario. Por defecto, se utilizarán las horas de inicio del evento guardadas en el archivo iCal.
-- **Hora de finalización forzada**: elige una hora de finalización para todos los eventos del calendario. Por defecto, se utilizarán las horas de finalización del evento guardado en el iCal.
-- **ical auto**: vacaciones en Francia y días festivos. Si se selecciona esta opción, no hay que indicar nada en el campo ical.
-- **cron**: elige el tiempo de actualización deseado para el calendario.
+- **Horas de inicio obligatorias**: elegir una hora de inicio para todos los eventos del calendario. Por defecto, se utilizarán las horas de inicio del evento guardado en el iCal.
+- **Horas de finalización obligatorias**: elegir una hora de finalización para todos los eventos del calendario. Por defecto, serán las horas de finalización del evento guardado en el iCal.
+- **ICAL general**: vacaciones escolares francesas y días festivos. Si se selecciona esta opción, no hay que indicar nada en el campo ical.
+- **Actualización automática**: elige la frecuencia de actualización deseada para el calendario.
 
 ### Ajustes de visualización
 - **icono**: el icono que se aplicará a cada evento.
@@ -31,8 +36,8 @@ Aquí puedes personalizar algunos eventos de tu calendario iCal.
 - Color de fondo y color del texto.
 
 Aquí, por defecto, no se ha modificado nada; estas opciones permiten cambiar la hora de inicio y de finalización para, por ejemplo, anticipar las acciones programadas.
-- Hora de inicio: el evento comenzará X horas antes.
-- Hora de finalización: el evento finalizará X horas después.
+- Inicio: el evento comenzará X minutos antes de la hora de inicio (de 0 a 360).
+- Fin: el evento finalizará X minutos después de su hora de finalización (de 0 a 360).
 
 ### Acciones de inicio y fin
 A todos los eventos de tu calendario se les añadirán las acciones definidas aquí.
@@ -46,7 +51,7 @@ En el campo **nombre**, puedes indicar el evento para el que está prevista la a
 - No tiene en cuenta las mayúsculas
 
 **1** y **2**: déjalos en blanco o escribe **all** para que la acción se añada a todos los eventos de la agenda.
-**4** - Selecciona **otros** para que la acción se añada a todos los eventos del calendario, excepto a aquellos para los que se haya previsto una acción personalizada.
+**4** - Selecciona **otros** para que la acción se añada a todos los eventos de la agenda, excepto a aquellos para los que se haya previsto una acción personalizada.
 **3** y **5**: introduce el **nombre del evento** para que la acción solo se añada a ellos.
 
 
@@ -73,25 +78,29 @@ Si modificas alguna de las siguientes opciones:
 - icono
 - color de fondo
 - color del texto
+- personalización de eventos (colores, inicio y fin)
+- horas de inicio y fin fijas
 - primeros pasos
 - acciones finales
 
-Los eventos se modificarán en el calendario
+Los eventos se modificarán en el calendario en cuanto se guarde el dispositivo.
 
 ## Gestión de eventos
-Cada vez que se realiza una copia de seguridad o cada vez que el cron definido analiza el archivo iCal, si un evento ya no aparece en dicho archivo, se elimina del calendario.
-Los eventos pasados de más de 3 días no se importan y se irán eliminando progresivamente.
+El iCal se procesa cada vez que se guarda el equipo y cada vez que se ejecuta su comando **Actualizar**. Por su parte, el cron definido solo lo procesa si el iCal ha cambiado.
+El primer día de cada mes, así como tras cada actualización del complemento, todas las agendas se procesan de nuevo en la siguiente ejecución de su cron. Un dispositivo sin cron solo se procesa en su próxima copia de seguridad.
+Si un evento ya no aparece en el archivo iCal, se elimina del calendario.
+Los eventos que hayan tenido lugar hace más de 3 días (duración ajustable en la configuración del complemento) no se importan y se irán eliminando progresivamente.
 
 ## Ocurrencias
-Las reglas definidas en tu ical se convierten al formato de Jeedom Agenda. No he probado todas las posibilidades, así que si alguna no funciona, por favor, adjunta la línea correspondiente del registro de import2calendar: **event options** (configura tus registros en modo «warning» o «debug»).
+Las reglas definidas en tu ical se convierten al formato de Jeedom Agenda. No he probado todas las posibilidades; si alguna no funciona, por favor, adjunta la línea del registro de import2calendar: **START OPTIONS** (activa el modo de depuración en tus registros).
 
 
 Los eventos incluidos en la ocurrencia siguen siendo visibles en el calendario mientras la ocurrencia sea válida.
 
-Ejemplo: 1 evento cada 5 días desde el 1 de marzo de 2024 hasta el 24 de noviembre de 2024. Todos los eventos se pueden ver en el calendario hasta el 27 de noviembre de 2024 (3 días después de que finalice la ocurrencia).
+Ejemplo: 1 evento cada 5 días desde el 1 de marzo de 2024 hasta el 24 de noviembre de 2024. Todos los eventos se pueden ver en el calendario hasta el 27 de noviembre de 2024 (3 días después de que finalice la ocurrencia, con la duración predeterminada).
 
 ## Complemento Agenda
-En tu agenda se añadirán avisos sobre los próximos eventos.
+En tu agenda se añadirán las notificaciones sobre los próximos eventos. Se actualizan cada noche o, si lo deseas, pulsando el botón **Actualización J+** de la página del complemento.
 Así pues, dispondrás de 9 nuevos comandos:
 - ayer
 - hoy
@@ -104,18 +113,16 @@ Así pues, dispondrás de 9 nuevos comandos:
 - d+7
 
 ## ical <-> Jeedom
-En algunos casos, no será posible convertir al formato Jeedom, por lo que tendrás que adaptar tus calendarios.
-Es el caso, por ejemplo, de esto:
+Hay algunas recurrencias que no existen en el complemento Agenda, por ejemplo:
 - los martes y miércoles cada tres semanas
-Para que esto se refleje en Jeedom, tienes que crear:
-- los martes cada tres semanas
-- los miércoles cada tres semanas
+
+A continuación, se importan en forma de fechas, se calculan para un año y se vuelven a calcular cada vez que se procesa la agenda, a más tardar el día 1 de cada mes. Por lo tanto, un dispositivo sin cron debe guardarse al menos una vez al año para que estas fechas no caduquen.
 
 # <u>JeeMate</u>
 - La descripción y la ubicación aparecerán en el calendario importado a JeeMate.
 
 # <u>Atención</u>
-- El nombre de la agenda creada es el mismo que el del dispositivo + «-ical» (ahora es posible modificarlo   )
+- El nombre de la agenda creada es el mismo que el del dispositivo + «-ical» (posteriormente se puede cambiar el nombre).
 - la habitación será idéntica
 
 # <u>Asistencia técnica</u>

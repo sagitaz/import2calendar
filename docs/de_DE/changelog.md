@@ -3,6 +3,23 @@
 >**WICHTIG**
 Wenn keine Informationen zum Update vorhanden sind, bedeutet dies, dass es sich ausschließlich um eine Aktualisierung der Dokumentation, der Übersetzung oder des Textes handelt.
 
+# 03.11.2026 Beta 1.5.1
+- Besser sichtbare Schaltflächen zum Hinzufügen von Farben und Aktionen
+- Behebung eines Fehlers beim Anlegen eines Geräts, der seit Version 1.5.0 auftrat
+- Korrektur von Ereignissen, die alle zwei Wochen oder seltener wiederkehren: verschobene Daten, fehlende Tage, Verschiebung um eine Woche ab Januar 2027
+- Änderungen an einem wiederkehrenden Termin im ursprünglichen Kalender werden auf die bereits importierten Termine übertragen
+- Die Speicherung der Geräteeinstellungen und der Befehl „Aktualisieren“ wenden Farben, Aktionen und Versätze sofort an
+- Alle Kalender werden nach der Aktualisierung des Plugins und anschließend am 1. jedes Monats neu berechnet.
+- Ein Task, dessen Import fehlschlägt, wird beim nächsten Durchlauf seines Cron-Jobs erneut versucht
+- Steuerung der kommenden Tage: Korrektur von monatlichen und jährlichen Ereignissen (Geburtstage) sowie von Ereignissen vom Typ „zweiter Montag des Monats“
+- Option „Bestellung für die folgenden Tage“: Ein im Plugin „Agenda“ erstellter Kalender verhindert nicht mehr die Aktualisierung anderer Plugins
+- Vollständige Namen, Notizen und Orte für Outlook-Kalender und iCal-Einträge mit langen Zeilen
+- Das Plugin stürzt nicht mehr ab, wenn das Kalender-Plugin deaktiviert oder deinstalliert ist
+- Schaltfläche „J+ aktualisieren“: Fehler werden nun angezeigt
+- Behebung ungültiger Wiederholungsregeln, die den Import blockieren konnten
+- Korrigierte und ergänzte Übersetzungen
+- Aktualisierte Dokumentation
+
 # 27.09.2026 Beta 1.5.0
 - Start und Ende benutzerdefinierter Ereignisse minengenau einstellbar (0 bis 360 Min.)
 - Die Aktualisierung von Kalendern ist wesentlich ressourcenschonender, insbesondere bei umfangreichen Kalendern
