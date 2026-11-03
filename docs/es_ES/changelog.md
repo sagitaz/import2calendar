@@ -3,7 +3,10 @@
 >**IMPORTANTE**
 Si no hay información sobre la actualización, es porque esta se refiere únicamente a la actualización de la documentación, la traducción o el texto.
 
-# 03/11/2026 Beta 1.5.1
+# 03/11/2026 Beta 1.6.0
+- Debian 12 y Jeedom 4.6 como mínimo: los dispositivos con Debian 11 o Jeedom 4.4/4.5 se quedan en la versión 1.5.1
+
+# 03/11/2026 Estable 1.5.1
 - Botones para añadir colores y acciones más visibles
 - Se ha corregido el error que impedía crear un dispositivo desde la versión 1.5.0
 - Corrección de eventos que se repiten cada dos semanas o más: fechas desplazadas, días que faltan, desfase de una semana a partir de enero de 2027
