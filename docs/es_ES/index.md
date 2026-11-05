@@ -26,6 +26,11 @@ El complemento sirve para importar un calendario en formato iCal al complemento 
 Empieza por añadir un dispositivo y elige su nombre
 ### Parámetros de importación
 - **ical**: indica la URL del archivo ical que se va a convertir.
+- **Nombre de usuario** y **Contraseña**: rellénalos solo si el servidor del calendario solicita autenticación (por ejemplo, Baïkal, con una URL del tipo `http://serveur/dav.php/calendars/utilisateur/default?export`). Déjalos en blanco para Google, Outlook y las direcciones públicas.
+  - No introduzcas la contraseña en la URL: en estos campos, se cifra y nunca más se muestra.
+  - Deja el campo **Contraseña** en blanco para conservar la que tienes guardada. Borra el **Nombre de usuario** para eliminarlo.
+  - Se aceptan las autenticaciones Digest y, solo en HTTPS, Basic. El certificado de una dirección HTTPS debe ser válido.
+  - Indica la dirección final del calendario: no se siguen las redirecciones cuando se introduce un identificador.
 - **Horas de inicio obligatorias**: elegir una hora de inicio para todos los eventos del calendario. Por defecto, se utilizarán las horas de inicio del evento guardado en el iCal.
 - **Horas de finalización obligatorias**: elegir una hora de finalización para todos los eventos del calendario. Por defecto, serán las horas de finalización del evento guardado en el iCal.
 - **ICAL general**: vacaciones escolares francesas y días festivos. Si se selecciona esta opción, no hay que indicar nada en el campo ical.

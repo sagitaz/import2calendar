@@ -3,6 +3,10 @@
 >**IMPORTANTE**
 Si no hay información sobre la actualización, es porque esta se refiere únicamente a la actualización de la documentación, la traducción o el texto.
 
+# 06/11/2026 Beta 1.6.1
+- Compatibilidad con agendas protegidas con nombre de usuario y contraseña (por ejemplo, Baïkal): nuevos campos en el equipo, contraseña cifrada
+- La dirección completa de la agenda ya no aparece en los registros
+
 # 03/11/2026 Beta 1.6.0
 - Debian 12 y Jeedom 4.6 como mínimo: los dispositivos con Debian 11 o Jeedom 4.4/4.5 se quedan en la versión 1.5.1
 
