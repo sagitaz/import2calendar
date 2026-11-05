@@ -907,7 +907,12 @@ class import2calendar extends eqLogic
   }
 
   // Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
-  public function preSave() {}
+  public function preSave()
+  {
+    if ($this->getConfiguration('icalLogin') === '' && $this->getConfiguration('icalPassword') !== '') {
+      $this->setConfiguration('icalPassword', null);
+    }
+  }
 
   // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
   public function postSave()
@@ -953,14 +958,74 @@ class import2calendar extends eqLogic
 
   /*     * **********************Getteur Setteur*************************** */
   /**
+   * Enregistre une valeur de configuration.
+   *
+   * Le mot de passe de l'iCal est chiffré dès sa réception : il ne reste jamais en clair dans
+   * l'objet, y compris dans ce que le core écrit quand une sauvegarde échoue. Une valeur vide
+   * est ignorée, car le formulaire n'affiche jamais le mot de passe enregistré et renvoie donc
+   * un champ vide quand aucun nouveau mot de passe n'est saisi.
+   *
+   * @param string $_key Clé de configuration
+   * @param mixed $_value Valeur, null pour supprimer la clé
+   * @return $this
+   */
+  public function setConfiguration($_key, $_value)
+  {
+    if ($_key === 'icalPassword') {
+      if ($_value === '') {
+        return $this;
+      }
+      $_value = utils::encrypt($_value);
+    }
+    return parent::setConfiguration($_key, $_value);
+  }
+
+  /**
+   * Représentation de l'équipement envoyée au navigateur et à l'API, sans le mot de passe de
+   * l'iCal. icalPasswordSet indique au formulaire si un mot de passe est enregistré.
+   *
+   * @return array<string, mixed>
+   */
+  public function toArray()
+  {
+    $return = parent::toArray();
+    $return['icalPasswordSet'] = isset($return['configuration']['icalPassword']);
+    unset($return['configuration']['icalPassword']);
+    return $return;
+  }
+
+  /**
+   * Adresse de l'iCal réduite à son protocole et à son serveur, seule forme écrite dans les
+   * logs : le reste peut contenir un mot de passe ou un jeton privé.
+   *
+   * @param string $url Adresse de l'iCal
+   * @return string Adresse réduite, ou un texte de remplacement si elle est illisible
+   */
+  private static function urlPourLog($url)
+  {
+    $scheme = parse_url($url, PHP_URL_SCHEME);
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!is_string($scheme) || !is_string($host)) {
+      return '(adresse illisible)';
+    }
+    return $scheme . '://' . $host . '/…';
+  }
+
+  /**
    * Télécharge l'iCal dans un fichier temporaire, à côté du fichier local.
    *
    * Le fichier local n'est pas remplacé ici : parseIcal() ne le fait qu'une fois le
    * traitement réussi, pour qu'un échec laisse l'agenda à retraiter au passage suivant.
    *
+   * Avec des identifiants, Digest est toujours accepté et Basic seulement en HTTPS, pour que
+   * le mot de passe ne circule jamais en clair. Aucune redirection n'est suivie, pour qu'il
+   * ne parte pas vers un autre serveur, et un refus du serveur arrête les tentatives, pour ne
+   * pas déclencher un blocage du compte ou de l'adresse.
+   *
    * @param string $url Adresse de l'iCal
    * @param string $destinationPath Fichier local du dernier iCal traité
    * @param bool $force Rendre le fichier même si son contenu n'a pas changé
+   * @param array<string, string> $auth Identifiants (login, password), vide si le serveur n'en demande pas
    * @param int $timeout Durée maximale d'une tentative, en secondes
    * @param int $retries Nombre de tentatives
    * @param int $delay Attente entre deux tentatives, en secondes
@@ -968,9 +1033,10 @@ class import2calendar extends eqLogic
    *                           échoue, null si le contenu n'a pas changé et que rien ne force
    *                           le traitement
    */
-  private static function downloadIcal($url, $destinationPath, $force = false, $timeout = 30, $retries = 3, $delay = 1)
+  private static function downloadIcal($url, $destinationPath, $force = false, $auth = [], $timeout = 30, $retries = 3, $delay = 1)
   {
     $tmpFile = $destinationPath . '.new';
+    $https = stripos($url, 'https://') === 0;
 
     for ($i = 0; $i < $retries; $i++) {
       $fp = fopen($tmpFile, 'w+');
@@ -988,12 +1054,22 @@ class import2calendar extends eqLogic
         CURLOPT_TIMEOUT => $timeout,
         CURLOPT_USERAGENT => 'PHP-cURL-ical/1.0'
       ]);
+      if ($auth !== []) {
+        curl_setopt_array($ch, [
+          CURLOPT_USERNAME => $auth['login'],
+          CURLOPT_PASSWORD => $auth['password'],
+          CURLOPT_HTTPAUTH => $https ? (CURLAUTH_DIGEST | CURLAUTH_BASIC) : CURLAUTH_DIGEST,
+          CURLOPT_FOLLOWLOCATION => false,
+          CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS
+        ]);
+      }
 
       $start = microtime(true);
       $success = curl_exec($ch);
       $end = microtime(true);
 
       $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      $serverAuth = curl_getinfo($ch, CURLINFO_HTTPAUTH_AVAIL);
       $curlError = curl_error($ch);
       curl_close($ch);
       fclose($fp);
@@ -1038,12 +1114,22 @@ class import2calendar extends eqLogic
         $duration
       ));
 
+      if ($auth !== [] && $httpCode === 401) {
+        if (!$https && $serverAuth === CURLAUTH_BASIC) {
+          log::add(__CLASS__, 'error', "║ Le serveur de l'agenda n'accepte que l'authentification Basic, refusée hors HTTPS.");
+        } else {
+          log::add(__CLASS__, 'error', "║ Identifiant ou mot de passe refusé par le serveur de l'agenda.");
+        }
+        break;
+      }
+
       if ($i < $retries - 1) {
         sleep($delay);
       }
     }
 
-    log::add(__CLASS__, 'error', "║ Échec du téléchargement après $retries tentatives.");
+    $attempts = min($i + 1, $retries);
+    log::add(__CLASS__, 'error', "║ Échec du téléchargement après $attempts tentative(s).");
     // Le fichier temporaire ne contient que la réponse d'erreur du dernier essai
     if (file_exists($tmpFile) && !unlink($tmpFile)) {
       log::add(__CLASS__, 'warning', "║ Impossible de supprimer le fichier iCal temporaire : $tmpFile");
@@ -1136,10 +1222,20 @@ class import2calendar extends eqLogic
     }
     // $icalData = self::getIcalDataWithCurl($file);
     $localFile = $folder . $eqlogic->getId() . '.ics';
-    $fichierTelecharge = self::downloadIcal($file, $localFile, $force);
+    $auth = [];
+    if ($icalConfig != "" && $eqlogic->getConfiguration('icalLogin') !== '') {
+      $password = utils::decrypt($eqlogic->getConfiguration('icalPassword'));
+      if (!is_string($password) || $password === '') {
+        log::add(__CLASS__, 'error', "║ Mot de passe de l'agenda absent ou illisible, à saisir de nouveau dans l'équipement.");
+        log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
+        return null;
+      }
+      $auth = ['login' => $eqlogic->getConfiguration('icalLogin'), 'password' => $password];
+    }
+    $fichierTelecharge = self::downloadIcal($file, $localFile, $force, $auth);
 
     if ($fichierTelecharge === false) {
-      log::add(__CLASS__, 'error', '║ Impossible de télécharger le fichier iCal => ' . $file);
+      log::add(__CLASS__, 'error', '║ Impossible de télécharger le fichier iCal => ' . self::urlPourLog($file));
       log::add(__CLASS__, 'debug', '╚════════════ :fg-warning:END PARSE ICAL:/fg: ');
       return null;
     }

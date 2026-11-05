@@ -319,6 +319,7 @@ function saveEqLogic(_eqLogic) {
 }
 
 function printEqLogic(_eqLogic) {
+  document.querySelector('.eqLogicAttr[data-l2key="icalPassword"]').placeholder = _eqLogic.icalPasswordSet ? '{{Mot de passe enregistré, laisser vide pour le conserver}}' : '{{Mot de passe}}'
   $('#div_start').empty()
   if (isset(_eqLogic.configuration) && isset(_eqLogic.configuration.starts)) {
     actionOptions = []

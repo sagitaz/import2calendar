@@ -3,6 +3,10 @@
 >**IMPORTANT**
 S'il n'y a pas d'information sur la mise à jour, c'est que celle-ci concerne uniquement de la mise à jour de documentation, de traduction ou de texte.
 
+# 05/11/2026 Beta 1.6.1
+- Agendas protégés par identifiant et mot de passe : nouveaux champs dans l'équipement, mot de passe chiffré
+- L'adresse complète de l'agenda n'apparaît plus dans les logs
+
 # 03/11/2026 Beta 1.6.0
 - Debian 12 et Jeedom 4.6 minimum : les box en Debian 11 ou en Jeedom 4.4 / 4.5 restent en 1.5.1
 
