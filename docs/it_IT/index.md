@@ -26,6 +26,11 @@ Il plugin serve a importare un calendario in formato iCal nel plugin Agenda uffi
 Inizia aggiungendo un dispositivo e scegliendone il nome
 ### Impostazioni di importazione
 - **ical**: specificare l'URL del file ical da convertire.
+- **Nome utente** e **Password**: da inserire solo se il server dell'agenda richiede l'autenticazione (ad esempio Baïkal, con un URL del tipo `http://serveur/dav.php/calendars/utilisateur/default?export`). Lasciare vuoti per Google, Outlook e gli indirizzi pubblici.
+  - Non inserite la password nell'URL: in questi campi viene crittografata e non viene mai più visualizzata.
+  - Lascia vuoto il campo **Password** per mantenere quella registrata. Cancella il campo **Nome utente** per eliminarlo.
+  - Sono accettate le autenticazioni Digest e, solo su HTTPS, Basic. Il certificato di un indirizzo HTTPS deve essere valido.
+  - Specificare l'indirizzo finale del calendario: i reindirizzamenti non vengono seguiti quando viene specificato un identificativo.
 - **Orari di inizio predefiniti**: scegli un orario di inizio per tutti gli eventi del calendario. Per impostazione predefinita, saranno gli orari di inizio dell'evento salvato nel file iCal.
 - **Orari di fine forzati**: scegliere un orario di fine per tutti gli eventi del calendario. Per impostazione predefinita, saranno gli orari di fine dell'evento registrati nel file iCal.
 - **ICAL generale**: vacanze scolastiche francesi e giorni festivi. Se selezionato, non inserire nulla nel campo ical.

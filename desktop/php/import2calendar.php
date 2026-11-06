@@ -171,7 +171,23 @@ $eqLogics = eqLogic::byType($plugin->getId());
 									</span>
 								</div>
 								<br>
-								<label class="col-sm-4 control-label">{{Heures de début forcées}}
+								<label class="col-sm-4 control-label">{{Identifiant}}
+										<sup><i class="fas fa-question-circle tooltips" title="{{À renseigner uniquement si le serveur de l'agenda demande une authentification}}"></i></sup>
+									</label>
+									<div class="col-sm-6">
+										<input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="icalLogin" autocomplete="off" placeholder="{{Identifiant}}">
+									</div>
+									<br>
+									<label class="col-sm-4 control-label">{{Mot de passe}}
+									</label>
+									<div class="col-sm-6 input-group">
+										<input type="text" class="inputPassword eqLogicAttr form-control roundedLeft" data-l1key="configuration" data-l2key="icalPassword" autocomplete="off" placeholder="{{Mot de passe}}">
+										<span class="input-group-btn">
+											<a class="btn btn-default form-control bt_showPass roundedRight"><i class="fas fa-eye"></i></a>
+										</span>
+									</div>
+									<br>
+									<label class="col-sm-4 control-label">{{Heures de début forcées}}
 								</label>
 								<div class="col-sm-6">
 									<select class="eqLogicAttr form-control startTime" data-l1key="configuration" data-l2key="startTime">
