@@ -26,6 +26,11 @@ O plugin serve para importar um calendário no formato iCal para o plugin Agenda
 Comece por adicionar um dispositivo e escolha o seu nome
 ### Parâmetro de importação
 - **ical**: indicar o URL do ficheiro ical a converter.
+- **Nome de utilizador** e **Palavra-passe**: preencher apenas se o servidor da agenda exigir autenticação (por exemplo, o Baïkal, com um URL do tipo `http://serveur/dav.php/calendars/utilisateur/default?export`). Deixar em branco para o Google, o Outlook e os endereços públicos.
+  - Não introduza a palavra-passe no URL: nestes campos, ela é encriptada e nunca mais é exibida.
+  - Deixe o campo **Palavra-passe** em branco para manter a palavra-passe registada. Limpe o campo **Nome de utilizador** para o eliminar.
+  - São aceites as autenticações Digest e, apenas em HTTPS, Basic. O certificado de um endereço HTTPS deve ser válido.
+  - Indique o endereço final da agenda: os redirecionamentos não são seguidos quando é introduzido um identificador.
 - **Horários de início fixos**: selecionar um horário de início para todos os eventos do calendário. Por predefinição, serão utilizados os horários de início do evento registados no iCal.
 - **Horários de fim obrigatórios**: selecionar um horário de fim para todos os eventos do calendário. Por predefinição, serão os horários de fim do evento registado no iCal.
 - **ICAL geral**: férias escolares francesas e feriados. Se esta opção for selecionada, não indique nada no campo ical.
