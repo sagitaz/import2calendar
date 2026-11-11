@@ -303,11 +303,13 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							<div class="form-control">
 								<a class="col-sm-1">
 								</a>
-								<a class="col-sm-5">{{Nom de l'évènement}}
+								<a class="col-sm-4">{{Nom de l'évènement}}
 								</a>
 								<a class="col-sm-1 text-center">{{Fond}}
 								</a>
 								<a class="col-sm-1 text-center">{{Texte}}
+								</a>
+								<a class="col-sm-1 text-center" title="{{Masquer sur le widget Agenda}}">{{Masquer}}
 								</a>
 								<a class="col-sm-2 text-center">{{Début (min avant)}}
 								</a>

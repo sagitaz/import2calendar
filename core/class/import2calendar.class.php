@@ -1354,7 +1354,7 @@ class import2calendar extends eqLogic
             "start" => $allCmdStart,
             "end" => $allCmdEnd,
             "transparent" => "0",
-            "noDisplayOnDashboard" => "0",
+            "noDisplayOnDashboard" => $color["noDisplayOnDashboard"],
             "note" => isset($note['htmlFormat']) ? $note['htmlFormat'] : '', // Vérification supplémentaire
             "location" => isset($location['htmlFormat']) ? $location['htmlFormat'] : '',
             "uid" => isset($event['uid']) ? $event['uid'] : '',
@@ -1383,7 +1383,7 @@ class import2calendar extends eqLogic
               "start" => $allCmdStart,
               "end" => $allCmdEnd,
               "transparent" => "0",
-              "noDisplayOnDashboard" => "0",
+              "noDisplayOnDashboard" => $color["noDisplayOnDashboard"],
               "note" => isset($note['htmlFormat']) ? $note['htmlFormat'] : '', // Vérification supplémentaire
               "location" => isset($location['htmlFormat']) ? $location['htmlFormat'] : '',
               "uid" => isset($event['uid']) ? $event['uid'] : '',
@@ -2151,7 +2151,7 @@ class import2calendar extends eqLogic
   {
 
     // Liste des paramètres à vérifier pour détecter les changements dans cmd_param
-    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'colors', 'note', 'location', 'uid', 'recurrenceId', 'exdate'];
+    $paramsToCheck = ['start', 'end', 'color', 'icon', 'text_color', 'noDisplayOnDashboard', 'colors', 'note', 'location', 'uid', 'recurrenceId', 'exdate'];
     foreach ($paramsToCheck as $param) {
       // Comparer les valeurs des paramètres si elles existent
       $optionValue = $option['cmd_param'][$param] ?? null;
@@ -2414,7 +2414,8 @@ class import2calendar extends eqLogic
     // Récupérer les couleurs définies dans la configuration, ou utiliser les couleurs par défaut
     $result = [
       "background" => $eqlogic->getConfiguration('color') ?: $defaultBackground,
-      "texte" => $eqlogic->getConfiguration('text_color') ?: $defaultText
+      "texte" => $eqlogic->getConfiguration('text_color') ?: $defaultText,
+      "noDisplayOnDashboard" => "0"
     ];
 
     // Récupérer les configurations des couleurs
@@ -2429,6 +2430,7 @@ class import2calendar extends eqLogic
           // Si une correspondance est trouvée, on met à jour les couleurs et on retourne le résultat
           $result["background"] = $color['colorBackground'] ?: $defaultBackground;
           $result["texte"] = $color['colorText'] ?: $defaultText;
+          $result["noDisplayOnDashboard"] = (($color['options']['disable'] ?? '0') == 1) ? "1" : "0";
           return $result;
         }
       }
