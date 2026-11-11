@@ -207,6 +207,7 @@ function addColor(_color) {
   div += '<span class="input-group-btn">'
   div += '<div class="col-sm-1">'
   div += '<div class="btn btn-default btn-sm bt_removeColor pull-left" data-type="color"><i class="fas fa-minus-circle"></i></div>'
+  div += '<div><input type="checkbox" class="expressionAttr" data-l1key="options" data-l2key="disable" title="{{Masquer sur le widget Agenda}}"></div>'
   div += '</div>'
   div += '<div class="col-sm-5">'
   div += '<div class="col-sm-10 expressionAttr"><input type="text" class="expressionAttr form-control" style="color: var(--txt-color) !important;" data-l1key="colorName" placeholder="{{Nom}}"></div>'
