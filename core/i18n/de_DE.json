@@ -22,6 +22,8 @@
         "Max": "Max",
         "Min": "Minimum",
         "Mise à jour des commandes agenda réussie.": "Aktualisierung der Kalenderbefehle erfolgreich abgeschlossen.",
+        "Mot de passe": "Passwort",
+        "Mot de passe enregistré, laisser vide pour le conserver": "Passwort gespeichert, bitte leer lassen, um es beizubehalten",
         "Nom": "Name",
         "Nom de la commande": "Name des Befehls",
         "Supprimer la commande": "Befehl löschen",
@@ -67,9 +69,11 @@
         "ICAL": "ICAL",
         "ICAL général": "ICAL allgemein",
         "Icône": "Symbol",
+        "Identifiant": "ICH WÜRDE",
         "Jours fériés Métropole": "Feiertage Metropole",
         "Mes import2calendars": "Meine import2calendars",
         "Mise à jour J+": "Update J+",
+        "Mot de passe": "Passwort",
         "Nom de l'équipement": "Name des Geräts",
         "Nom de l'évènement": "Name des Ereignisses",
         "Objet parent": "Übergeordnetes Objekt",
@@ -97,7 +101,8 @@
         "Vacances scolaires FR zone B": "Schulferien FR Zone B",
         "Vacances scolaires FR zone C": "Schulferien FR Zone C",
         "Visible": "Sichtbar",
-        "aide Discord": "discord-Hilfe"
+        "aide Discord": "discord-Hilfe",
+        "À renseigner uniquement si le serveur de l'agenda demande une authentification": "Nur ausfüllen, wenn der Kalender-Server eine Authentifizierung verlangt"
     },
     "plugins\/import2calendar\/plugin_info\/configuration.php": {
         "Ajoute les commandes jour suivant pour tous les agendas": "Fügt die Termine für den nächsten Tag zu allen Kalendern hinzu",

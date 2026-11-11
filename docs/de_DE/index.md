@@ -26,6 +26,11 @@ Das Plugin dient dazu, einen Kalender im iCal-Format in das offizielle Jeedom-Ka
 Fügen Sie zunächst ein Gerät hinzu und wählen Sie einen Namen dafür aus
 ### Importparameter
 - **ical**: Geben Sie die URL der zu konvertierenden iCal-Datei an.
+- **Benutzername** und **Passwort**: Nur ausfüllen, wenn der Kalender-Server eine Authentifizierung verlangt (z. B. Baïkal mit einer URL der Form `http://serveur/dav.php/calendars/utilisateur/default?export`). Bei Google, Outlook und öffentlichen Adressen leer lassen.
+  - Geben Sie das Passwort nicht in die URL ein: In diesen Feldern wird es verschlüsselt und nie wieder angezeigt.
+  - Lassen Sie das Feld **Passwort** leer, um das gespeicherte Passwort beizubehalten. Löschen Sie den Eintrag im Feld **Benutzername**, um ihn zu entfernen.
+  - Es werden die Authentifizierungsmethoden „Digest“ und – ausschließlich bei HTTPS – „Basic“ akzeptiert. Das Zertifikat einer HTTPS-Adresse muss gültig sein.
+  - Geben Sie die endgültige Adresse des Kalenders an: Weiterleitungen werden nicht verfolgt, wenn eine Kennung angegeben ist.
 - **Vorgeschriebene Startzeiten**: Wählen Sie eine Startzeit für alle Ereignisse im Kalender aus. Standardmäßig werden die im iCal gespeicherten Startzeiten der Ereignisse verwendet.
 - **Vorgeschriebene Endzeiten**: Wählen Sie eine Endzeit für alle Ereignisse im Kalender aus. Standardmäßig werden die im iCal gespeicherten Endzeiten der Ereignisse verwendet.
 - **Allgemeiner iCal**: Französische Schulferien und Feiertage. Wenn diese Option ausgewählt ist, geben Sie im iCal-Feld nichts ein.

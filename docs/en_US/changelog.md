@@ -3,6 +3,10 @@
 >**IMPORTANT**
 If there is no information about the update, it means that the update only involves documentation, translations, or text.
 
+# November 6, 2026 Beta 1.6.1
+- Support for calendars protected by a username and password (e.g., Baïkal): new fields in the device, encrypted password
+- The full address of the calendar no longer appears in the logs
+
 # November 3, 2026 Beta 1.6.0
 - Debian 12 and Jeedom 4.6 or higher: devices running Debian 11 or Jeedom 4.4/4.5 will remain on version 1.5.1
 
